@@ -42,7 +42,7 @@ app.get('/api/auth/me', (req, res) => {
 // --- BOOKING (PATIENT) ROUTES ---
 app.get('/api/doctors', async (req, res) => {
     try {
-        const result = await db.query('SELECT id, name, type FROM doctors WHERE is_active = true');
+        const result = await db.query('SELECT id, name, type, specialty FROM doctors WHERE is_active = true');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -71,15 +71,18 @@ app.get('/api/availability', async (req, res) => {
 
 app.post('/api/bookings', async (req, res) => {
     const { patientName, phone, email, reasonForVisit, doctorId, sessionId, date } = req.body;
+    console.log('[BOOKING REQUEST]', req.body);
     try {
         const isOpen = await tokenService.isBookingOpen(sessionId, date);
         if (!isOpen) {
-            return res.status(400).json({ error: 'Booking is not open for this session.' });
+            console.log('[BOOKING REJECTED] Not open:', { sessionId, date });
+            return res.status(400).json({ message: 'Booking is not open for this session.', error: 'Booking is not open for this session.' });
         }
         
         const slots = await tokenService.getAvailableSlots(sessionId, date);
         if (slots <= 0) {
-            return res.status(400).json({ error: 'Session is fully booked.' });
+            console.log('[BOOKING REJECTED] No slots:', { sessionId, date });
+            return res.status(400).json({ message: 'Session is fully booked.', error: 'Session is fully booked.' });
         }
 
         const tokenNumber = await tokenService.getNextTokenNumber(sessionId, date);

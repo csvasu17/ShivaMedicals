@@ -44,7 +44,8 @@ async function isBookingOpen(sessionId, bookingDateStr) {
     
     // bookingDateStr is YYYY-MM-DD
     const today = new Date();
-    const bookingDate = new Date(bookingDateStr);
+    const [by, bm, bd] = bookingDateStr.split('-').map(Number);
+    const bookingDate = new Date(by, bm - 1, bd); // Local midnight of the booking date
     
     // Check if booking is in the past
     if (bookingDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) return false;

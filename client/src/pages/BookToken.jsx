@@ -14,6 +14,7 @@ const BookToken = ({ onClose }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [bookingSuccess, setBookingSuccess] = useState(null);
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6001';
 
@@ -55,7 +56,10 @@ const BookToken = ({ onClose }) => {
     for (let i = 0; i < 3; i++) {
       const d = new Date();
       d.setDate(d.getDate() + i);
-      dates.push(d.toISOString().split('T')[0]);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      dates.push(`${year}-${month}-${day}`);
     }
     return dates;
   };
@@ -71,12 +75,12 @@ const BookToken = ({ onClose }) => {
         body: JSON.stringify(formData)
       });
       if (res.ok) {
-        alert('Token booked successfully!');
+        const data = await res.json();
+        setBookingSuccess(data);
         setFormData({ patientName: '', phone: '', email: '', doctorId: '', sessionId: '', date: '', reasonForVisit: '' });
-        onClose();
       } else {
         const data = await res.json();
-        setError(data.message || 'Error booking token.');
+        setError(data.message || data.error || 'Error booking token.');
       }
     } catch (err) {
       setError('System error. Please try later.');
@@ -85,9 +89,59 @@ const BookToken = ({ onClose }) => {
     }
   };
 
+  if (bookingSuccess) {
+    return (
+      <div className="w-full max-w-xl mx-auto py-4 text-center animate-fade-in">
+        <div className="w-16 h-16 bg-teal-primary/10 text-teal-primary rounded-2xl flex items-center justify-center mx-auto mb-5 rotate-3 hover:rotate-0 transition-transform duration-500">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </div>
+        <h2 className="text-3xl font-serif font-medium text-ink mb-2">Token Confirmed!</h2>
+        <p className="text-muted-text text-sm mb-8 px-8">Your appointment has been successfully scheduled. Please arrive at least 10 minutes before your estimated time.</p>
+        
+        <div className="bg-slate-50 rounded-[32px] p-8 mb-8 border border-white shadow-inner relative overflow-hidden group">
+           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-blue-primary/10 transition-colors"></div>
+           <div className="grid grid-cols-2 gap-8 relative z-10">
+              <div className="text-left">
+                 <p className="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-2 opacity-60">Token Number</p>
+                 <div className="flex items-baseline gap-1">
+                    <p className="text-6xl font-serif font-bold text-ink">{bookingSuccess.token_number}</p>
+                    <span className="text-blue-mid font-bold text-sm">#</span>
+                 </div>
+              </div>
+              <div className="text-right">
+                 <p className="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-2 opacity-60">Booking ID</p>
+                 <p className="text-lg font-bold text-ink bg-white px-3 py-1 rounded-lg border border-slate-100 shadow-sm inline-block">{bookingSuccess.booking_ref}</p>
+              </div>
+           </div>
+           
+           <div className="mt-8 pt-8 border-t border-slate-200/50 flex justify-between items-center relative z-10">
+              <div className="text-left">
+                 <p className="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-1 opacity-60">Estimated Time</p>
+                 <p className="text-2xl font-bold text-blue-mid">
+                    {bookingSuccess.estimated_time.slice(0,5)} 
+                    <span className="text-sm ml-1 opacity-70">
+                       {parseInt(bookingSuccess.estimated_time.slice(0,2)) >= 12 ? 'PM' : 'AM'}
+                    </span>
+                 </p>
+              </div>
+              <div className="text-right">
+                 <p className="text-[10px] font-bold text-muted-text uppercase tracking-widest mb-1 opacity-60">Patient</p>
+                 <p className="text-sm font-bold text-ink">{bookingSuccess.patient_name}</p>
+              </div>
+           </div>
+        </div>
+        
+        <div className="flex flex-col gap-3">
+           <button onClick={onClose} className="btn-dark w-full justify-center h-14 !rounded-2xl text-base shadow-xl shadow-ink/10">Done</button>
+           <p className="text-center text-[11px] text-muted-text mt-2">A confirmation has been sent to your phone via SMS/WhatsApp.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-xl mx-auto">
-      <div className="mb-4 text-center">
+      <div className="mb-3 text-center">
         <span className="text-[9px] font-bold text-blue-mid uppercase tracking-[0.4em] mb-1 block">Quick Registration</span>
         <h2 className="text-2xl lg:text-3xl font-serif font-medium text-ink mb-0.5 tracking-tight">Book Your Token</h2>
         <p className="text-muted-text text-[13px]">Secure your digital consultation token in seconds.</p>
