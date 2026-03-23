@@ -10,20 +10,24 @@
   --color-cream-base: #FAF8F4;
   --color-cream-soft: #F2EEE6;
   --color-muted-text: #6B7490;
-  
+
   --font-serif: "Playfair Display", serif;
   --font-sans: "Outfit", sans-serif;
-  
+
   --radius-premium: 16px;
   --radius-badge: 32px;
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-white text-ink antialiased font-sans transition-colors duration-300;
     -webkit-font-smoothing: antialiased;
   }
-  
+
   h1, h2, h3, h4 {
     @apply font-serif font-medium tracking-tight text-ink;
   }
@@ -50,7 +54,6 @@
     @apply border-2 border-slate-100 bg-white hover:border-ink text-ink py-3 px-6 rounded-xl font-medium transition-all transform active:scale-[0.98] inline-flex items-center gap-2;
   }
 
-  /* PREMIUM CARDS */
   .p-card {
     @apply bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-primary/10 transition-all duration-500 overflow-hidden;
   }
@@ -58,9 +61,24 @@
   .accent-italic {
     @apply text-blue-mid italic;
   }
+
+  .input-premium {
+    @apply w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-medium text-ink outline-none transition-all duration-200 placeholder:text-muted-text/55 focus:border-blue-primary/30 focus:bg-white focus:shadow-[0_0_0_4px_rgba(43,92,230,0.08)];
+  }
+
+  .form-label-premium {
+    @apply mb-2 block text-[11px] font-bold uppercase tracking-[0.24em] text-ink/70;
+  }
+
+  .summary-label {
+    @apply text-[11px] font-bold uppercase tracking-[0.24em] text-muted-text;
+  }
+
+  .summary-value {
+    @apply mt-2 text-sm font-semibold leading-6 text-ink;
+  }
 }
 
-/* ── ANIMATIONS ── */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
@@ -89,10 +107,18 @@
   animation: float 4s ease-in-out infinite;
 }
 
+@keyframes scale-up {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-up {
+  animation: scale-up 0.35s ease-out forwards;
+}
+
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }
 .stagger-3 { animation-delay: 0.3s; }
 
-/* ── UTILITIES ── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
