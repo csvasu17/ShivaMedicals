@@ -14,7 +14,7 @@
   --font-serif: "Playfair Display", serif;
   --font-sans: "Outfit", sans-serif;
   
-  --radius-premium: 20px;
+  --radius-premium: 16px;
   --radius-badge: 32px;
 }
 
@@ -31,23 +31,23 @@
 
 @layer components {
   .sec-title {
-    @apply font-serif text-4xl lg:text-5xl font-medium leading-tight tracking-tight mb-6;
+    @apply font-serif text-4xl lg:text-5xl font-medium leading-tight tracking-tight mb-4;
   }
 
   .sec-sub {
-    @apply text-muted-text text-lg leading-relaxed max-w-lg mb-8;
+    @apply text-muted-text text-lg leading-relaxed max-w-lg mb-4;
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 bg-blue-primary/5 border border-blue-primary/15 text-blue-mid py-1.5 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider mb-6;
+    @apply inline-flex items-center gap-2 bg-blue-primary/5 border border-blue-primary/15 text-blue-mid py-1 px-3.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-4;
   }
 
   .btn-dark {
-    @apply bg-ink hover:bg-blue-primary text-white py-4 px-8 rounded-xl font-medium transition-all transform active:scale-[0.98] inline-flex items-center gap-2;
+    @apply bg-ink hover:bg-blue-primary text-white py-3 px-6 rounded-xl font-medium transition-all transform active:scale-[0.98] inline-flex items-center gap-2;
   }
 
   .btn-outline {
-    @apply border-2 border-slate-100 bg-white hover:border-ink text-ink py-4 px-8 rounded-xl font-medium transition-all transform active:scale-[0.98] inline-flex items-center gap-2;
+    @apply border-2 border-slate-100 bg-white hover:border-ink text-ink py-3 px-6 rounded-xl font-medium transition-all transform active:scale-[0.98] inline-flex items-center gap-2;
   }
 
   /* PREMIUM CARDS */

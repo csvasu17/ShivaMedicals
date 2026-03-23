@@ -104,7 +104,7 @@ function App() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-5 md:p-8 overflow-hidden">
+              <div className="p-4 md:p-6 overflow-hidden">
                 <BookToken onClose={() => setIsBookingModalOpen(false)} />
               </div>
            </div>
@@ -115,7 +115,7 @@ function App() {
       {isLoginModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-navy/60 backdrop-blur-md animate-fade-in" onClick={() => setIsLoginModalOpen(false)}></div>
-           <div className="bg-white rounded-[40px] w-full max-w-md p-10 shadow-2xl relative animate-scale-up z-[110]">
+           <div className="bg-white rounded-[40px] w-full max-w-md p-8 shadow-2xl relative animate-scale-up z-[110]">
               <button 
                 type="button"
                 onClick={(e) => { e.stopPropagation(); setIsLoginModalOpen(false); }}
@@ -135,14 +135,10 @@ function App() {
           className="flex items-center gap-3 cursor-pointer group" 
           onClick={() => { setRoute('home'); window.history.pushState({}, '', '/'); }}
         >
-          <div className="w-9 h-9 rounded-xl bg-ink relative overflow-hidden flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-mid to-teal-primary opacity-85"></div>
-            <svg className="relative z-10" width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="7" y="1" width="4" height="16" rx="2" fill="white"/>
-              <rect x="1" y="7" width="16" height="4" rx="2" fill="white"/>
-            </svg>
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-sm border border-slate-100">
+            <img src="/shiva-logo.jpg" alt="Shiva Medicals Logo" className="w-full h-full object-cover" />
           </div>
-          <span className="font-serif text-xl font-medium text-ink tracking-tight">CareToken</span>
+          <span className="font-serif text-xl font-medium text-ink tracking-tight">Shiva Medicals</span>
         </div>
         
         <ul className="hidden lg:flex items-center gap-9">
@@ -166,16 +162,21 @@ function App() {
       <main className={`flex-1 transition-all duration-500 ${!isBookingModalOpen ? 'mt-[68px]' : 'mt-0'}`}>
         {route === 'home' && (
           <div className="animate-fade-in">
-            {/* CARETOKEN HERO */}
-            <section className="min-h-[calc(100vh-68px)] grid grid-cols-1 lg:grid-cols-[1.05fr,0.95fr] items-center">
-              
+            {/* SHIVA MEDICALS HERO */}
+            <section className="min-h-[calc(100vh-68px)] grid grid-cols-1 lg:grid-cols-[1.05fr,0.95fr] items-center relative overflow-hidden">
+              {/* Subtle Medical Background Texture */}
+              <div className="absolute inset-0 -z-10 pointer-events-none opacity-[0.06]">
+                <img src="/medical-bg.png" className="w-full h-full object-cover" alt="" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-transparent to-white/80"></div>
+              </div>
+
               {/* Left Column: Content */}
-              <div className="px-6 md:px-12 py-16 lg:py-0">
+              <div className="px-6 md:px-12 py-12 lg:py-0 relative z-10">
                 <div className="eyebrow animate-fade-in">
                    <span className="w-2 h-2 rounded-full bg-blue-mid animate-pulse"></span>
                    Sessions open — book for today
                 </div>
-                <h1 className="text-5xl lg:text-[72px] leading-[1.05] font-serif font-medium text-ink mb-6 tracking-tight animate-slide-up">
+                <h1 className="text-5xl lg:text-[72px] leading-[1.05] font-serif font-medium text-ink mb-4 tracking-tight animate-slide-up">
                    Your clinic visit,<br />
                    <span className="accent-italic">without</span> the<br />
                    <span className="text-teal-primary">waiting room.</span>
@@ -183,8 +184,8 @@ function App() {
                 <p className="sec-sub animate-slide-up stagger-1">
                    Reserve your token online. Get an estimated time, arrive only when it's your turn, and receive real-time updates on your phone.
                 </p>
-                <div className="flex flex-wrap gap-4 mb-14 animate-slide-up stagger-2">
-                   <button onClick={() => setIsBookingModalOpen(true)} className="btn-dark px-10 h-16 text-base">
+                <div className="flex flex-wrap gap-4 mb-10 animate-slide-up stagger-2">
+                   <button onClick={() => setIsBookingModalOpen(true)} className="btn-dark px-10 h-14 text-base">
                       Book a token
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                    </button>
@@ -213,7 +214,7 @@ function App() {
                 <div className="relative w-full max-w-[760px] max-h-[70vh] aspect-[1.4] md:aspect-[1.6] rounded-[40px] md:rounded-[65px] overflow-hidden shadow-[0_32px_80px_-20px_rgba(0,0,0,0.12)] border border-white animate-fade-in group">
                    <img 
                      src="/hero-healthcare.png" 
-                     alt="CareToken Premium Clinic" 
+                     alt="Shiva Medicals Premium Clinic" 
                      className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-105" 
                    />
                    {/* Pill Tag at Bottom Left - Clear and Pill-shaped */}
@@ -227,15 +228,15 @@ function App() {
               </div>
             </section>
 
-            {/* CARETOKEN STATS BAND */}
-            <div className="bg-ink px-6 md:px-12 py-12 lg:py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-0">
+            {/* SHIVA MEDICALS STATS BAND slice */}
+            <div className="bg-ink px-6 md:px-12 py-10 lg:py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-0">
               <div className="lg:pr-10 lg:border-r border-white/10 animate-fade-in">
-                <div className="font-serif text-4xl lg:text-[42px] font-medium text-white leading-none mb-1.5">2<span className="text-2xl ml-1"> specialists</span></div>
-                <div className="text-[13px] text-white/45 font-normal tracking-wide">General + Child specialist</div>
+                <div className="font-serif text-4xl lg:text-[42px] font-medium text-white leading-none mb-1.5 flex items-baseline">Expert<span className="text-2xl ml-2"> Doctors</span></div>
+                <div className="text-[13px] text-white/45 font-normal tracking-wide">Professional Medical Team</div>
               </div>
               <div className="lg:px-12 lg:border-r border-white/10 animate-fade-in stagger-1 text-left lg:text-center">
-                <div className="font-serif text-4xl lg:text-[42px] font-medium text-white leading-none mb-1.5">4</div>
-                <div className="text-[13px] text-white/45 font-normal tracking-wide">Sessions every day</div>
+                <div className="font-serif text-4xl lg:text-[42px] font-medium text-white leading-none mb-1.5">Daily</div>
+                <div className="text-[13px] text-white/45 font-normal tracking-wide">Flexible session slots</div>
               </div>
               <div className="lg:px-12 lg:border-r border-white/10 animate-fade-in stagger-2 text-left lg:text-center">
                 <div className="font-serif text-4xl lg:text-[42px] font-medium text-white leading-none mb-1.5">~6<span className="text-2xl ml-1"> min</span></div>
@@ -246,81 +247,101 @@ function App() {
               </div>
             </div>
             
-            {/* CARETOKEN DOCTORS */}
-            <section className="px-6 md:px-12 py-24 bg-white" id="doctors">
-              <div className="max-w-2xl mb-16 animate-slide-up">
-                <span className="eyebrow">Our specialists</span>
-                <h2 className="sec-title">Two doctors.<br />Four sessions daily.</h2>
-                <p className="sec-sub">Book with our experienced specialists for morning or evening consultations. Real-time slot counts ensure absolute accuracy.</p>
+            {/* SHIVA MEDICALS DOCTORS */}
+            <section className="px-6 md:px-12 py-24 bg-white relative overflow-hidden" id="doctors">
+              <div className="absolute inset-0 -z-10 opacity-[0.03] pointer-events-none">
+                <img src="/medical-bg.png" className="w-full h-full object-cover" alt="" />
+                <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white"></div>
               </div>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-[960px] animate-slide-up stagger-1">
-                {/* DR RAMESH */}
-                <div className="p-card group cursor-default">
-                  <div className="p-8 border-b border-slate-50">
-                    <div className="flex items-center gap-5 mb-8">
-                       <div className="w-14 h-14 rounded-2xl bg-blue-primary/5 text-blue-primary font-serif text-xl font-semibold flex items-center justify-center">RK</div>
-                       <div>
-                          <h3 className="text-xl font-bold text-ink mb-0.5">Dr. Ramesh Kumar</h3>
-                          <p className="text-[13px] text-muted-text">General Medicine · MD</p>
-                       </div>
-                    </div>
-                    <span className="inline-block bg-green-50 text-green-700 font-bold px-3 py-1 rounded-full text-[11px]">Available today</span>
+              <div className="max-w-6xl mx-auto relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-20 items-start">
+                  <div className="lg:col-span-1 animate-slide-up lg:sticky lg:top-32">
+                    <span className="eyebrow">Medical Team</span>
+                    <h2 className="sec-title text-4xl lg:text-5xl leading-[1.2] mb-6">Clinical Excellence.<br />Available Daily.</h2>
+                    <p className="sec-sub text-lg opacity-80 mb-0">Consult with our expert medical team across multiple daily sessions. Real-time availability ensures absolute accuracy for your visit.</p>
                   </div>
-                  <div className="p-8 space-y-3">
-                    <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-blue-primary/10 transition-colors">
-                       <div>
-                          <p className="text-[13px] font-bold text-ink">Morning Session</p>
-                          <span className="text-[11px] text-muted-text">9:00 AM – 12:00 PM</span>
-                       </div>
-                       <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">12 slots left</span>
-                    </div>
-                    <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-blue-primary/10 transition-colors">
-                       <div>
-                          <p className="text-[13px] font-bold text-ink">Evening Session</p>
-                          <span className="text-[11px] text-muted-text">5:00 PM – 8:00 PM</span>
-                       </div>
-                       <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">18 slots left</span>
-                    </div>
-                  </div>
-                  <button onClick={() => setIsBookingModalOpen(true)} className="w-[calc(100%-64px)] mx-8 mb-8 bg-ink hover:bg-blue-primary text-white py-4 rounded-xl font-medium transition-all transform active:scale-95 shadow-lg shadow-ink/5">Book token</button>
-                </div>
+                  
+                  <div className="lg:col-span-2 lg:max-w-3xl animate-slide-up stagger-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* DR RAMESH */}
+                      <div className="p-card group cursor-default h-full flex flex-col">
+                        <div className="p-6 border-b border-slate-50">
+                          <div className="flex items-center gap-5 mb-6">
+                             <div className="w-14 h-14 rounded-2xl bg-blue-primary/5 text-blue-primary font-serif text-xl font-semibold flex items-center justify-center transition-transform group-hover:scale-110">RK</div>
+                             <div>
+                                <h3 className="text-xl font-bold text-ink mb-0.5">Dr. Ramesh Kumar</h3>
+                                <p className="text-[13px] text-muted-text">General Medicine · MD</p>
+                             </div>
+                          </div>
+                          <span className="inline-block bg-green-50 text-green-700 font-bold px-3 py-1 rounded-full text-[11px]">Available today</span>
+                        </div>
+                        <div className="p-6 space-y-3 flex-1">
+                          <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-blue-primary/10 transition-colors">
+                             <div>
+                                <p className="text-[13px] font-bold text-ink">Morning Session</p>
+                                <span className="text-[11px] text-muted-text">9:00 AM – 12:00 PM</span>
+                             </div>
+                             <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">12 slots</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-blue-primary/10 transition-colors">
+                             <div>
+                                <p className="text-[13px] font-bold text-ink">Evening Session</p>
+                                <span className="text-[11px] text-muted-text">5:00 PM – 8:00 PM</span>
+                             </div>
+                             <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">18 slots</span>
+                          </div>
+                        </div>
+                        <div className="px-6 pb-6 mt-auto">
+                          <button onClick={() => setIsBookingModalOpen(true)} className="w-full bg-ink hover:bg-blue-primary text-white py-3.5 rounded-xl font-medium transition-all transform active:scale-95 shadow-lg shadow-ink/5">Book token</button>
+                        </div>
+                      </div>
 
-                {/* CHILD SPECIALIST (Placeholders for now) */}
-                <div className="p-card group cursor-default">
-                  <div className="p-8 border-b border-slate-50">
-                    <div className="flex items-center gap-5 mb-8">
-                       <div className="w-14 h-14 rounded-2xl bg-teal-primary/5 text-teal-primary font-serif text-xl font-semibold flex items-center justify-center">PS</div>
-                       <div>
-                          <h3 className="text-xl font-bold text-ink mb-0.5">Dr. Priya Sundar</h3>
-                          <p className="text-[13px] text-muted-text">Child Specialist · DCH</p>
-                       </div>
-                    </div>
-                    <span className="inline-block bg-green-50 text-green-700 font-bold px-3 py-1 rounded-full text-[11px]">Available today</span>
-                  </div>
-                  <div className="p-8 space-y-3">
-                    <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-teal-primary/10 transition-colors">
-                       <div>
-                          <p className="text-[13px] font-bold text-ink">Morning Session</p>
-                          <span className="text-[11px] text-muted-text">9:30 AM – 11:30 AM</span>
-                       </div>
-                       <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">3 slots left</span>
-                    </div>
-                    <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-teal-primary/10 transition-colors">
-                       <div>
-                          <p className="text-[13px] font-bold text-ink">Evening Session</p>
-                          <span className="text-[11px] text-muted-text">5:30 PM – 7:30 PM</span>
-                       </div>
-                       <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">11 slots left</span>
+                      {/* CHILD SPECIALIST */}
+                      <div className="p-card group cursor-default h-full flex flex-col animate-slide-up stagger-2">
+                        <div className="p-6 border-b border-slate-50">
+                          <div className="flex items-center gap-5 mb-6">
+                             <div className="w-14 h-14 rounded-2xl bg-teal-primary/5 text-teal-primary font-serif text-xl font-semibold flex items-center justify-center transition-transform group-hover:scale-110">PS</div>
+                             <div>
+                                <h3 className="text-xl font-bold text-ink mb-0.5">Dr. Priya Sundar</h3>
+                                <p className="text-[13px] text-muted-text">Child Specialist · DCH</p>
+                             </div>
+                          </div>
+                          <span className="inline-block bg-green-50 text-green-700 font-bold px-3 py-1 rounded-full text-[11px]">Available today</span>
+                        </div>
+                        <div className="p-6 space-y-3 flex-1">
+                          <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-teal-primary/10 transition-colors">
+                             <div>
+                                <p className="text-[13px] font-bold text-ink">Morning Session</p>
+                                <span className="text-[11px] text-muted-text">9:30 AM – 11:30 AM</span>
+                             </div>
+                             <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full">3 slots</span>
+                          </div>
+                          <div className="flex justify-between items-center bg-cream-base/50 p-4 rounded-xl border border-transparent hover:border-teal-primary/10 transition-colors">
+                             <div>
+                                <p className="text-[13px] font-bold text-ink">Evening Session</p>
+                                <span className="text-[11px] text-muted-text">5:30 PM – 7:30 PM</span>
+                             </div>
+                             <span className="text-[11px] font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">11 slots</span>
+                          </div>
+                        </div>
+                        <div className="px-6 pb-6 mt-auto">
+                          <button onClick={() => setIsBookingModalOpen(true)} className="w-full bg-ink hover:bg-teal-primary text-white py-3.5 rounded-xl font-medium transition-all transform active:scale-95 shadow-lg shadow-ink/5">Book token</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* CARETOKEN HOW IT WORKS */}
-            <section className="px-6 md:px-12 py-24 bg-cream-base" id="how">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* SHIVA MEDICALS HOW IT WORKS */}
+            <section className="px-6 md:px-12 py-16 bg-cream-base relative overflow-hidden" id="how">
+              <div className="absolute inset-0 -z-10 opacity-[0.04] pointer-events-none">
+                <img src="/medical-bg.png" className="w-full h-full object-cover" alt="" />
+                <div className="absolute inset-0 bg-gradient-to-b from-cream-base via-transparent to-cream-base"></div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
                 <div className="animate-slide-up">
                   <span className="eyebrow">Simple process</span>
                   <h2 className="sec-title">Book your token<br />in 4 steps.</h2>
@@ -350,7 +371,7 @@ function App() {
                     <div className="w-2.5 h-2.5 rounded-full bg-[#FEBC2E]"></div>
                     <div className="w-2.5 h-2.5 rounded-full bg-[#28C840]"></div>
                   </div>
-                  <div className="p-8">
+                  <div className="p-6">
                     <p className="text-[10px] uppercase tracking-widest text-muted-text font-bold mb-5">Select session</p>
                     <div className="space-y-3 mb-8">
                        <div className="flex justify-between items-center p-4 rounded-xl bg-blue-primary/5 border border-blue-primary/20">
@@ -378,10 +399,10 @@ function App() {
               </div>
             </section>
 
-            {/* CARETOKEN FEATURES */}
-            <section className="px-6 md:px-12 py-24 bg-ink" id="features">
-              <div className="text-center max-w-2xl mx-auto mb-20 animate-slide-up">
-                <span className="eyebrow bg-white/5 border-white/10 text-teal-primary">Why CareToken</span>
+            {/* SHIVA MEDICALS FEATURES */}
+            <section className="px-6 md:px-12 py-16 bg-ink" id="features">
+              <div className="text-center max-w-2xl mx-auto mb-16 animate-slide-up">
+                <span className="eyebrow bg-white/5 border-white/10 text-teal-primary">Why Shiva Medicals</span>
                 <h2 className="sec-title text-white">Every detail, considered.</h2>
                 <p className="text-white/55 text-lg leading-relaxed">Built for patients who value their time and clinics that care about experience.</p>
               </div>
@@ -395,7 +416,7 @@ function App() {
                   { t: "Easy cancellation", d: "Cancel anytime more than 1 hour before your session. Your slot is released for others.", i: "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16", c: "rgba(255,255,255,0.08)", s: "rgba(255,255,255,0.6)" },
                   { t: "Instant confirmation", d: "Token confirmed immediately with your booking ID, time, and doctor details.", i: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", c: "rgba(255,255,255,0.08)", s: "rgba(255,255,255,0.6)" }
                 ].map((f,idx)=>(
-                  <div key={idx} className="p-8 rounded-[28px] border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-500 group animate-slide-up">
+                  <div key={idx} className="p-6 rounded-[28px] border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 transition-all duration-500 group animate-slide-up">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110" style={{backgroundColor:f.c}}>
                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={f.s} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={f.i} /></svg>
                     </div>
@@ -406,9 +427,9 @@ function App() {
               </div>
             </section>
 
-            {/* CARETOKEN FINAL CTA */}
-            <section className="px-6 md:px-12 py-24 bg-white">
-              <div className="bg-ink rounded-[48px] p-8 md:p-16 lg:p-24 relative overflow-hidden text-center">
+            {/* SHIVA MEDICALS FINAL CTA */}
+            <section className="px-6 md:px-12 py-16 bg-white">
+              <div className="bg-ink rounded-[48px] p-8 md:p-12 lg:p-16 relative overflow-hidden text-center">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(24,71,194,0.15)_0%,transparent_70%)]"></div>
                 
                 <div className="relative z-10 max-w-2xl mx-auto">
@@ -439,17 +460,17 @@ function App() {
         )}
       </main>
 
-      {/* CARETOKEN FOOTER */}
+      {/* SHIVA MEDICALS FOOTER */}
       {/* SHIVA MEDICAL PREMIUM FOOTER */}
-      <footer className="bg-ink px-6 md:px-12 pt-24 pb-12 text-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 lg:gap-12 mb-20">
+      <footer className="bg-ink px-6 md:px-12 pt-16 pb-10 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-10 mb-16">
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-blue-primary flex items-center justify-center shadow-lg shadow-blue-primary/20">
-                <span className="font-bold text-lg text-white">SM</span>
+              <div className="w-12 h-12 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg">
+                <img src="/shiva-logo.jpg" alt="SM Logo" className="w-full h-full object-cover" />
               </div>
-              <span className="font-serif text-2xl font-medium text-white tracking-tight">Shiva Medical</span>
+              <span className="font-serif text-2xl font-medium text-white tracking-tight">Shiva Medicals</span>
             </div>
             <p className="text-white/90 font-medium text-sm mb-4">Your Health, Our Priority</p>
             <p className="text-white/45 text-sm leading-relaxed mb-10 max-w-[240px]">
@@ -526,7 +547,7 @@ function App() {
 
         <div className="pt-12 border-t border-white/5 flex justify-center">
           <p className="text-white/30 text-[13px] tracking-wide text-center">
-            © 2026 Shiva Medical. All rights reserved.
+            © 2026 Shiva Medicals. All rights reserved.
           </p>
         </div>
       </footer>

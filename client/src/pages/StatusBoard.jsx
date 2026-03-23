@@ -62,13 +62,13 @@ export default function StatusBoard() {
   );
 
   return (
-    <div className="min-h-screen bg-ink text-white p-10 lg:p-20 flex flex-col overflow-hidden relative">
+    <div className="min-h-screen bg-ink text-white p-8 lg:p-12 flex flex-col overflow-hidden relative">
       {/* BACKGROUND EFFECTS */}
       <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-blue-primary/10 rounded-full blur-[250px] -z-10 animate-pulse-slow"></div>
       <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-teal-primary/5 rounded-full blur-[200px] -z-10"></div>
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-10 mb-24 border-b border-white/5 pb-16 animate-fade-in relative z-10">
+      <div className="flex flex-col lg:flex-row justify-between lg:items-end gap-10 mb-16 border-b border-white/5 pb-10 animate-fade-in relative z-10">
          <div>
             <div className="flex items-center gap-4 mb-4">
               <div className="w-2 h-2 rounded-full bg-teal-primary animate-pulse shadow-[0_0_15px_rgba(11,143,115,0.8)]"></div>
@@ -89,9 +89,9 @@ export default function StatusBoard() {
       </div>
 
       {/* DOCTORS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 flex-1 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 flex-1 relative z-10">
          {doctors.map((doc, idx) => (
-            <div key={doc.id} className={`bg-white/[0.03] border border-white/5 rounded-[48px] p-12 flex flex-col justify-between relative overflow-hidden backdrop-blur-3xl hover:bg-white/[0.06] transition-all duration-700 animate-slide-up style={{animationDelay: '${idx * 150}ms'}} group`}>
+            <div key={doc.id} className={`bg-white/[0.03] border border-white/5 rounded-[32px] p-10 flex flex-col justify-between relative overflow-hidden backdrop-blur-3xl hover:bg-white/[0.06] transition-all duration-700 animate-slide-up style={{animationDelay: '${idx * 150}ms'}} group`}>
                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-primary/10 rounded-full blur-[100px] group-hover:bg-blue-primary/20 transition-all duration-1000 translate-x-1/2 -translate-y-1/2"></div>
                
                <div>
@@ -102,11 +102,11 @@ export default function StatusBoard() {
                   <p className="text-white/30 text-sm font-medium uppercase tracking-widest">{doc.specialty || 'Medical Officer'}</p>
                </div>
 
-               <div className="my-16 text-center relative py-10 scale-110 lg:scale-125">
+               <div className="my-10 text-center relative py-6 scale-110 lg:scale-125">
                   {currentTokens[doc.id] ? (
                     <div className="animate-fade-in">
-                       <p className="text-blue-light font-bold uppercase text-[10px] tracking-[0.5em] mb-10 opacity-70">Now Consulting</p>
-                       <div className="text-[160px] leading-none font-serif font-medium text-white drop-shadow-[0_20px_60px_rgba(74,123,255,0.4)] mb-8 tracking-tighter group-hover:scale-105 transition-transform duration-700 animate-float">
+                       <p className="text-blue-light font-bold uppercase text-[10px] tracking-[0.5em] mb-6 opacity-70">Now Consulting</p>
+                       <div className="text-[140px] leading-none font-serif font-medium text-white drop-shadow-[0_20px_60px_rgba(74,123,255,0.4)] mb-6 tracking-tighter group-hover:scale-105 transition-transform duration-700 animate-float">
                           {currentTokens[doc.id].token}
                        </div>
                        <div className="px-8 py-3.5 bg-white/10 rounded-2xl inline-block font-bold text-white text-[10px] tracking-[0.4em] uppercase border border-white/5 shadow-2xl backdrop-blur-sm">
@@ -131,7 +131,7 @@ export default function StatusBoard() {
          ))}
       </div>
 
-      <div className="mt-24 text-center animate-fade-in border-t border-white/5 pt-12">
+      <div className="mt-16 text-center animate-fade-in border-t border-white/5 pt-10">
          <p className="text-white/20 font-bold uppercase tracking-[0.6em] text-[10px]">
            Please wait for your token number to be displayed. Thank you for your patience.
          </p>

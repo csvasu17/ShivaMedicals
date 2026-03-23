@@ -80,10 +80,10 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 animate-fade-in relative z-10">
+    <div className="max-w-7xl mx-auto px-6 py-8 animate-fade-in relative z-10">
       
       {/* HEADER & CONTROLS */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
         <div>
           <span className="eyebrow mb-4">Staff Dashboard</span>
           <h2 className="text-4xl lg:text-5xl font-serif font-medium text-ink tracking-tight mb-2">Live Queue Manager</h2>
@@ -124,7 +124,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       </div>
 
       {/* METRICS GRID */}
-      <div className="bg-ink rounded-[40px] p-8 md:p-12 mb-12 grid grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-0 relative overflow-hidden">
+      <div className="bg-ink rounded-[32px] p-6 md:p-8 mb-8 grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-0 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(24,71,194,0.15)_0%,transparent_70%)] opacity-50"></div>
         {metricCards.map((m, i) => (
           <div key={i} className={`relative z-10 lg:px-10 first:pl-0 last:pr-0 ${i !== metricCards.length-1 ? 'lg:border-r border-white/5' : ''} animate-fade-in`} style={{animationDelay: `${i * 100}ms`}}>
@@ -135,8 +135,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       </div>
 
       {/* TABLE CONTAINER */}
-      <div className="bg-white rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/40 relative z-10 overflow-hidden">
-         <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between">
+      <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/40 relative z-10 overflow-hidden">
+         <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
             <h3 className="text-xl font-bold text-ink">Queue timeline</h3>
             <div className="flex items-center gap-2 group cursor-pointer" onClick={fetchTokens}>
                <span className="text-[11px] font-bold text-muted-text uppercase tracking-widest">Auto-refreshing</span>
@@ -148,7 +148,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-cream-base/30 text-[11px] uppercase font-bold tracking-widest text-ink/40">
-                  <th className="pl-10 pr-6 py-5">Token</th>
+                  <th className="pl-8 pr-6 py-4">Token</th>
                   <th className="px-6 py-5">Patient Details</th>
                   <th className="px-6 py-5">Status</th>
                   <th className="px-6 py-5 text-right pr-10">Management</th>
@@ -157,23 +157,23 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
               <tbody className="divide-y divide-slate-50">
                 {tokens.map((t, idx) => (
                   <tr key={t.id} className="group hover:bg-cream-base/20 transition-all">
-                    <td className="pl-10 pr-6 py-8">
+                    <td className="pl-8 pr-6 py-5">
                        <div className="w-14 h-14 bg-ink text-white rounded-2xl flex items-center justify-center text-2xl font-serif font-medium group-hover:bg-blue-primary transition-colors">
                           {t.token_number}
                        </div>
                        <p className="text-[10px] font-bold text-muted-text mt-3 uppercase tracking-wider">ETA: {t.estimated_time?.slice(0,5)}</p>
                     </td>
-                    <td className="px-6 py-8">
+                    <td className="px-6 py-5">
                        <div className="font-bold text-lg text-ink leading-tight mb-1">{t.patient_name}</div>
                        <div className="text-[13px] font-medium text-muted-text">{t.patient_phone}</div>
                     </td>
-                    <td className="px-6 py-8">
+                    <td className="px-6 py-5">
                        {t.status === 'confirmed' && <span className="bg-cream-base-dark text-ink/60 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-cream2">Waiting</span>}
                        {t.status === 'called' && <span className="bg-blue-primary/10 text-blue-primary px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-blue-primary/10 flex items-center gap-2 w-fit">In Consultation</span>}
                        {t.status === 'completed' && <span className="bg-teal-primary/10 text-teal-primary px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-teal-primary/10">Completed</span>}
                        {(t.status === 'no_show' || t.status === 'cancelled') && <span className="bg-slate-100 text-slate-400 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider">No-show</span>}
                     </td>
-                    <td className="px-6 py-8 text-right pr-10">
+                    <td className="px-6 py-5 text-right pr-8">
                        <div className="flex justify-end gap-3">
                           {t.status === 'confirmed' && (
                              <button onClick={() => handleAction(t.id, 'call')} className="btn-dark !h-11 !px-6 !text-[12px] !rounded-xl">Call Now</button>
