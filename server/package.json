@@ -1,9 +1,11 @@
 {
-  "name": "server",
+  "name": "shiva-medicals-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "Shiva Medicals — Express/Node.js backend API",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

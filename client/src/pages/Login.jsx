@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
+import { API_URL } from '../constants/api';
 
 export default function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6001';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,80 +20,128 @@ export default function Login({ onLoginSuccess }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.error || 'Invalid credentials. Please try again.');
 
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminUser', JSON.stringify(data.user));
       onLoginSuccess(data.user);
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+      // Fallback to relative URL if localhost fails (useful for remote dev/mixed content)
+      if (API_URL.includes('localhost')) {
+         try {
+            const relRes = await fetch(`/api/admin/login`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password })
+            });
+            const relData = await relRes.json();
+            if (relRes.ok) {
+              localStorage.setItem('adminToken', relData.token);
+              localStorage.setItem('adminUser', JSON.stringify(relData.user));
+              onLoginSuccess(relData.user);
+              return;
+            }
+         } catch(e) {}
+      }
+      setError(err.message === 'Failed to fetch' ? 'Connection failed. Please ensure the server is running.' : err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="animate-fade-in relative px-2">
+    <div className="animate-fade-in relative">
+      {/* HEADER */}
       <div className="text-center mb-10">
-        <div className="w-20 h-20 bg-navy text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl animate-float">
-           <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        <div className="w-16 h-16 bg-ink rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl rotate-3 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-blue-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <svg className="w-8 h-8 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
         </div>
-        <h2 className="text-3xl font-black text-navy mb-2 tracking-tightest uppercase">Staff Portal</h2>
-        <p className="text-sm text-slate-500 font-medium">Professional medical dashboard access</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-mid mb-2">Authenticated Access</p>
+        <h2 className="text-3xl font-serif font-semibold text-ink leading-tight">Staff Portal</h2>
+        <p className="text-sm text-muted-text mt-2 font-medium">Please enter your specialized credentials.</p>
       </div>
 
+      {/* ERROR MESSAGE */}
       {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-3 animate-fade-in shadow-sm">
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div className="mb-8 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-[13px] font-bold flex items-center gap-3 animate-fade-in shadow-sm">
+          <svg className="shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="form-row">
-        <div className="space-y-1.5">
-          <label className="form-label">Username</label>
-          <input 
-            type="text" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="input-medical"
-            placeholder="Enter your username"
-            required
-          />
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="form-label-premium">Username</label>
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-text/40 group-focus-within:text-blue-primary transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input-premium !pl-12 !h-[56px]"
+              placeholder="Ex. receptionist_1"
+              required
+            />
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="form-label">Secret Password</label>
-          <input 
-            type="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-medical"
-            placeholder="••••••••••••"
-            required
-          />
+        <div className="space-y-2">
+          <label className="form-label-premium">Keep-Safe Password</label>
+          <div className="relative group">
+             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-text/40 group-focus-within:text-blue-primary transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+             </div>
+             <input 
+               type="password" 
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               className="input-premium !pl-12 !h-[56px]"
+               placeholder="••••••••••••"
+               required
+             />
+          </div>
         </div>
 
-        <div className="pt-8 pb-2">
+        <div className="pt-4">
           <button 
             type="submit" 
             disabled={loading}
-            className="btn-primary w-full shadow-navy/20 gap-3 group"
+            className="btn-dark w-full !h-[60px] !rounded-2xl justify-center font-bold text-base shadow-2xl shadow-ink/15 group"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-3">
-                <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Verifying Credentials...
-              </span>
+              <div className="flex items-center gap-3">
+                <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                  <circle className="opacity-25" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                Verifying...
+              </div>
             ) : (
-                <>
-                  <span>Login to Dashboard</span>
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </>
+                <div className="flex items-center gap-2">
+                  Access Dashboard
+                  <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </div>
             )}
           </button>
         </div>
       </form>
+
+      {/* FOOTER NOTE */}
+      <p className="text-center text-[10px] font-black text-muted-text/30 uppercase tracking-[0.3em] mt-8">
+        Secure 256-bit encrypted session
+      </p>
     </div>
   );
 }

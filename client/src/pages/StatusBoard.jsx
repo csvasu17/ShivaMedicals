@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
+import { API_URL } from '../constants/api';
+
 export default function StatusBoard() {
   const [doctors, setDoctors] = useState([]);
   const [currentTokens, setCurrentTokens] = useState({});
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6001';
 
   useEffect(() => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);

@@ -24,7 +24,7 @@
   }
 
   body {
-    @apply bg-white text-ink antialiased font-sans transition-colors duration-300;
+    @apply bg-white text-ink antialiased font-sans;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -43,7 +43,7 @@
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 bg-blue-primary/5 border border-blue-primary/15 text-blue-mid py-1 px-3.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-4;
+    @apply inline-flex items-center gap-2 bg-blue-primary/5 border border-blue-primary/15 text-blue-mid py-1 px-3.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-4 transition-all duration-300;
   }
 
   .btn-dark {

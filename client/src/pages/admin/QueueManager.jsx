@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+import { API_URL } from '../../constants/api';
+
 export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -7,8 +9,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [selectedSession, setSelectedSession] = useState('');
   const [tokens, setTokens] = useState([]);
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]); 
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6001';
 
   useEffect(() => {
     fetch(`${API_URL}/api/doctors`)
