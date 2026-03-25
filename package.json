@@ -1,0 +1,25 @@
+{
+  "name": "shiva-medicals",
+  "version": "1.0.0",
+  "description": "Shiva Medicals — Digital token booking & clinic queue management system",
+  "private": true,
+  "author": "Shiva Medicals, Aranthangi",
+  "license": "ISC",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev":          "node dev.js",
+    "start":        "node dev.js",
+    "dev:client":   "cd client && node node_modules/.bin/vite",
+    "dev:server":   "cd server && node --watch index.js",
+    "build":        "cd client && node node_modules/.bin/vite build",
+    "preview":      "cd client && node node_modules/.bin/vite preview",
+    "db:update":    "cd server && node update_db.js",
+    "lint":         "cd client && node node_modules/.bin/eslint ."
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
