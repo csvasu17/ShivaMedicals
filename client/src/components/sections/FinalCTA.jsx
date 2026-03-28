@@ -12,7 +12,7 @@ const FinalCTA = ({ setIsBookingModalOpen }) => {
         <div className="relative z-10 max-w-3xl mx-auto">
           <h2 className="text-4xl lg:text-7xl font-black text-white mb-8 tracking-tighter leading-tight animate-slide-up">Ready for<br/>your visit?</h2>
           <p className="text-white/80 text-lg md:text-xl font-medium mb-12 max-w-xl mx-auto leading-relaxed animate-slide-up stagger-1">
-            Join 500+ patients who experience zero-wait healthcare at Shiva Medicals every week.
+            Join 500+ patients who experience zero-wait healthcare at Shiva Medical every week.
           </p>
           
           <div className="flex flex-wrap items-center justify-center gap-6 animate-slide-up stagger-2">

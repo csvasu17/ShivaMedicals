@@ -8,9 +8,9 @@ const Footer = ({ setIsLoginModalOpen }) => {
         <div className="lg:col-span-1">
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg">
-              <img src="/shiva-logo.jpg" alt="SM Logo" className="w-full h-full object-cover" />
+              <img src="/shiva-logo.jpg" alt="Semmalar Clinic & Shiva Medical Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-serif text-2xl font-medium text-white tracking-tight">Shiva Medicals</span>
+            <span className="font-serif text-2xl font-medium text-white tracking-tight">Semmalar Clinic & Shiva Medical</span>
           </div>
           <p className="text-white/90 font-medium text-sm mb-4">Your Health, Our Priority</p>
           <p className="text-white/45 text-sm leading-relaxed mb-10 max-w-[240px]">
@@ -75,7 +75,7 @@ const Footer = ({ setIsLoginModalOpen }) => {
 
       <div className="pt-12 border-t border-white/5 flex justify-center">
         <p className="text-white/30 text-[13px] tracking-wide text-center">
-          © 2026 Shiva Medicals. All rights reserved.
+          © 2026 Semmalar Clinic & Shiva Medical. All rights reserved.
         </p>
       </div>
     </footer>

@@ -28,16 +28,39 @@ function App() {
     const path = window.location.pathname;
     if (path === '/status') {
       setRoute('status');
+    } else if (path === '/doctors') {
+      setRoute('doctors');
+    } else if (path === '/features') {
+      setRoute('features');
     } else if (path === '/admin' || path === '/staff/dashboard') {
       setRoute('admin');
     } else {
       setRoute('home');
     }
 
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/status') setRoute('status');
+      else if (path === '/doctors') setRoute('doctors');
+      else if (path === '/features') setRoute('features');
+      else if (path === '/admin' || path === '/staff/dashboard') setRoute('admin');
+      else setRoute('home');
+    };
+
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [route]);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -96,10 +119,21 @@ function App() {
             <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
             <StatsSection />
             <ServicesSection setIsBookingModalOpen={setIsBookingModalOpen} />
-            <DoctorsSection setIsBookingModalOpen={setIsBookingModalOpen} />
-            <HowItWorks />
-            <FeaturesSection />
             <TestimonialsSection />
+            <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+          </div>
+        )}
+
+        {route === 'doctors' && (
+          <div className="animate-fade-in pt-12">
+            <DoctorsSection setIsBookingModalOpen={setIsBookingModalOpen} />
+            <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+          </div>
+        )}
+
+        {route === 'features' && (
+          <div className="animate-fade-in pt-12">
+            <FeaturesSection />
             <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
           </div>
         )}
@@ -116,7 +150,7 @@ function App() {
         )}
       </main>
 
-      {route === 'home' && <Footer setIsLoginModalOpen={setIsLoginModalOpen} />}
+      {(route === 'home' || route === 'doctors' || route === 'features') && <Footer setIsLoginModalOpen={setIsLoginModalOpen} />}
     </div>
   );
 }
