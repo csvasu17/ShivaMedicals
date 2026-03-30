@@ -6,7 +6,6 @@ import Footer from './components/layout/Footer';
 import BookingModal from './components/modals/BookingModal';
 import LoginModal from './components/modals/LoginModal';
 import HeroSection from './components/sections/HeroSection';
-import StatsSection from './components/sections/StatsSection';
 import ServicesSection from './components/sections/ServicesSection';
 import DoctorsSection from './components/sections/DoctorsSection';
 import HowItWorks from './components/sections/HowItWorks';
@@ -116,7 +115,6 @@ function App() {
         {route === 'home' && (
           <div className="animate-fade-in">
             <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
-            <StatsSection />
             <ServicesSection setIsBookingModalOpen={setIsBookingModalOpen} />
             <TestimonialsSection />
             <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />

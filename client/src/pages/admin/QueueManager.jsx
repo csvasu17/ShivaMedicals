@@ -117,15 +117,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                {sessions.map(s => <option key={s.id} value={s.id}>{s.session_type} ({s.start_time.slice(0,5)})</option>)}
              </select>
            </div>
-           <button onClick={onAddPatient} className="btn-dark !h-14 px-8 !rounded-2xl text-[14px]">
+           <button onClick={onAddPatient} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-14 px-8 rounded-2xl text-[14px] shadow-lg shadow-teal-500/20 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-300 transform active:scale-[0.97]">
              Add patient
            </button>
         </div>
       </div>
 
       {/* METRICS GRID */}
-      <div className="bg-ink rounded-[32px] p-6 md:p-8 mb-8 grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-0 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(24,71,194,0.15)_0%,transparent_70%)] opacity-50"></div>
+      <div className="bg-gradient-to-br from-teal-500/90 to-emerald-600 rounded-[32px] p-6 md:p-8 mb-8 grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-0 relative overflow-hidden shadow-2xl shadow-teal-500/20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-50"></div>
         {metricCards.map((m, i) => (
           <div key={i} className={`relative z-10 lg:px-10 first:pl-0 last:pr-0 ${i !== metricCards.length-1 ? 'lg:border-r border-white/5' : ''} animate-fade-in`} style={{animationDelay: `${i * 100}ms`}}>
              <p className={`text-[32px] md:text-[40px] font-serif font-medium leading-none mb-2 ${m.color.includes('ink') ? 'text-white' : m.color}`}>{m.val}</p>
@@ -176,11 +176,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                     <td className="px-6 py-5 text-right pr-8">
                        <div className="flex justify-end gap-3">
                           {t.status === 'confirmed' && (
-                             <button onClick={() => handleAction(t.id, 'call')} className="btn-dark !h-11 !px-6 !text-[12px] !rounded-xl">Call Now</button>
+                             <button onClick={() => handleAction(t.id, 'call')} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-11 px-6 rounded-xl text-[12px] shadow-md shadow-teal-500/10 hover:shadow-lg transition-all duration-300">Call Now</button>
                           )}
                           {t.status === 'called' && (
                              <>
-                                <button onClick={() => handleAction(t.id, 'complete')} className="bg-teal-primary hover:bg-ink text-white font-bold h-11 px-6 rounded-xl text-[12px] transition-all">Finish</button>
+                                <button onClick={() => handleAction(t.id, 'complete')} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-11 px-6 rounded-xl text-[12px] shadow-md shadow-teal-500/10 hover:shadow-lg transition-all duration-300">Finish</button>
                                 <button onClick={() => handleAction(t.id, 'noshow')} className="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-muted-text font-bold h-11 px-6 rounded-xl text-[12px] transition-all">No-show</button>
                              </>
                           )}
