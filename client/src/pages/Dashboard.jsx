@@ -70,8 +70,8 @@ const Dashboard = ({ user, setRoute, onAddPatient }) => {
   };
 
   return (
-    <div className="bg-slate-50 font-sans min-h-[calc(100vh-68px)]">
-      <main className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-10 lg:py-14 animate-fade-in relative z-10">
+    <div className="bg-slate-50 font-sans min-h-[calc(100vh-72px)]">
+      <main className="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-[88px] pb-14 animate-fade-in relative z-10">
         
         {/* PREMIUM STATS GRID */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-14">

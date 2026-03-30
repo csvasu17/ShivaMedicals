@@ -4,6 +4,7 @@ import { API_URL } from '../constants/api';
 export default function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -52,15 +53,13 @@ export default function Login({ onLoginSuccess }) {
     <div className="animate-fade-in relative">
       {/* HEADER */}
       <div className="text-center mb-10">
-        <div className="w-16 h-16 bg-ink rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl rotate-3 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-blue-primary/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <svg className="w-8 h-8 text-white relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+        <div className="w-16 h-16 bg-gradient-to-br from-teal-100 to-emerald-200 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-md relative group cursor-default transition-transform hover:scale-105 duration-500">
+          <svg className="w-8 h-8 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-mid mb-2">Authenticated Access</p>
-        <h2 className="text-3xl font-serif font-semibold text-ink leading-tight">Staff Portal</h2>
-        <p className="text-sm text-muted-text mt-2 font-medium">Please enter your specialized credentials.</p>
+        <h2 className="text-3xl font-serif font-semibold text-gray-900 tracking-tight mb-2">Staff Portal</h2>
+        <p className="text-sm text-gray-600 font-medium">Please enter your specialized credentials.</p>
       </div>
 
       {/* ERROR MESSAGE */}
@@ -75,72 +74,76 @@ export default function Login({ onLoginSuccess }) {
 
       {/* FORM */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-2">
-          <label className="form-label-premium">Username</label>
-          <div className="relative group">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-text/40 group-focus-within:text-blue-primary transition-colors">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-              </svg>
-            </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Username</label>
             <input 
               type="text" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="input-premium !pl-12 !h-[56px]"
+              className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:border-transparent focus:outline-none transition-all duration-300 font-medium"
               placeholder="Ex. receptionist_1"
               required
             />
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <label className="form-label-premium">Keep-Safe Password</label>
-          <div className="relative group">
-             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-text/40 group-focus-within:text-blue-primary transition-colors">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-             </div>
-             <input 
-               type="password" 
-               value={password}
-               onChange={(e) => setPassword(e.target.value)}
-               className="input-premium !pl-12 !h-[56px]"
-               placeholder="••••••••••••"
-               required
-             />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Keep-Safe Password</label>
+              <button type="button" className="text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors hover:underline">Forgot password?</button>
+            </div>
+            <div className="relative">
+              <input 
+                type={showPassword ? "text" : "password"} 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-12 pl-4 pr-12 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:border-transparent focus:outline-none transition-all duration-300 font-medium"
+                placeholder="••••••••••••"
+                required
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           <button 
             type="submit" 
             disabled={loading}
-            className="btn-dark w-full !h-[60px] !rounded-2xl justify-center font-bold text-base shadow-2xl shadow-ink/15 group"
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:shadow-2xl hover:shadow-teal-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:translate-y-0"
           >
             {loading ? (
-              <div className="flex items-center gap-3">
-                <svg className="animate-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+              <>
+                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
                   <circle className="opacity-25" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
                 Verifying...
-              </div>
+              </>
             ) : (
-                <div className="flex items-center gap-2">
+                <>
                   Access Dashboard
-                  <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
-                </div>
+                </>
             )}
           </button>
         </div>
       </form>
 
       {/* FOOTER NOTE */}
-      <p className="text-center text-[10px] font-black text-muted-text/30 uppercase tracking-[0.3em] mt-8">
-        Secure 256-bit encrypted session
+      <p className="text-center text-xs text-gray-400 mt-6">
+        Secure access. Protected data.
       </p>
     </div>
   );

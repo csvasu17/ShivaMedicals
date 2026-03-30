@@ -58,7 +58,7 @@ const DatePicker = ({ value, onChange }) => {
       <button
         type="button"
         onClick={() => setOpen(o=>!o)}
-        className={`input-premium w-full flex items-center justify-between gap-2 text-left h-[48px] ${!value ? 'text-muted-text/55' : 'text-ink'}`}
+        className={`input-premium w-full flex items-center justify-between gap-2 text-left h-14 ${!value ? 'text-muted-text/55' : 'text-ink'}`}
       >
         <span className="text-[14px] font-medium tracking-tight">{value ? formatDisplay(value) : 'Pick a date…'}</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-text/40">
@@ -92,7 +92,7 @@ const DatePicker = ({ value, onChange }) => {
               return (
                 <button key={day} type="button" onClick={()=>pick(day)} disabled={isDisabled}
                   className={`h-8 w-full rounded-xl text-[12px] font-bold transition-all leading-none
-                    ${isSel ? 'bg-ink text-white shadow-xl shadow-ink/20' : isToday ? 'text-blue-primary bg-blue-50/50' : isDisabled ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50 text-ink'}`}>
+                    ${isSel ? 'bg-ink text-white shadow-xl shadow-ink/20' : isToday ? 'text-teal-600 bg-teal-50/50' : isDisabled ? 'text-slate-200 cursor-not-allowed' : 'hover:bg-slate-50 text-ink'}`}>
                   {day}
                 </button>
               );
@@ -210,8 +210,8 @@ const BookToken = ({ onClose }) => {
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
         <p className="text-[11px] font-black uppercase tracking-[0.4em] text-teal-primary mb-2">Success</p>
-        <h2 className="font-serif text-3xl font-semibold text-ink mb-2">Token Confirmed.</h2>
-        <p className="text-sm text-muted-text max-w-xs mb-8">Your token is reserved. Arrive 10 minutes prior to your estimated time.</p>
+        <h2 className="font-serif text-3xl font-semibold text-ink mb-2">Appointment Confirmed.</h2>
+        <p className="text-sm text-muted-text max-w-xs mb-8">Your appointment is reserved. Arrive 10 minutes prior to your estimated time.</p>
         
         <div className="w-full grid grid-cols-2 gap-4 mb-8">
           <div className="bg-ink rounded-[24px] p-5 text-left text-white shadow-xl shadow-ink/10">
@@ -234,97 +234,162 @@ const BookToken = ({ onClose }) => {
           </div>
         </div>
         
-        <button onClick={onClose} className="btn-dark w-full justify-center !rounded-2xl !py-4 shadow-xl shadow-ink/10 font-bold">Done</button>
+        <button 
+          onClick={onClose} 
+          className="w-full justify-center h-12 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:from-teal-600 hover:to-emerald-600 hover:shadow-2xl hover:shadow-teal-600/30 transition-all duration-300"
+        >
+          Done
+        </button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="mb-6">
-        <h2 className="font-serif text-3xl font-black text-ink">Book a token</h2>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div>
+        <h2 className="font-serif text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
+        <p className="text-muted-text text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
       </div>
 
       {error && (
-        <div className="rounded-2xl bg-red-50 border border-red-100/50 p-4 text-[13px] text-red-600 font-medium flex items-center gap-3 animate-fade-in shadow-sm shadow-red-100/20">
+        <div className="rounded-2xl bg-red-50 border border-red-100/50 p-3.5 text-[13px] text-red-600 font-medium flex items-center gap-3 animate-fade-in">
           <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           {error}
         </div>
       )}
 
-      {/* Inputs Grid */}
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="form-label-premium">Patient name *</label>
-            <input type="text" name="patientName" value={form.patientName} onChange={handleChange} placeholder="Ramesh Kumar" className="input-premium h-[48px]" required/>
-          </div>
-          <div>
-            <label className="form-label-premium">Phone *</label>
-            <input type="tel" name="phone" value={form.phone} onChange={handleChange} placeholder="Mobile number" className="input-premium h-[48px]" required/>
-          </div>
+      {/* Main Form Fields */}
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+        {/* Patient Name */}
+        <div className="flex flex-col">
+          <label className="form-label-premium">Patient Name *</label>
+          <input 
+            type="text" 
+            name="patientName" 
+            value={form.patientName} 
+            onChange={handleChange} 
+            placeholder="e.g. Ramesh Kumar" 
+            className="input-premium h-12 focus:ring-teal-500" 
+            required
+          />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="form-label-premium">Doctor *</label>
-            <select name="doctorId" value={form.doctorId} onChange={handleChange} className="input-premium h-[48px]" required>
-              <option value="">Select doctor…</option>
-              {doctors.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
+        {/* Phone */}
+        <div className="flex flex-col">
+          <label className="form-label-premium">Phone Number *</label>
+          <input 
+            type="tel" 
+            name="phone" 
+            value={form.phone} 
+            onChange={handleChange} 
+            placeholder="Mobile number" 
+            className="input-premium h-12 focus:ring-teal-500" 
+            required
+          />
+        </div>
+
+        {/* Doctor Selection */}
+        <div className="flex flex-col">
+          <label className="form-label-premium">Doctor Specialist *</label>
+          <div className="relative group">
+            <select 
+              name="doctorId" 
+              value={form.doctorId} 
+              onChange={handleChange} 
+              className="input-premium h-12 appearance-none pr-10 cursor-pointer focus:ring-teal-500" 
+              required
+            >
+              <option value="">Select a specialist…</option>
+              {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
-          </div>
-          <div>
-            <label className="form-label-premium">Preferred Date *</label>
-            <DatePicker value={form.date} onChange={handleDateChange}/>
-          </div>
-        </div>
-
-        {/* SESSION SELECTOR — Visually disabled if no doctor */}
-        <div className={`transition-all duration-500 transform ${form.doctorId ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
-          <label className="form-label-premium">Available Session *</label>
-          {form.doctorId && sessions.length === 0 ? (
-            <div className="h-[52px] flex items-center px-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-[11px] font-bold text-muted-text/50 uppercase tracking-widest italic animate-pulse">Checking availability…</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {(sessions.length > 0 ? sessions : [{id:'none', session_type:'Select doctor first'}]).map(s=>(
-                <button key={s.id} type="button" disabled={s.id==='none'}
-                  onClick={()=>setForm(p=>({...p,sessionId:String(s.id)}))}
-                  className={`flex flex-col items-start p-3.5 rounded-2xl border text-left transition-all duration-300 relative overflow-hidden group ${
-                    form.sessionId===String(s.id)
-                      ?'bg-ink text-white border-ink shadow-2xl shadow-ink/20 scale-[1.02]'
-                      : s.id==='none' ? 'bg-slate-50 border-slate-100 text-slate-300' : 'bg-slate-50/80 border-slate-100 hover:border-blue-primary/30 hover:bg-white text-ink active:scale-95'
-                  }`}>
-                  <span className="text-[12px] font-black uppercase tracking-[0.15em] mb-1">{s.session_type}</span>
-                  {s.start_time && <span className={`text-[10px] font-medium tracking-tight ${form.sessionId===String(s.id)?'text-white/50':'text-muted-text/70'}`}>{s.start_time.slice(0,5)} – {s.end_time.slice(0,5)}</span>}
-                </button>
-              ))}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
             </div>
-          )}
+          </div>
         </div>
 
-        <div>
-          <label className="form-label-premium">Reason for visit <span className="normal-case font-medium text-muted-text/50 ml-1">(Optional)</span></label>
-          <input type="text" name="reasonForVisit" value={form.reasonForVisit} onChange={handleChange} placeholder="Brief note..." className="input-premium h-[48px]"/>
+        {/* Date Picker */}
+        <div className="flex flex-col">
+          <label className="form-label-premium">Preferred Date *</label>
+          {/* Ensure datepicker also uses h-12 if I can find the class inside */}
+          <DatePicker value={form.date} onChange={handleDateChange} />
         </div>
       </div>
 
-      <button type="submit" disabled={loading} className="btn-dark w-full justify-center !rounded-[20px] !h-[58px] !text-base shadow-2xl shadow-ink/20 mt-2 transform active:scale-[0.98] disabled:opacity-50">
-        {loading ? (
-          <div className="flex items-center gap-3">
-            <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle className="opacity-20" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-            Confirming Booking…
+      {/* Session Selection Section */}
+      <div className={`transition-all duration-700 transform ${form.doctorId ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
+        <label className="form-label-premium block mb-2">Available Sessions *</label>
+        
+        {form.doctorId && sessions.length === 0 ? (
+          <div className="h-12 flex items-center px-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-[11px] font-bold text-muted-text/40 uppercase tracking-widest italic animate-pulse">
+            Checking availability…
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            Confirm booking 
-            <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <div className="grid grid-cols-2 gap-3">
+            {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => (
+              <button 
+                key={s.id} 
+                type="button" 
+                disabled={s.id === 'none'}
+                onClick={() => setForm(p => ({ ...p, sessionId: String(s.id) }))}
+                className={`flex flex-col items-start p-3 rounded-2xl border text-left transition-all duration-500 relative overflow-hidden group ${
+                  form.sessionId === String(s.id)
+                    ? 'bg-ink text-white border-ink shadow-2xl shadow-ink/10 scale-[1.01]'
+                    : s.id === 'none' 
+                      ? 'bg-slate-50 border-slate-100 text-slate-300' 
+                      : 'bg-slate-50/50 border-slate-100 hover:border-teal-500/40 hover:bg-white text-ink hover:shadow-lg active:scale-95'
+                }`}
+              >
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] mb-1">{s.session_type}</span>
+                {s.start_time && (
+                  <span className={`text-[10px] font-medium tracking-tight ${form.sessionId === String(s.id) ? 'text-white/40' : 'text-muted-text/60'}`}>
+                    Slots: {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         )}
-      </button>
+      </div>
 
-      <p className="text-center text-[10px] font-black text-muted-text/30 uppercase tracking-[0.2em] -mt-1">
-        Your security is our priority
-      </p>
+      {/* Reason for Visit */}
+      <div className="flex flex-col">
+        <label className="form-label-premium">Reason for consultation (Optional)</label>
+        <textarea 
+          name="reasonForVisit" 
+          value={form.reasonForVisit} 
+          onChange={handleChange} 
+          placeholder="Briefly describe your concern..." 
+          rows="1"
+          className="input-premium py-3 resize-none h-12 focus:ring-teal-500"
+        />
+      </div>
+
+      {/* Footer CTA */}
+      <div className="flex flex-col items-center gap-3">
+        <button 
+          type="submit" 
+          disabled={loading} 
+          className="w-full h-14 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:from-teal-600 hover:to-emerald-600 hover:shadow-2xl hover:shadow-teal-600/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
+        >
+          {loading ? (
+            <div className="flex items-center gap-3 justify-center">
+              <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><circle className="opacity-20" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+              Securing...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 justify-center">
+              Confirm Appointment
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          )}
+        </button>
+
+        <div className="flex items-center gap-2 opacity-20">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span className="text-[8px] font-bold uppercase tracking-[0.4em]">End-to-end encrypted</span>
+        </div>
+      </div>
     </form>
   );
 };

@@ -28,7 +28,7 @@ const Footer = ({ setIsLoginModalOpen }) => {
               { label: 'Our Doctors', action: null },
               { label: 'Services', action: null },
               { label: 'Live Board', action: null },
-              { label: 'Book a Token', action: null },
+              { label: 'Book Appointment', action: null },
             ].map(l => (
               <li key={l.label}><button className="text-white/45 text-sm hover:text-white transition-colors uppercase tracking-wider">{l.label}</button></li>
             ))}

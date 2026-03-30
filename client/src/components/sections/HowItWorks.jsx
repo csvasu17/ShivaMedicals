@@ -15,7 +15,7 @@ const HowItWorks = () => {
             {[
               { n: 1, t: "Select Specialist", d: "Choose your doctor based on clinical expertise and real-time slot availability." },
               { n: 2, t: "Secure with OTP", d: "Verify your mobile number to ensure a secure and authenticated booking." },
-              { n: 3, t: "Instant Token Generation", d: "Receive your unique clinical token with an estimated consultation time." },
+              { n: 3, t: "Instant Appointment Confirmation", d: "Receive your unique clinical appointment time instantly." },
               { n: 4, t: "Track Live Progress", d: "Arrive exactly when you're needed. Monitor the live queue from home." }
             ].map((s, i) => (
               <div key={i} className="flex gap-8 group">
@@ -35,13 +35,13 @@ const HowItWorks = () => {
             <div className="absolute inset-0 bg-blue-primary/5 rounded-[48px] rotate-3 -z-10"></div>
             <div className="bg-white rounded-[40px] border border-slate-100 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.12)] p-10 relative overflow-hidden">
                <div className="flex justify-between items-center mb-12">
-                  <h3 className="text-2xl font-bold text-ink tracking-tight transition-transform">Your Token</h3>
+                  <h3 className="text-2xl font-bold text-ink tracking-tight transition-transform">Your Appointment</h3>
                   <span className="bg-blue-primary/10 text-blue-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Confirmed</span>
                </div>
                
                <div className="text-center mb-12">
                   <div className="text-[120px] font-black text-blue-primary leading-none tracking-tighter mb-4 animate-scale-up">#08</div>
-                  <p className="text-xs font-bold text-muted-text/50 uppercase tracking-[0.2em] mb-1">Current Token: <span className="text-ink">#04</span></p>
+                  <p className="text-xs font-bold text-muted-text/50 uppercase tracking-[0.2em] mb-1">Current Appointment: <span className="text-ink">#04</span></p>
                </div>
 
                <div className="space-y-6 pt-10 border-t border-slate-50 italic">

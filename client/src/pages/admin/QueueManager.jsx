@@ -148,7 +148,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-cream-base/30 text-[11px] uppercase font-bold tracking-widest text-ink/40">
-                  <th className="pl-8 pr-6 py-4">Token</th>
+                  <th className="pl-8 pr-6 py-4">Appointment</th>
                   <th className="px-6 py-5">Patient Details</th>
                   <th className="px-6 py-5">Status</th>
                   <th className="px-6 py-5 text-right pr-10">Management</th>

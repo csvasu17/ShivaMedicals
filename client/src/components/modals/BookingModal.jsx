@@ -5,28 +5,25 @@ const BookingModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
+        className="absolute inset-0 bg-white/40 backdrop-blur-md cursor-pointer"
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="relative z-[1010] bg-white rounded-[28px] w-full max-w-lg shadow-2xl border border-slate-100 animate-scale-up max-h-[95vh] flex flex-col">
-        {/* Close button */}
-        <button
-          type="button"
+      <div className="relative z-[3010] bg-white rounded-[20px] w-full max-w-2xl shadow-[0_32px_80px_-20px_rgba(0,0,0,0.15)] border border-slate-100 animate-scale-up max-h-[95vh] flex flex-col overflow-hidden">
+        {/* Absolute Close button */}
+        <button 
           onClick={onClose}
-          className="absolute top-5 right-5 z-[1020] p-2 rounded-full hover:bg-slate-100 text-slate-400 hover:text-ink transition-all"
+          className="absolute right-4 top-4 z-20 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-gray-100 text-gray-400 transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
 
         {/* Modal Body */}
-        <div className="overflow-y-auto p-6 md:p-8 scrollbar-hide">
+        <div className="p-6 md:px-10 md:py-8 flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
           <BookToken onClose={onClose} />
         </div>
       </div>

@@ -33,7 +33,7 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="px-6 md:px-12 lg:px-24 py-24 bg-white" id="features">
+    <section className="px-6 md:px-12 lg:px-24 pt-[88px] pb-24 bg-white" id="features">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((f, i) => (

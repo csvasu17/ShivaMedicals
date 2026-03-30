@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const testimonials = [
   {
-    quote: "Got my token online before leaving home. By the time I arrived, there were only 2 patients ahead of me. Never experienced this in any clinic before.",
+    quote: "Booked my appointment online before leaving home. By the time I arrived, there were only 2 patients ahead of me. Never experienced this in any clinic before.",
     name: "Karthik R.",
     role: "Software Engineer, Aranthangi",
     initials: "KR",
@@ -16,7 +16,7 @@ const testimonials = [
     color: "#E1F5EE",
   },
   {
-    quote: "Doctor doesn't rush through. Takes time to listen and explains everything clearly. The token system made the overall experience much smoother.",
+    quote: "Doctor doesn't rush through. Takes time to listen and explains everything clearly. The appointment system made the overall experience much smoother.",
     name: "Arjun P.",
     role: "Teacher, Aranthangi",
     initials: "AP",

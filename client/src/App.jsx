@@ -13,6 +13,7 @@ import HowItWorks from './components/sections/HowItWorks';
 import FeaturesSection from './components/sections/FeaturesSection';
 import TestimonialsSection from './components/sections/TestimonialsSection';
 import FinalCTA from './components/sections/FinalCTA';
+import ContactPage from './pages/ContactPage';
 
 function App() {
   const [route, setRoute] = useState('home'); 
@@ -32,6 +33,8 @@ function App() {
       setRoute('doctors');
     } else if (path === '/features') {
       setRoute('features');
+    } else if (path === '/contact') {
+      setRoute('contact');
     } else if (path === '/admin' || path === '/staff/dashboard') {
       setRoute('admin');
     } else {
@@ -43,11 +46,12 @@ function App() {
       if (path === '/status') setRoute('status');
       else if (path === '/doctors') setRoute('doctors');
       else if (path === '/features') setRoute('features');
+      else if (path === '/contact') setRoute('contact');
       else if (path === '/admin' || path === '/staff/dashboard') setRoute('admin');
       else setRoute('home');
     };
 
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setIsScrolled(window.scrollY > 50);
     
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('popstate', handlePopState);
@@ -77,16 +81,13 @@ function App() {
     window.history.pushState({}, '', '/');
   };
 
-  if (route === 'status') return <StatusBoard />;
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden font-sans scroll-smooth">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden font-sans scroll-smooth">
       
       {/* PREMIUM BACKGROUND MESH */}
       <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-200/30 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-100/40 rounded-full blur-[100px]"></div>
-        <div className="absolute top-[30%] left-[20%] w-[30%] h-[30%] bg-purple-100/20 rounded-full blur-[80px]"></div>
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-50/50 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-50/30 rounded-full blur-[100px]"></div>
       </div>
 
       <BookingModal 
@@ -100,20 +101,18 @@ function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
-      {/* NAVBAR: Always visible, even in Dashboard per USER REQUEST */}
-      {!isBookingModalOpen && !isLoginModalOpen && (
-        <Navbar 
-          setRoute={setRoute} 
-          user={user} 
-          setIsLoginModalOpen={setIsLoginModalOpen} 
-          setIsBookingModalOpen={setIsBookingModalOpen} 
-          isScrolled={isScrolled || route === 'admin'} 
-          currentRoute={route}
-          onLogout={logout}
-        />
-      )}
+      {/* NAVBAR */}
+      <Navbar 
+        setRoute={setRoute} 
+        user={user} 
+        setIsLoginModalOpen={setIsLoginModalOpen} 
+        setIsBookingModalOpen={setIsBookingModalOpen} 
+        isScrolled={isScrolled || route === 'admin' || route === 'doctors' || route === 'features' || route === 'status' || route === 'contact'} 
+        currentRoute={route}
+        onLogout={logout}
+      />
 
-      <main className={`flex-1 transition-all duration-500 mt-[68px]`}>
+      <main className="flex-1 transition-all duration-500">
         {route === 'home' && (
           <div className="animate-fade-in">
             <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
@@ -125,16 +124,28 @@ function App() {
         )}
 
         {route === 'doctors' && (
-          <div className="animate-fade-in pt-12">
+          <div className="animate-fade-in">
             <DoctorsSection setIsBookingModalOpen={setIsBookingModalOpen} />
             <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
           </div>
         )}
 
         {route === 'features' && (
-          <div className="animate-fade-in pt-12">
+          <div className="animate-fade-in">
             <FeaturesSection />
             <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+          </div>
+        )}
+
+        {route === 'status' && (
+          <div className="animate-fade-in">
+            <StatusBoard />
+          </div>
+        )}
+
+        {route === 'contact' && (
+          <div className="animate-fade-in">
+            <ContactPage />
           </div>
         )}
         
@@ -150,7 +161,7 @@ function App() {
         )}
       </main>
 
-      {(route === 'home' || route === 'doctors' || route === 'features') && <Footer setIsLoginModalOpen={setIsLoginModalOpen} />}
+      {(route === 'home' || route === 'doctors' || route === 'features' || route === 'status' || route === 'contact') && <Footer setIsLoginModalOpen={setIsLoginModalOpen} />}
     </div>
   );
 }
