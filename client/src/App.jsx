@@ -81,7 +81,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden font-sans scroll-smooth">
+    <div className="min-h-screen bg-gradient-to-b from-[#F4F8FB] to-[#EAF2F8] flex flex-col relative overflow-hidden font-sans scroll-smooth">
       
       {/* PREMIUM BACKGROUND MESH */}
       <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none">

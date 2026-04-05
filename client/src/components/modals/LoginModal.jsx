@@ -13,7 +13,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
        ></div>
 
         {/* Modal Container */}
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl w-full max-w-md p-8 sm:p-10 shadow-2xl relative animate-scale-up z-[3010] border border-white/20 flex flex-col my-auto transition-all duration-500">
+        <div className="p-modal-card p-10 w-full max-w-md relative animate-scale-up z-[3010] flex flex-col my-auto transition-all duration-500">
            {/* Close button */}
            <button 
              type="button"

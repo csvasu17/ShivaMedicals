@@ -1,4 +1,5 @@
 import React from 'react';
+import ClinicLogo from './ClinicLogo';
 
 const Footer = ({ setIsLoginModalOpen }) => {
   return (
@@ -7,14 +8,12 @@ const Footer = ({ setIsLoginModalOpen }) => {
         {/* Brand Column */}
         <div className="lg:col-span-1">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-white overflow-hidden flex items-center justify-center shadow-lg">
-              <img src="/shiva-logo.jpg" alt="Semmalar Clinic & Shiva Medical Logo" className="w-full h-full object-cover" />
-            </div>
+            <ClinicLogo className="w-16 h-16" />
             <span className="font-serif text-2xl font-medium text-white tracking-tight">Semmalar Clinic & Shiva Medical</span>
           </div>
-          <p className="text-white/90 font-medium text-sm mb-4">Your Health, Our Priority</p>
+          <p className="text-white/90 font-medium text-sm mb-4">Excellence in Care, Rooted in Compassion.</p>
           <p className="text-white/45 text-sm leading-relaxed mb-10 max-w-[240px]">
-            Providing quality healthcare services with compassion and excellence in Aranthangi.
+            Your trusted destination for advanced medical care and modern clinical expertise in the heart of Aranthangi.
           </p>
         </div>
 
@@ -23,12 +22,12 @@ const Footer = ({ setIsLoginModalOpen }) => {
           <h4 className="font-bold text-white text-sm mb-8 uppercase tracking-widest">Quick Links</h4>
           <ul className="space-y-4">
             {[
-              { label: 'Home', action: null },
-              { label: 'How It Works', action: null },
-              { label: 'Our Doctors', action: null },
-              { label: 'Services', action: null },
-              { label: 'Live Board', action: null },
-              { label: 'Book Appointment', action: null },
+              { label: 'Home' },
+              { label: 'Doctors' },
+              { label: 'Features' },
+              { label: 'Live Board' },
+              { label: 'Contact' },
+              { label: 'Book Appointment' },
             ].map(l => (
               <li key={l.label}><button className="text-white/45 text-sm hover:text-white transition-colors uppercase tracking-wider">{l.label}</button></li>
             ))}

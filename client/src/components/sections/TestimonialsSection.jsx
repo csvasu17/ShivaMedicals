@@ -34,7 +34,7 @@ const TestimonialsSection = () => {
   const [active, setActive] = useState(0);
 
   return (
-    <section className="px-6 md:px-12 py-20 bg-white relative overflow-hidden" id="testimonials">
+    <section className="px-6 md:px-12 py-20 bg-transparent relative overflow-hidden" id="testimonials">
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
         <div className="absolute top-[-15%] left-[-5%] w-[35%] h-[60%] bg-blue-primary/3 rounded-full blur-[100px]"></div>
         <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[50%] bg-teal-primary/3 rounded-full blur-[80px]"></div>
@@ -67,8 +67,8 @@ const TestimonialsSection = () => {
                 onClick={() => setActive(idx)}
                 className={`rounded-[28px] border p-6 cursor-pointer transition-all duration-400 ${
                   active === idx
-                    ? 'border-blue-primary/20 bg-blue-50/40 shadow-lg shadow-blue-primary/5'
-                    : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-md'
+                    ? 'border-blue-primary/40 bg-blue-50/60 shadow-lg'
+                    : 'p-card hover:shadow-md'
                 }`}
               >
                 <div className="flex gap-1 mb-4">

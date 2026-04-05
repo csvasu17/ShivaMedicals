@@ -4,12 +4,25 @@ const ContactPage = () => {
   return (
     <div className="relative min-h-screen pt-[110px] pb-20 px-6 md:px-12 lg:px-24">
       
-      {/* HEADER */}
-      <header className="max-w-7xl mx-auto mb-20 animate-fade-in text-center md:text-left">
-        <span className="eyebrow mx-auto md:mx-0">Get In Touch</span>
-        <h1 className="sec-title">Contact Our Clinical Team</h1>
-        <p className="sec-sub mx-auto md:mx-0">
-          Have questions about our services or need to book an appointment? Our team is here to help you with expert care and guidance.
+      {/* ROYAL PREMIUM HEADER */}
+      <header className="max-w-4xl mx-auto mb-20 animate-fade-in text-center flex flex-col items-center">
+        <span className="eyebrow mx-auto mb-6">Always At Your Service</span>
+        
+        <h1 className="sec-title !text-5xl md:!text-7xl">
+          Contact <span className="text-brand-green">Us</span>
+        </h1>
+        
+        {/* Royal Decorative Divider */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-20 md:w-32 h-[1px] bg-gradient-to-r from-transparent to-blue-primary/30"></div>
+          <div className="rotate-45 w-2 h-2 bg-blue-primary/40"></div>
+          <div className="rotate-45 w-3 h-3 bg-blue-primary"></div>
+          <div className="rotate-45 w-2 h-2 bg-blue-primary/40"></div>
+          <div className="w-20 md:w-32 h-[1px] bg-gradient-to-l from-transparent to-blue-primary/30"></div>
+        </div>
+
+        <p className="sec-sub mx-auto">
+          Get in touch with us for appointments, queries, or emergency services
         </p>
       </header>
 
@@ -42,55 +55,55 @@ const ContactPage = () => {
               sub: ""
             }
           ].map((item, idx) => (
-            <div key={idx} className="p-card p-8 bg-white shadow-premium flex flex-col items-center text-center group hover:border-blue-primary/30 transition-all duration-500">
-               <div className="w-16 h-16 rounded-3xl bg-blue-primary/5 text-blue-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+            <div key={idx} className="p-card p-8 flex flex-col items-center text-center group">
+               <div className="w-16 h-16 rounded-3xl bg-blue-primary/5 text-blue-primary flex items-center justify-center mb-6 p-card-icon">
                   {item.icon}
                </div>
-               <h3 className="text-lg font-serif font-bold text-ink mb-3">{item.title}</h3>
+               <h3 className="text-lg font-serif font-bold text-ink mb-3 p-card-title">{item.title}</h3>
                <div className="space-y-1">
                   {item.details.map((line, lidx) => (
                     <p key={lidx} className="text-[13px] font-medium text-muted-text whitespace-pre-wrap">{line}</p>
                   ))}
                </div>
-               {item.sub && <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-primary/40">{item.sub}</p>}
-            </div>
-          ))}
+                {item.sub && <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-blue-primary/40">{item.sub}</p>}
+             </div>
+           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           
           {/* CONTACT FORM */}
           <div className="animate-slide-up">
-            <div className="p-card p-10 bg-white shadow-premium">
+            <div className="p-card p-10">
               <h2 className="text-3xl font-serif font-bold text-ink mb-2">Send us a Message</h2>
               <p className="text-muted-text/70 text-sm mb-10">Fill out the form below and we'll get back to you as soon as possible.</p>
               
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-ink/40 ml-1">Full Name *</label>
-                    <input type="text" placeholder="Enter your full name" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-medium focus:ring-2 focus:ring-blue-primary/20 focus:border-blue-primary/30 outline-none transition-all" />
+                  <div className="flex flex-col">
+                    <label className="form-label-premium">Full Name *</label>
+                    <input type="text" placeholder="Enter your full name" className="input-premium h-14" />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-ink/40 ml-1">Email Address *</label>
-                    <input type="email" placeholder="your.email@example.com" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-medium focus:ring-2 focus:ring-blue-primary/20 focus:border-blue-primary/30 outline-none transition-all" />
+                  <div className="flex flex-col">
+                    <label className="form-label-premium">Email Address *</label>
+                    <input type="email" placeholder="your.email@example.com" className="input-premium h-14" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-ink/40 ml-1">Phone Number *</label>
-                    <input type="tel" placeholder="+91 98765 43210" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-medium focus:ring-2 focus:ring-blue-primary/20 focus:border-blue-primary/30 outline-none transition-all" />
+                  <div className="flex flex-col">
+                    <label className="form-label-premium">Phone Number *</label>
+                    <input type="tel" placeholder="+91 98765 43210" className="input-premium h-14" />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-black uppercase tracking-widest text-ink/40 ml-1">Subject *</label>
-                    <input type="text" placeholder="What is this regarding?" className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl px-6 text-sm font-medium focus:ring-2 focus:ring-blue-primary/20 focus:border-blue-primary/30 outline-none transition-all" />
+                  <div className="flex flex-col">
+                    <label className="form-label-premium">Subject *</label>
+                    <input type="text" placeholder="What is this regarding?" className="input-premium h-14" />
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-ink/40 ml-1">Message *</label>
-                  <textarea rows="5" placeholder="Tell us how we can help you..." className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-6 text-sm font-medium focus:ring-2 focus:ring-blue-primary/20 focus:border-blue-primary/30 outline-none transition-all resize-none"></textarea>
+                <div className="flex flex-col">
+                  <label className="form-label-premium">Message *</label>
+                  <textarea rows="5" placeholder="Tell us how we can help you..." className="input-premium py-5 h-auto resize-none"></textarea>
                 </div>
 
                 <button type="submit" className="btn-premium w-full justify-center">
@@ -103,7 +116,7 @@ const ContactPage = () => {
 
           {/* VISIT US & MAP */}
           <div className="animate-slide-up stagger-1 h-full">
-            <div className="p-card bg-white p-2 h-full min-h-[500px] flex flex-col">
+            <div className="p-card p-2 h-full min-h-[500px] flex flex-col">
                <div className="relative rounded-[28px] overflow-hidden flex-1 border border-slate-100 shadow-inner">
                   <iframe 
                     title="Clinic Location"
@@ -114,17 +127,6 @@ const ContactPage = () => {
                   ></iframe>
 
                   {/* SMALLER COMPACT NAVIGATE BUTTON */}
-                  <div className="absolute top-6 left-6 z-10 animate-fade-in">
-                    <a 
-                      href="https://www.google.com/maps/dir/?api=1&destination=SHIVA+MEDICAL+%26+SEMMALAR+CLINIC" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 bg-blue-primary text-white pl-4 pr-5 py-2.5 rounded-full text-[11px] font-bold hover:bg-blue-mid transition-all duration-300 shadow-lg active:scale-95 whitespace-nowrap group animate-slide-up"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="group-hover:rotate-12 transition-transform"><path d="M12 2L19 21L12 17L5 21L12 2Z"/></svg>
-                      Get Directions
-                    </a>
-                  </div>
                </div>
             </div>
           </div>

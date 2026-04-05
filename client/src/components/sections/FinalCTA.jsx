@@ -2,7 +2,7 @@ import React from 'react';
 
 const FinalCTA = ({ setIsBookingModalOpen }) => {
   return (
-    <section className="px-6 md:px-12 lg:px-24 py-16 bg-white relative overflow-hidden">
+    <section className="px-6 md:px-12 lg:px-24 py-16 bg-transparent relative overflow-hidden">
       {/* Dynamic Background elements */}
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-100/30 rounded-full blur-[100px] -z-10 animate-pulse-slow"></div>
       <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-indigo-100/20 rounded-full blur-[80px] -z-10"></div>
@@ -33,7 +33,7 @@ const FinalCTA = ({ setIsBookingModalOpen }) => {
           <div className="flex flex-wrap items-center justify-center gap-6 animate-slide-up stagger-2">
             <button 
               onClick={() => setIsBookingModalOpen(true)}
-              className="bg-white hover:bg-blue-50 text-blue-primary px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-xl shadow-blue-primary/30 flex items-center gap-3 group"
+              className="bg-white hover:bg-teal-50 text-teal-600 px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-xl shadow-teal-500/30 flex items-center gap-3 group"
             >
               Book Appointment
               <svg className="group-hover:translate-x-1 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

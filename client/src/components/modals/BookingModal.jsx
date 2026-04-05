@@ -13,7 +13,7 @@ const BookingModal = ({ isOpen, onClose }) => {
       />
 
       {/* Modal Container */}
-      <div className="relative z-[3010] bg-white rounded-[20px] w-full max-w-2xl shadow-[0_32px_80px_-20px_rgba(0,0,0,0.15)] border border-slate-100 animate-scale-up max-h-[95vh] flex flex-col overflow-hidden">
+      <div className="relative z-[3010] p-modal-card !p-0 w-full max-w-2xl animate-scale-up max-h-[95vh] flex flex-col overflow-hidden">
         {/* Absolute Close button */}
         <button 
           onClick={onClose}
@@ -23,8 +23,10 @@ const BookingModal = ({ isOpen, onClose }) => {
         </button>
 
         {/* Modal Body */}
-        <div className="p-6 md:px-10 md:py-8 flex flex-col min-h-0 overflow-y-auto scrollbar-hide">
-          <BookToken onClose={onClose} />
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+          <div className="p-6 md:px-10 md:py-6">
+            <BookToken onClose={onClose} />
+          </div>
         </div>
       </div>
     </div>

@@ -63,6 +63,39 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     }
   };
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  const totalPages = Math.ceil(tokens.length / itemsPerPage);
+  const displayedTokens = tokens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const downloadCSV = () => {
+    if (tokens.length === 0) return;
+    const headers = ["Token No", "Patient Name", "Mobile", "Email", "Reason", "Status", "Date"];
+    const csvContent = [
+      headers.join(","),
+      ...tokens.map(t => [
+        t.token_number,
+        `"${t.patient_name}"`,
+        `"\t${t.patient_phone}"`, 
+        t.patient_email || "",
+        `"${t.reason_for_visit || '-'}"`,
+        t.status,
+        `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"` // Force text DD-MM-YYYY
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bookings_${dateStr}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const metrics = {
     total: tokens.length,
     waiting: tokens.filter(t => t.status === 'confirmed').length,
@@ -85,9 +118,9 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
         <div>
-          <span className="eyebrow mb-4">Staff Dashboard</span>
+          <span className="eyebrow mb-4">Staff Portal</span>
           <h2 className="text-4xl lg:text-5xl font-serif font-medium text-ink tracking-tight mb-2">Live Queue Manager</h2>
-          <p className="text-muted-text text-lg">Manage real-time patient flow and session updates.</p>
+          <p className="text-muted-text text-lg">Manage real-time patient flow for today’s sessions.</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
@@ -95,14 +128,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
              <input 
                type="date" 
                value={dateStr} 
-               onChange={e => setDateStr(e.target.value)} 
+               onChange={e => { setDateStr(e.target.value); setCurrentPage(1); }} 
                className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer" 
              />
            </div>
            <div className="h-14 bg-white border border-slate-100 rounded-2xl flex items-center px-5 shadow-sm">
              <select 
                value={selectedDoctor} 
-               onChange={e => setSelectedDoctor(e.target.value)} 
+               onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
                className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
              >
                {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -111,13 +144,13 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
            <div className="h-14 bg-white border border-slate-100 rounded-2xl flex items-center px-5 shadow-sm">
              <select 
                value={selectedSession} 
-               onChange={e => setSelectedSession(e.target.value)} 
+               onChange={e => { setSelectedSession(e.target.value); setCurrentPage(1); }} 
                className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
              >
                {sessions.map(s => <option key={s.id} value={s.id}>{s.session_type} ({s.start_time.slice(0,5)})</option>)}
              </select>
            </div>
-           <button onClick={onAddPatient} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-14 px-8 rounded-2xl text-[14px] shadow-lg shadow-teal-500/20 hover:shadow-xl hover:shadow-teal-500/30 transition-all duration-300 transform active:scale-[0.97]">
+           <button onClick={onAddPatient} className="bg-ink hover:bg-ink2 text-white font-bold h-14 px-8 rounded-2xl text-[14px] shadow-lg shadow-ink/10 transition-all duration-300 transform active:scale-[0.97]">
              Add patient
            </button>
         </div>
@@ -137,59 +170,118 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       {/* TABLE CONTAINER */}
       <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/40 relative z-10 overflow-hidden">
          <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
-            <h3 className="text-xl font-bold text-ink">Queue timeline</h3>
-            <div className="flex items-center gap-2 group cursor-pointer" onClick={fetchTokens}>
-               <span className="text-[11px] font-bold text-muted-text uppercase tracking-widest">Auto-refreshing</span>
-               <div className="w-2 h-2 rounded-full bg-teal-primary animate-pulse"></div>
+            <div className="flex items-center gap-6">
+               <h3 className="text-xl font-bold text-ink">Queue timeline</h3>
+               <button 
+                onClick={downloadCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-100/50 group"
+               >
+                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-text group-hover:text-ink transition-colors"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                 <span className="text-[11px] font-bold uppercase tracking-widest text-muted-text group-hover:text-ink">Export CSV</span>
+               </button>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-teal-50/50 px-4 py-2 rounded-xl border border-teal-100/30">
+               <div className="relative flex h-2 w-2">
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                 <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+               </div>
+               <span className="text-[10px] font-black uppercase text-teal-600 tracking-widest">LIVE SYNC ACTIVE</span>
             </div>
          </div>
 
-         <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="overflow-x-auto overflow-y-hidden">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-cream-base/30 text-[11px] uppercase font-bold tracking-widest text-ink/40">
-                  <th className="pl-8 pr-6 py-4">Appointment</th>
-                  <th className="px-6 py-5">Patient Details</th>
+                <tr className="border-b border-slate-100 text-[11px] uppercase font-bold tracking-widest text-ink/30">
+                  <th className="pl-10 pr-6 py-5">Appt. No</th>
+                  <th className="px-6 py-5">Patient Name</th>
+                  <th className="px-6 py-5">Mobile No</th>
+                  <th className="px-6 py-5">Primary Concern</th>
                   <th className="px-6 py-5">Status</th>
-                  <th className="px-6 py-5 text-right pr-10">Management</th>
+                  <th className="px-6 py-5 text-right pr-10">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {tokens.map((t, idx) => (
-                  <tr key={t.id} className="group hover:bg-cream-base/20 transition-all">
-                    <td className="pl-8 pr-6 py-5">
-                       <div className="w-14 h-14 bg-ink text-white rounded-2xl flex items-center justify-center text-2xl font-serif font-medium group-hover:bg-blue-primary transition-colors">
-                          {t.token_number}
-                       </div>
-                       <p className="text-[10px] font-bold text-muted-text mt-3 uppercase tracking-wider">ETA: {t.estimated_time?.slice(0,5)}</p>
-                    </td>
-                    <td className="px-6 py-5">
-                       <div className="font-bold text-lg text-ink leading-tight mb-1">{t.patient_name}</div>
-                       <div className="text-[13px] font-medium text-muted-text">{t.patient_phone}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                       {t.status === 'confirmed' && <span className="bg-cream-base-dark text-ink/60 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-cream2">Waiting</span>}
-                       {t.status === 'called' && <span className="bg-blue-primary/10 text-blue-primary px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-blue-primary/10 flex items-center gap-2 w-fit">In Consultation</span>}
-                       {t.status === 'completed' && <span className="bg-teal-primary/10 text-teal-primary px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider border border-teal-primary/10">Completed</span>}
-                       {(t.status === 'no_show' || t.status === 'cancelled') && <span className="bg-slate-100 text-slate-400 px-4 py-2 rounded-full text-[11px] font-bold uppercase tracking-wider">No-show</span>}
-                    </td>
-                    <td className="px-6 py-5 text-right pr-8">
-                       <div className="flex justify-end gap-3">
-                          {t.status === 'confirmed' && (
-                             <button onClick={() => handleAction(t.id, 'call')} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-11 px-6 rounded-xl text-[12px] shadow-md shadow-teal-500/10 hover:shadow-lg transition-all duration-300">Call Now</button>
-                          )}
-                          {t.status === 'called' && (
-                             <>
-                                <button onClick={() => handleAction(t.id, 'complete')} className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold h-11 px-6 rounded-xl text-[12px] shadow-md shadow-teal-500/10 hover:shadow-lg transition-all duration-300">Finish</button>
-                                <button onClick={() => handleAction(t.id, 'noshow')} className="bg-slate-100 hover:bg-red-50 hover:text-red-600 text-muted-text font-bold h-11 px-6 rounded-xl text-[12px] transition-all">No-show</button>
-                             </>
-                          )}
-                       </div>
-                    </td>
-                  </tr>
-                ))}
+                {displayedTokens.map((t, idx) => {
+                  const initials = t.patient_name ? t.patient_name.trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'PN';
+                  const avatarColors = ['bg-blue-50 text-blue-600', 'bg-orange-50 text-orange-600', 'bg-teal-50 text-teal-600', 'bg-pink-50 text-pink-600', 'bg-purple-50 text-purple-600'];
+                  const colorClass = avatarColors[idx % avatarColors.length];
+
+                  return (
+                    <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-300">
+                      <td className="pl-10 pr-6 py-6">
+                         <div className="text-[17px] font-black text-ink">
+                            #{t.token_number}
+                         </div>
+                      </td>
+                      <td className="px-6 py-6 transition-all border-b border-transparent">
+                         <div className="flex items-center gap-5">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-[13px] tracking-tight shrink-0 shadow-sm ${colorClass}`}>
+                               {initials}
+                            </div>
+                            <div className="flex flex-col">
+                               <div className="font-bold text-[16px] text-ink leading-tight">{t.patient_name}</div>
+                               <div className="text-[12px] font-medium text-muted-text/30 mt-0.5">{t.patient_email || 'No email provided'}</div>
+                            </div>
+                         </div>
+                      </td>
+                      <td className="px-6 py-6">
+                         <div className="text-[14px] font-bold text-ink/70 tracking-tight">
+                            {t.patient_phone}
+                         </div>
+                      </td>
+                      <td className="px-6 py-6 text-[14px] font-semibold text-ink/40 max-w-[200px] truncate">
+                         {t.reason_for_visit || 'General Consultation'}
+                      </td>
+                      <td className="px-6 py-6">
+                         {t.status === 'confirmed' && <span className="bg-slate-100 text-slate-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-200/50">Waiting</span>}
+                         {t.status === 'called' && <span className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">In Consultation</span>}
+                         {t.status === 'completed' && <span className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Completed</span>}
+                         {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
+                      </td>
+                      <td className="px-6 py-6 text-right pr-10">
+                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            {t.status === 'confirmed' && (
+                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-10 px-5 rounded-xl text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95">Call Staff</button>
+                            )}
+                            {t.status === 'called' && (
+                               <>
+                                  <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-10 px-5 rounded-xl text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95">Finish Case</button>
+                                  <button onClick={() => handleAction(t.id, 'noshow')} className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                               </>
+                            )}
+                         </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+            
+            {/* PAGINATION FOOTER */}
+            {totalPages > 1 && (
+              <div className="px-8 py-5 border-t border-slate-50 flex items-center justify-between">
+                <p className="text-[12px] font-bold text-muted-text/50 uppercase tracking-widest">Page {currentPage} of {totalPages}</p>
+                <div className="flex items-center gap-2">
+                  <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-hover:-translate-x-1 transition-transform"><path d="M15 18l-6-6 6-6"/></svg>
+                  </button>
+                  <button 
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-hover:translate-x-1 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {tokens.length === 0 && (
                <div className="py-24 flex flex-col items-center justify-center text-center">
                   <div className="w-16 h-16 bg-cream-base text-muted-text/30 rounded-2xl flex items-center justify-center mb-6">

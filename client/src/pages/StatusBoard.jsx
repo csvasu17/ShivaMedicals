@@ -81,7 +81,7 @@ export default function StatusBoard() {
   }
 
   return (
-    <div className="relative min-h-screen pt-[88px] pb-20 px-6 md:px-12 lg:px-24">
+    <div className="relative min-h-screen pt-[88px] pb-20 px-6 md:px-12 lg:px-24 bg-transparent">
       
       {/* HEADER SECTION */}
       <header className="max-w-7xl mx-auto mb-16 animate-fade-in">

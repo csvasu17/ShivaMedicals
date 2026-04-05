@@ -52,3 +52,57 @@ exports.callNext = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getStaff = async (req, res) => {
+    try {
+        const result = await db.query('SELECT id, name, username, phone, role, is_active FROM users ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getDoctors = async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM doctors ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.addStaff = async (req, res) => {
+    const { name, username, password, phone, role } = req.body;
+    try {
+        const query = `
+            INSERT INTO users (name, username, password, phone, role) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING id, name, username, phone, role, is_active
+        `;
+        const values = [name, username, password, phone, role || 'staff'];
+        const result = await db.query(query, values);
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        if (err.code === '23505') {
+            return res.status(400).json({ error: 'Username or phone already exists' });
+        }
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.addDoctor = async (req, res) => {
+    const { name, type, specialty } = req.body;
+    try {
+        const query = `
+            INSERT INTO doctors (name, type, specialty) 
+            VALUES ($1, $2, $3) 
+            RETURNING *
+        `;
+        const values = [name, type || 'general', specialty];
+        const result = await db.query(query, values);
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+

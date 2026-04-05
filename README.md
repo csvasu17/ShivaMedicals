@@ -40,7 +40,8 @@ ShivaMedicals/
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL running locally
+- PostgreSQL database (Local or Supabase)
+
 
 ### Setup
 

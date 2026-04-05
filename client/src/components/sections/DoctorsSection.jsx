@@ -2,7 +2,7 @@ import React from 'react';
 
 const DoctorsSection = ({ setIsBookingModalOpen }) => {
   return (
-    <section className="px-6 md:px-12 lg:px-24 pt-[88px] pb-32 bg-white" id="doctors">
+    <section className="px-6 md:px-12 lg:px-24 pt-[88px] pb-32 bg-transparent" id="doctors">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-20 animate-slide-up">
           <div className="max-w-2xl">
@@ -30,7 +30,7 @@ const DoctorsSection = ({ setIsBookingModalOpen }) => {
                 <span className="bg-teal-500/10 text-teal-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-teal-500/10 animate-pulse">Acting Now</span>
                 <span className="text-[11px] font-bold text-muted-text/70 uppercase tracking-widest">MD · GENERAL MEDICINE</span>
               </div>
-              <h3 className="text-3xl font-serif font-bold text-ink mb-8 tracking-tight group-hover:text-blue-primary transition-colors">Dr. Ramesh Kumar</h3>
+              <h3 className="text-3xl font-serif font-bold text-ink mb-8 tracking-tight p-card-title">Dr. Ramesh Kumar</h3>
               
               <div className="flex items-center justify-between bg-slate-50 p-6 rounded-3xl border border-slate-100">
                 <div className="text-left">
@@ -61,7 +61,7 @@ const DoctorsSection = ({ setIsBookingModalOpen }) => {
                 <span className="bg-amber-500/10 text-amber-600 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-amber-500/10">Filling Fast</span>
                 <span className="text-[11px] font-bold text-muted-text/70 uppercase tracking-widest">DCH · CHILD SPECIALIST</span>
               </div>
-              <h3 className="text-3xl font-serif font-bold text-ink mb-8 tracking-tight group-hover:text-blue-primary transition-colors">Dr. Priya Sundar</h3>
+              <h3 className="text-3xl font-serif font-bold text-ink mb-8 tracking-tight p-card-title">Dr. Priya Sundar</h3>
               
               <div className="flex items-center justify-between bg-slate-50 p-6 rounded-3xl border border-slate-100">
                 <div className="text-left">

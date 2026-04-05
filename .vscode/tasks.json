@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "npm: dev",
+            "type": "shell",
+            "command": "npm run dev",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "npm: dev:client",
+            "type": "shell",
+            "command": "npm run dev:client",
+            "problemMatcher": [],
+            "group": "none"
+        },
+        {
+            "label": "npm: dev:server",
+            "type": "shell",
+            "command": "npm run dev:server",
+            "problemMatcher": [],
+            "group": "none"
+        }
+    ]
+}

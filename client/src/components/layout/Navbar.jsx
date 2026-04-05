@@ -1,4 +1,5 @@
 import React from 'react';
+import ClinicLogo from './ClinicLogo';
 
 const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, isScrolled, currentRoute, onLogout }) => {
   return (
@@ -11,9 +12,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
         className="flex items-center gap-3 cursor-pointer group" 
         onClick={() => { setRoute('home'); window.history.pushState({}, '', '/'); }}
       >
-        <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white border border-blue-100 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-blue-primary/10">
-          <img src="/shiva-logo.jpg" alt="Semmalar Clinic & Shiva Medical Logo" className="w-full h-full object-cover" />
-        </div>
+        <ClinicLogo className="w-14 h-14" />
         <span className="font-serif text-xl md:text-2xl font-medium text-ink tracking-tight whitespace-nowrap transition-colors group-hover:text-blue-primary">
           Semmalar Clinic & Shiva Medical
         </span>
@@ -72,7 +71,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
             </button>
             <button 
               onClick={() => setIsBookingModalOpen(true)} 
-              className="bg-blue-primary hover:bg-blue-mid text-white px-5 h-[42px] rounded-full text-[13px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-lg shadow-blue-primary/20 flex items-center gap-2 group whitespace-nowrap"
+              className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-5 h-[42px] rounded-full text-[13px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-lg shadow-teal-500/20 hover:shadow-teal-600/40 flex items-center gap-2 group whitespace-nowrap"
             >
               Book Appointment
               <svg className="group-hover:translate-x-1 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>

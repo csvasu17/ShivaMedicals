@@ -91,3 +91,19 @@ exports.getLiveQueue = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.cancelBooking = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await db.query(
+            `UPDATE bookings SET status = 'cancelled' WHERE id = $1 RETURNING *`,
+            [id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Booking not found.' });
+        }
+        res.json({ message: 'Booking cancelled successfully.', booking: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

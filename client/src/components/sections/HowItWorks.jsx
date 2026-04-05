@@ -2,7 +2,7 @@ import React from 'react';
 
 const HowItWorks = () => {
   return (
-    <section className="px-6 md:px-12 lg:px-24 py-24 bg-[#F8FAFC] relative overflow-hidden" id="how">
+    <section className="px-6 md:px-12 lg:px-24 py-24 bg-transparent relative overflow-hidden" id="how">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 animate-fade-in">
           <h2 className="text-4xl lg:text-5xl font-serif font-medium text-ink mb-4">Book in 4 steps</h2>
@@ -33,7 +33,7 @@ const HowItWorks = () => {
           {/* RIGHT: TOKEN PREVIEW */}
           <div className="relative animate-slide-up stagger-1">
             <div className="absolute inset-0 bg-blue-primary/5 rounded-[48px] rotate-3 -z-10"></div>
-            <div className="bg-white rounded-[40px] border border-slate-100 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.12)] p-10 relative overflow-hidden">
+            <div className="p-card p-10">
                <div className="flex justify-between items-center mb-12">
                   <h3 className="text-2xl font-bold text-ink tracking-tight transition-transform">Your Appointment</h3>
                   <span className="bg-blue-primary/10 text-blue-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em]">Confirmed</span>

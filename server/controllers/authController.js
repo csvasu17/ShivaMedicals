@@ -6,18 +6,20 @@ const db = require('../db');
 exports.adminLogin = async (req, res) => {
     const { username, password } = req.body;
     try {
-        const result = await db.query('SELECT * FROM admin_users WHERE username = $1', [username]);
+        const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         const user = result.rows[0];
-        // In a real app, use bcrypt.compare(password, user.password_hash)
-        // For this demo/dev phase, we'll check against a hardcoded hash or plain if it matches the seed.
-        // The seed has '$2b$10$p3m1x2Cys0j3Bf8/s.6dGuBofU5Zk1.41.uMOnF1uDDBZq6yJmC0m' for admin123
         
-        const isValid = (username === 'admin' && password === 'admin123') || 
-                        (username === 'staff' && password === 'staff123');
+        let isValid = false;
+        if (user.password.startsWith('$2')) {
+            const bcrypt = require('bcryptjs');
+            isValid = await bcrypt.compare(password, user.password);
+        } else {
+            isValid = password === user.password;
+        }
 
         if (isValid) {
             res.json({ 

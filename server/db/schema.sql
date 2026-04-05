@@ -50,11 +50,14 @@ CREATE TABLE blocked_dates (
     UNIQUE(doctor_id, blocked_date)
 );
 
-CREATE TABLE admin_users (
+CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR NOT NULL,
+    phone VARCHAR,
     username VARCHAR UNIQUE NOT NULL,
-    password_hash VARCHAR NOT NULL,
-    role admin_role DEFAULT 'receptionist',
+    password VARCHAR NOT NULL,
+    role admin_role DEFAULT 'superadmin',
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -69,7 +72,6 @@ INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens,
 ('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'morning', '09:30:00', '11:30:00', 20, '22:00:00', 60, true),
 ('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'evening', '17:30:00', '19:30:00', 20, '22:00:00', 60, true);
 
--- Default Superadmin (password: admin123 hashed using bcrypt - $2a$10$XU.. is common but we can use plain or simpler hash for seed, let's use a bcrypt hash of admin123)
--- Hash for 'admin123' is $2b$10$p3m1x2Cys0j3Bf8/s.6dGuBofU5Zk1.41.uMOnF1uDDBZq6yJmC0m
-INSERT INTO admin_users (username, password_hash, role) VALUES
-('admin', '$2b$10$p3m1x2Cys0j3Bf8/s.6dGuBofU5Zk1.41.uMOnF1uDDBZq6yJmC0m', 'superadmin');
+-- Default Superadmin (password: admin)
+INSERT INTO users (name, phone, username, password, role) VALUES
+('Admin', '1234567890', 'admin', 'admin', 'superadmin');

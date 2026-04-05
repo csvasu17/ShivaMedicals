@@ -11,9 +11,9 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           className="w-full h-full object-cover scale-105 animate-pulse-slow"
         />
         {/* Advanced overlay for depth and readability */}
-        <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/40 to-transparent md:w-[70%] lg:w-[60%]"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent h-1/3 bottom-0"></div>
+        <div className="absolute inset-0 bg-transparent backdrop-blur-[1px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#F4F8FB] via-[#F4F8FB]/80 to-transparent md:w-[70%] lg:w-[60%]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#EAF2F8] via-transparent to-transparent h-1/3 bottom-0"></div>
       </div>
 
       <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10">
@@ -26,9 +26,9 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
 
           {/* Headline */}
           <h1 className="sec-title animate-slide-up">
-            Clinical <span className="text-blue-primary relative inline-block">
+            Clinical <span className="text-[#438a4d] relative inline-block">
               Precision
-              <svg className="absolute -bottom-2 left-0 w-full h-3 text-blue-primary/20" viewBox="0 0 100 10" preserveAspectRatio="none">
+              <svg className="absolute -bottom-2 left-0 w-full h-3 text-[#438a4d]/20" viewBox="0 0 100 10" preserveAspectRatio="none">
                 <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
               </svg>
             </span><br />
@@ -48,11 +48,11 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
             >
               <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
               Book Appointment
-              <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" strokeWidth="0" /><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
             <button 
               onClick={() => { window.location.href = '/status'; }}
-              className="px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest text-ink border-2 border-slate-200 hover:border-blue-primary hover:bg-white transition-all transform active:scale-95 flex items-center gap-3 bg-white/60 backdrop-blur-md"
+              className="px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest text-ink hover:bg-white bg-white/80 border border-white shadow-sm backdrop-blur-md transition-all transform active:scale-95 flex items-center gap-3"
             >
               View Live Wait Time
             </button>

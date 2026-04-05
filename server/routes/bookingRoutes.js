@@ -8,5 +8,6 @@ router.get('/availability', bookingController.getAvailability);
 router.post('/bookings', bookingController.createBooking);
 router.get('/bookings/my', bookingController.getMyBookings);
 router.get('/queue/live/:sessionId/:date', bookingController.getLiveQueue);
+router.put('/bookings/:id/cancel', bookingController.cancelBooking);
 
 module.exports = router;

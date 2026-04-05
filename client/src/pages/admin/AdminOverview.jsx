@@ -65,7 +65,7 @@ const AdminOverview = ({ user }) => {
             </div>
          </div>
 
-         <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm shadow-slate-200/40">
+         <div className="p-card p-10">
             <h3 className="text-2xl font-serif font-medium text-ink mb-10">Recent Activity</h3>
             <div className="space-y-8">
                {[

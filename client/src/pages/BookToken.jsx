@@ -14,6 +14,21 @@ const toDateStr = (d) => {
   return `${y}-${m}-${day}`;
 };
 
+const formatTimeAMPM = (timeStr) => {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':');
+  let hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12 || 12;
+  return `${hour}:${m} ${ampm}`;
+};
+
+const formatDateDisplay = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
 const formatDisplay = (ds) => {
   if (!ds) return 'Pick a date…';
   return new Date(`${ds}T00:00:00`).toLocaleDateString(undefined,{
@@ -58,7 +73,7 @@ const DatePicker = ({ value, onChange }) => {
       <button
         type="button"
         onClick={() => setOpen(o=>!o)}
-        className={`input-premium w-full flex items-center justify-between gap-2 text-left h-14 ${!value ? 'text-muted-text/55' : 'text-ink'}`}
+        className={`input-premium w-full flex items-center justify-between gap-2 text-left h-[42px] ${!value ? 'text-muted-text/55' : 'text-ink'}`}
       >
         <span className="text-[14px] font-medium tracking-tight">{value ? formatDisplay(value) : 'Pick a date…'}</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-text/40">
@@ -120,13 +135,29 @@ const BookToken = ({ onClose }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
 
+  // Cancellation state
+  const [cancelMode, setCancelMode] = useState(false);
+  const [cancelPhone, setCancelPhone] = useState('');
+  const [myBookings, setMyBookings] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelError, setCancelError] = useState('');
+  const [confirmPrompt, setConfirmPrompt] = useState(null);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState('');
+
   useEffect(() => {
     fetch(`${API_URL}/api/doctors`)
       .then(r => r.json())
-      .then(setDoctors)
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDoctors(data);
+        } else {
+          throw new Error(data.error || 'Failed to load doctors');
+        }
+      })
       .catch((e) => {
         console.error('Fetch doctors error:', e);
-        setError('Unable to reach server. Please try again later.');
+        setError(e.message || 'Unable to reach server. Please try again later.');
+        setDoctors([]);
       });
   }, []);
 
@@ -159,7 +190,13 @@ const BookToken = ({ onClose }) => {
 
   const handleDateChange = (ds) => setForm(p => ({ ...p, date: ds }));
 
-  const selectedDoctor = useMemo(() => doctors.find(d => String(d.id) === String(form.doctorId)), [doctors, form.doctorId]);
+  const selectedDoctor = useMemo(() => 
+    Array.isArray(doctors) ? doctors.find(d => String(d.id) === String(form.doctorId)) : null
+  , [doctors, form.doctorId]);
+
+  const selectedSession = useMemo(() => 
+    sessions.find(s => String(s.id) === String(form.sessionId))
+  , [sessions, form.sessionId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -203,52 +240,242 @@ const BookToken = ({ onClose }) => {
     }
   };
 
+  const fetchMyBookings = async (e) => {
+    e.preventDefault();
+    if (!cancelPhone) return;
+    setCancelLoading(true);
+    setCancelError('');
+    try {
+      const res = await fetch(`${API_URL}/api/bookings/my?phone=${cancelPhone}`);
+      const data = await res.json();
+      if (res.ok) {
+         setMyBookings(data.filter(b => b.status === 'confirmed')); // only show confirmed
+      } else {
+         setCancelError(data.error || 'Failed to fetch bookings');
+      }
+    } catch (err) {
+      setCancelError('Network error. Check connection.');
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
+  const handleCancelBooking = (booking) => {
+    setConfirmPrompt(booking);
+  };
+
+  const executeCancelBooking = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/bookings/${id}/cancel`, { method: 'PUT' });
+      if (res.ok) {
+        setMyBookings(prev => prev.filter(b => b.id !== id));
+        setCancelSuccessMsg(`Token was cancelled successfully.`);
+        setConfirmPrompt(null);
+        setTimeout(() => setCancelSuccessMsg(''), 4000);
+      } else {
+        const data = await res.json();
+        alert(data.message || 'Failed to cancel');
+      }
+    } catch (err) {
+      alert('Network error while cancelling.');
+    }
+  };
+
   if (success) {
     return (
-      <div className="flex flex-col items-center text-center py-4 animate-fade-in">
-        <div className="w-16 h-16 rounded-3xl bg-teal-primary flex items-center justify-center mb-6 shadow-2xl shadow-teal-primary/20 rotate-3">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      <div className="flex flex-col items-center text-center py-2 animate-fade-in relative w-full">
+        {/* Top Header */}
+        <div className="w-[60px] h-[60px] rounded-full bg-[#00c389] shadow-lg shadow-[#00c389]/30 text-white flex items-center justify-center mb-5 rotate-0">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <p className="text-[11px] font-black uppercase tracking-[0.4em] text-teal-primary mb-2">Success</p>
-        <h2 className="font-serif text-3xl font-semibold text-ink mb-2">Appointment Confirmed.</h2>
-        <p className="text-sm text-muted-text max-w-xs mb-8">Your appointment is reserved. Arrive 10 minutes prior to your estimated time.</p>
-        
-        <div className="w-full grid grid-cols-2 gap-4 mb-8">
-          <div className="bg-ink rounded-[24px] p-5 text-left text-white shadow-xl shadow-ink/10">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">Token</p>
-            <p className="font-serif text-5xl font-black leading-none mb-4">{success.token_number}</p>
-            <div className="pt-4 border-t border-white/10">
-               <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Est. Time</p>
-               <p className="text-xl font-bold">{success.estimated_time?.slice(0,5)}</p>
+        <p className="text-[12px] font-bold tracking-[0.2em] text-[#00c389] mb-2 uppercase">Success</p>
+        <h2 className="font-serif text-3xl font-bold text-slate-800 mb-2">Appointment Confirmed.</h2>
+        <p className="text-[15px] text-slate-500 mb-8">Show this token number at reception for your turn.</p>
+
+        {/* The Card */}
+        <div className="w-full bg-[#111c24] rounded-[24px] overflow-hidden shadow-2xl mb-7 relative group text-left border border-slate-800">
+          <div className="absolute top-0 left-0 w-full h-[140px] bg-gradient-to-b from-[#00c389]/40 to-transparent mix-blend-screen pointer-events-none" />
+          
+          <div className="relative p-7 sm:px-9">
+            {/* Card Header */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="bg-[#00c389]/20 p-1.5 rounded-lg text-[#00c389]">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              </div>
+              <span className="text-white font-medium text-base">Token Number</span>
+            </div>
+            
+            {/* Card Body */}
+            <div className="grid grid-cols-[1fr_1.3fr] gap-6 mb-7">
+              <div className="flex items-center justify-center border-r border-white/10 pr-6">
+                <span className="font-serif text-[110px] leading-none text-white font-normal drop-shadow-md">{success.token_number}</span>
+              </div>
+              <div className="flex flex-col justify-center gap-3 pl-4 text-[15px]">
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Patient:</span> <span className="text-white font-medium truncate">{success.patient_name}</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Date:</span> <span className="text-white font-medium">{formatDateDisplay(success.booking_date)}</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Time:</span> <span className="text-white font-medium">{formatTimeAMPM(selectedSession?.start_time || success.estimated_time)}</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Depart:</span> <span className="text-white font-medium capitalize">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
+              </div>
+            </div>
+
+            {/* Card Footer */}
+            <div className="pt-5 border-t border-white/10 flex text-[14px]">
+              <div className="flex gap-2"><span className="text-slate-400/80 font-medium">Doctor:</span><span className="text-white font-medium">{selectedDoctor?.name || '—'}</span></div>
             </div>
           </div>
-          <div className="bg-slate-50/80 rounded-[24px] p-5 text-left border border-slate-100 flex flex-col justify-between">
-            <div>
-              <p className="text-[10px] text-muted-text uppercase tracking-widest font-black mb-1">Patient</p>
-              <p className="font-bold text-sm text-ink truncate">{success.patient_name}</p>
-            </div>
-            <div className="mt-4">
-              <p className="text-[10px] text-muted-text uppercase tracking-widest font-black mb-1">Doctor</p>
-              <p className="font-bold text-sm text-ink truncate">{selectedDoctor?.name||'—'}</p>
-            </div>
-          </div>
         </div>
-        
+
+        {/* Action Buttons */}
         <button 
           onClick={onClose} 
-          className="w-full justify-center h-12 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:from-teal-600 hover:to-emerald-600 hover:shadow-2xl hover:shadow-teal-600/30 transition-all duration-300"
+          className="w-full bg-[#00c389] text-white font-medium text-[17px] py-4 rounded-xl shadow-[0_8px_20px_rgba(0,195,137,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all outline-none"
         >
-          Done
+          Go to Dashboard
         </button>
+        
+        <div className="mt-8 flex items-center justify-center gap-4 w-full text-slate-400">
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <button 
+            type="button"
+            onClick={() => { setSuccess(null); setForm(initialFormState); }} 
+            className="text-[14px] font-medium text-[#498894] hover:text-teal-700 transition"
+          >
+            Book Another Appointment
+          </button>
+          <div className="flex-1 h-px bg-slate-200"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (cancelMode) {
+    return (
+      <div className="flex flex-col gap-6 animate-fade-in w-full min-h-[400px]">
+        <div className="flex items-start justify-between gap-4 pr-8 sm:pr-12 md:pr-14">
+          <div>
+            <h2 className="font-serif text-3xl font-semibold text-ink leading-tight">Cancel Appointment</h2>
+            <p className="text-muted-text text-sm mt-0.5 opacity-60 italic font-medium">Enter your phone number to find active tokens.</p>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => { setCancelMode(false); setMyBookings(null); setCancelPhone(''); }}
+            className="px-4 py-2 text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-slate-500 hover:text-slate-800 bg-slate-50 hover:bg-slate-100/80 rounded-xl transition-colors border border-slate-200 shadow-sm outline-none whitespace-nowrap mt-1"
+          >
+            ← BACK
+          </button>
+        </div>
+
+        <form onSubmit={fetchMyBookings} className="flex gap-3">
+          <input 
+            type="tel" 
+            value={cancelPhone}
+            onChange={e => setCancelPhone(e.target.value)}
+            placeholder="Enter Phone Number..." 
+            className="input-premium h-12 flex-1 focus:ring-red-500 border-2"
+            required
+          />
+          <button type="submit" disabled={cancelLoading} className="px-6 h-12 bg-ink text-white font-bold rounded-xl hover:bg-ink2 transition-colors disabled:opacity-50">
+            {cancelLoading ? 'Searching...' : 'Find tokens'}
+          </button>
+        </form>
+
+        {cancelError && <p className="text-red-500 text-sm font-medium">{cancelError}</p>}
+
+        {myBookings && (
+           <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+             {myBookings.length === 0 ? (
+               <div className="text-center text-slate-500 text-sm py-10 font-medium">No active appointments found for this number.</div>
+             ) : (
+               myBookings.map(b => (
+                 <div key={b.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between group">
+                   <div className="flex flex-col">
+                     <span className="text-ink font-bold text-lg leading-none mb-1">Token: {b.token_number}</span>
+                     <span className="text-slate-500 text-xs font-medium">
+                       {formatDateDisplay(b.booking_date)} • {formatTimeAMPM(b.estimated_time)}
+                     </span>
+                     <span className="text-slate-400 text-xs mt-1 capitalize">{b.doctor_name ? `Dr. ${b.doctor_name}` : ''} • {b.session_type}</span>
+                   </div>
+                   <button 
+                     type="button"
+                     onClick={() => handleCancelBooking(b)}
+                     className="px-4 py-2 bg-white text-red-500 border border-red-200 rounded-lg text-xs font-bold hover:bg-red-50 hover:text-red-600 transition-colors shadow-sm"
+                   >
+                     Cancel Token
+                   </button>
+                 </div>
+               ))
+             )}
+           </div>
+        )}
+
+        {/* Confirmation Popup */}
+        {confirmPrompt && (
+          <div className="fixed top-6 right-6 z-[4000] w-[340px] bg-white shadow-[-10px_10px_40px_rgba(0,0,0,0.1)] rounded-[24px] border border-slate-100 p-6 animate-slide-up flex flex-col gap-5 text-left">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <h3 className="font-bold text-ink text-[16px] leading-tight mb-1">Cancel Token?</h3>
+                <p className="text-slate-500 text-[13px] leading-relaxed">This action cannot be undone. Are you sure you wish to proceed?</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-1">
+              <button 
+                type="button"
+                onClick={() => setConfirmPrompt(null)} 
+                className="flex-1 h-12 rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold text-[13px] transition-colors outline-none"
+              >
+                Keep It
+              </button>
+              <button 
+                type="button"
+                onClick={() => executeCancelBooking(confirmPrompt.id)} 
+                className="flex-1 h-12 rounded-xl text-white bg-red-500 hover:bg-red-600 font-bold text-[13px] transition-all shadow-lg shadow-red-500/20 active:scale-95 outline-none"
+              >
+                Yes, Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Success Popup */}
+        {cancelSuccessMsg && (
+          <div className="fixed top-6 right-6 z-[4000] w-[320px] bg-white shadow-[-10px_10px_40px_rgba(0,0,0,0.1)] rounded-[20px] border border-slate-100 p-5 animate-slide-up flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-[#00c389]/10 text-[#00c389] flex items-center justify-center shrink-0">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <div className="flex flex-col">
+              <h3 className="font-bold text-ink text-[14px]">Success</h3>
+              <p className="text-slate-500 text-[12px] mt-0.5">{cancelSuccessMsg}</p>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setCancelSuccessMsg('')}
+              className="ml-auto text-slate-400 hover:text-ink transition-colors outline-none"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div>
-        <h2 className="font-serif text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
-        <p className="text-muted-text text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex justify-between items-start gap-4 pr-8 sm:pr-12 md:pr-14">
+        <div>
+          <h2 className="font-serif text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
+          <p className="text-muted-text text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
+        </div>
+        <button 
+          type="button" 
+          onClick={() => setCancelMode(true)}
+          className="px-4 py-2 text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-600 hover:bg-red-100 bg-red-50/80 rounded-xl transition-colors border border-red-500/20 shadow-sm outline-none whitespace-nowrap mt-1"
+        >
+          CANCEL APPOINTMENT
+        </button>
       </div>
 
       {error && (
@@ -259,7 +486,7 @@ const BookToken = ({ onClose }) => {
       )}
 
       {/* Main Form Fields */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+      <div className="grid grid-cols-2 gap-x-5 gap-y-3">
         {/* Patient Name */}
         <div className="flex flex-col">
           <label className="form-label-premium">Patient Name *</label>
@@ -269,7 +496,7 @@ const BookToken = ({ onClose }) => {
             value={form.patientName} 
             onChange={handleChange} 
             placeholder="e.g. Ramesh Kumar" 
-            className="input-premium h-12 focus:ring-teal-500" 
+            className="input-premium h-[42px] focus:ring-teal-500" 
             required
           />
         </div>
@@ -283,8 +510,21 @@ const BookToken = ({ onClose }) => {
             value={form.phone} 
             onChange={handleChange} 
             placeholder="Mobile number" 
-            className="input-premium h-12 focus:ring-teal-500" 
+            className="input-premium h-[42px] focus:ring-teal-500" 
             required
+          />
+        </div>
+
+        {/* Email Address */}
+        <div className="flex flex-col col-span-2">
+          <label className="form-label-premium">Email Address (Optional)</label>
+          <input 
+            type="email" 
+            name="email" 
+            value={form.email} 
+            onChange={handleChange} 
+            placeholder="e.g. name@example.com" 
+            className="input-premium h-[42px] focus:ring-teal-500" 
           />
         </div>
 
@@ -296,11 +536,11 @@ const BookToken = ({ onClose }) => {
               name="doctorId" 
               value={form.doctorId} 
               onChange={handleChange} 
-              className="input-premium h-12 appearance-none pr-10 cursor-pointer focus:ring-teal-500" 
+              className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500" 
               required
             >
               <option value="">Select a specialist…</option>
-              {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {Array.isArray(doctors) && doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
@@ -318,7 +558,7 @@ const BookToken = ({ onClose }) => {
 
       {/* Session Selection Section */}
       <div className={`transition-all duration-700 transform ${form.doctorId ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
-        <label className="form-label-premium block mb-2">Available Sessions *</label>
+        <label className="form-label-premium block mb-1">Available Sessions *</label>
         
         {form.doctorId && sessions.length === 0 ? (
           <div className="h-12 flex items-center px-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-[11px] font-bold text-muted-text/40 uppercase tracking-widest italic animate-pulse">
@@ -332,7 +572,7 @@ const BookToken = ({ onClose }) => {
                 type="button" 
                 disabled={s.id === 'none'}
                 onClick={() => setForm(p => ({ ...p, sessionId: String(s.id) }))}
-                className={`flex flex-col items-start p-3 rounded-2xl border text-left transition-all duration-500 relative overflow-hidden group ${
+                className={`flex flex-col items-start px-3 py-2 rounded-2xl border text-left transition-all duration-500 relative overflow-hidden group ${
                   form.sessionId === String(s.id)
                     ? 'bg-ink text-white border-ink shadow-2xl shadow-ink/10 scale-[1.01]'
                     : s.id === 'none' 
@@ -361,16 +601,16 @@ const BookToken = ({ onClose }) => {
           onChange={handleChange} 
           placeholder="Briefly describe your concern..." 
           rows="1"
-          className="input-premium py-3 resize-none h-12 focus:ring-teal-500"
+          className="input-premium py-2.5 resize-none h-[42px] focus:ring-teal-500"
         />
       </div>
 
       {/* Footer CTA */}
-      <div className="flex flex-col items-center gap-3">
+      <div className="flex flex-col items-center gap-2 mt-4 w-full">
         <button 
           type="submit" 
           disabled={loading} 
-          className="w-full h-14 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:from-teal-600 hover:to-emerald-600 hover:shadow-2xl hover:shadow-teal-600/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
+          className="w-full h-12 rounded-xl bg-[#00c389] text-white font-bold text-base shadow-lg shadow-[#00c389]/20 hover:opacity-90 hover:shadow-2xl hover:shadow-[#00c389]/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
         >
           {loading ? (
             <div className="flex items-center gap-3 justify-center">
@@ -385,11 +625,11 @@ const BookToken = ({ onClose }) => {
           )}
         </button>
 
-        <div className="flex items-center gap-2 opacity-20">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          <span className="text-[8px] font-bold uppercase tracking-[0.4em]">End-to-end encrypted</span>
+          <div className="flex items-center gap-2 opacity-20">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span className="text-[8px] font-bold uppercase tracking-[0.4em]">End-to-end encrypted</span>
+          </div>
         </div>
-      </div>
     </form>
   );
 };
