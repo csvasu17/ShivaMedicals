@@ -1,16 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../constants/api';
 
-const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
+const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editStaff }) => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     username: '',
     password: '',
-    role: 'staff' // default to staff
+    role: 'staff'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (editStaff) {
+      setFormData({
+        name: editStaff.name || '',
+        phone: editStaff.phone || '',
+        username: editStaff.username || '',
+        password: '', // Don't show password
+        role: editStaff.role || 'staff'
+      });
+    } else {
+      setFormData({ name: '', phone: '', username: '', password: '', role: 'staff' });
+    }
+  }, [editStaff, isOpen]);
 
   if (!isOpen) return null;
 
@@ -24,15 +38,19 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/admin/staff`, {
-        method: 'POST',
+      const url = editStaff 
+        ? `${API_URL}/api/admin/staff/${editStaff.id}`
+        : `${API_URL}/api/admin/staff`;
+      
+      const response = await fetch(url, {
+        method: editStaff ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to add staff');
+        throw new Error(data.error || 'Failed to process staff');
       }
 
       onStaffAdded(data);
@@ -47,12 +65,12 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 backdrop-blur-sm p-4 pb-12 animate-fade-in" onClick={onClose}>
       <div 
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl relative overflow-hidden"
+        className="bg-white rounded-[32px] w-full max-w-md shadow-2xl relative overflow-hidden animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-6 right-6">
           <button 
             type="button"
             onClick={onClose}
@@ -62,10 +80,10 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
           </button>
         </div>
 
-        <div className="p-8">
-          <div className="mb-6">
-            <h2 className="text-2xl font-serif text-ink font-semibold">Add New Staff</h2>
-            <p className="text-muted-text text-[13px] mt-1">Create a user account for a new team member.</p>
+        <div className="p-10">
+          <div className="mb-8">
+            <h2 className="text-3xl font-serif text-ink font-semibold">{editStaff ? 'Edit Staff Member' : 'Add New Staff'}</h2>
+            <p className="text-muted-text text-[13px] mt-1">{editStaff ? 'Update profile information for this team member.' : 'Create a user account for a new team member.'}</p>
           </div>
 
           {error && (
@@ -74,78 +92,100 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded }) => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
-              <input 
-                type="text" 
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none transition-all font-medium"
-                required
-              />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Full Name</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
+                <input 
+                  type="text" 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Phone Number</label>
-              <input 
-                type="tel" 
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none transition-all font-medium"
-                required
-              />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Phone Number</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
+                <input 
+                  type="tel" 
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                  required
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Username</label>
-                <input 
-                  type="text" 
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none transition-all font-medium"
-                  required
-                />
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Username</label>
+                <div className={`h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm ${editStaff ? 'opacity-50' : ''}`}>
+                  <input 
+                    type="text" 
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    readOnly={!!editStaff}
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Password</label>
-                <input 
-                  type="text" 
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none transition-all font-medium"
-                  required
-                />
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Password</label>
+                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
+                  <input 
+                    type="password" 
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={editStaff ? 'Leave blank to keep' : '••••••••'}
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                    required={!editStaff}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Role</label>
-              <select 
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:outline-none transition-all font-medium"
-              >
-                <option value="staff">Staff</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Role</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
+                <select 
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
+                >
+                  <option value="staff">Staff Member</option>
+                  <option value="admin">Administrator</option>
+                </select>
+              </div>
             </div>
 
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full mt-6 h-12 rounded-xl bg-purple-600 text-white font-bold text-[14px] shadow-lg shadow-purple-600/20 hover:bg-purple-700 transition-all duration-300 flex items-center justify-center disabled:opacity-50"
+              className="w-full mt-6 h-14 rounded-2xl bg-emerald-600 text-white font-black text-[11px] uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all duration-300 flex items-center justify-center disabled:opacity-50 active:scale-95"
             >
-              {loading ? 'Creating User...' : 'Add Staff Member'}
+              {loading ? (editStaff ? 'Updating...' : 'Creating...') : (editStaff ? 'Save Changes' : 'Create Staff Member')}
             </button>
           </form>
+
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes slide-up {
+              from { opacity: 0; transform: translateY(40px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-slide-up {
+              animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+          `}} />
         </div>
       </div>
     </div>

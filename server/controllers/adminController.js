@@ -106,3 +106,72 @@ exports.addDoctor = async (req, res) => {
     }
 };
 
+exports.updateStaff = async (req, res) => {
+    const { id } = req.params;
+    const { name, phone, role, password } = req.body;
+    try {
+        let query, values;
+        if (password) {
+            query = `
+                UPDATE users 
+                SET name = $1, phone = $2, role = $3, password = $4
+                WHERE id = $5 
+                RETURNING id, name, username, phone, role, is_active
+            `;
+            values = [name, phone, role, password, id];
+        } else {
+            query = `
+                UPDATE users 
+                SET name = $1, phone = $2, role = $3
+                WHERE id = $4 
+                RETURNING id, name, username, phone, role, is_active
+            `;
+            values = [name, phone, role, id];
+        }
+        const result = await db.query(query, values);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Staff not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteStaff = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM users WHERE id = $1', [id]);
+        res.json({ success: true, message: 'Staff deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateDoctor = async (req, res) => {
+    const { id } = req.params;
+    const { name, type, specialty } = req.body;
+    try {
+        const query = `
+            UPDATE doctors 
+            SET name = $1, type = $2, specialty = $3
+            WHERE id = $4 
+            RETURNING *
+        `;
+        const values = [name, type, specialty, id];
+        const result = await db.query(query, values);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Doctor not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.deleteDoctor = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query('DELETE FROM doctors WHERE id = $1', [id]);
+        res.json({ success: true, message: 'Doctor deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+

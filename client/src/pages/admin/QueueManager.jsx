@@ -99,77 +99,118 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const metrics = {
     total: tokens.length,
     waiting: tokens.filter(t => t.status === 'confirmed').length,
-    present: tokens.filter(t => t.status === 'called').length,
-    served: tokens.filter(t => t.status === 'completed').length,
-    absent: tokens.filter(t => t.status === 'no_show' || t.status === 'cancelled').length,
+    serving: tokens.filter(t => t.status === 'called').length,
+    completed: tokens.filter(t => t.status === 'completed').length,
+    noshow: tokens.filter(t => t.status === 'no_show' || t.status === 'cancelled').length,
   };
 
   const metricCards = [
-    { label: "Total queue", val: metrics.total, color: "text-ink" },
-    { label: "Waiting", val: metrics.waiting, color: "text-blue-mid" },
-    { label: "In consultation", val: metrics.present, color: "text-ink" },
-    { label: "Completed", val: metrics.served, color: "text-teal-primary" },
-    { label: "Absent/No-show", val: metrics.absent, color: "text-ink/40" }
+    { label: "Total queue", val: metrics.total, color: "text-slate-800", iconColor: "bg-slate-50 text-slate-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { label: "Waiting", val: metrics.waiting, color: "text-orange-500", iconColor: "bg-orange-50 text-orange-400", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { label: "Now serving", val: metrics.serving, color: "text-blue-500", iconColor: "bg-blue-50 text-blue-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { label: "Completed", val: metrics.completed, color: "text-emerald-500", iconColor: "bg-emerald-50 text-emerald-400", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { label: "No-show", val: metrics.noshow, color: "text-red-500", iconColor: "bg-red-50 text-red-400", icon: "M18 12H6" }
   ];
 
+  const nowServing = tokens.find(t => t.status === 'called');
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 animate-fade-in relative z-10">
+    <div className="max-w-7xl mx-auto px-6 py-12 animate-fade-in relative z-10">
       
-      {/* HEADER & CONTROLS */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-        <div>
-          <span className="eyebrow mb-4">Staff Portal</span>
-          <h2 className="text-4xl lg:text-5xl font-serif font-medium text-ink tracking-tight mb-2">Live Queue Manager</h2>
-          <p className="text-muted-text text-lg">Manage real-time patient flow for today’s sessions.</p>
-        </div>
-        
-        <div className="flex flex-wrap items-center gap-3">
-           <div className="h-14 bg-white border border-slate-100 rounded-2xl flex items-center px-4 shadow-sm">
-             <input 
-               type="date" 
-               value={dateStr} 
-               onChange={e => { setDateStr(e.target.value); setCurrentPage(1); }} 
-               className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer" 
-             />
+      {/* HEADER & CONTROLS SECTION */}
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+           <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Appointment Date</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group hover:border-blue-primary transition-all shadow-sm">
+                <input 
+                  type="date" 
+                  value={dateStr} 
+                  onChange={e => { setDateStr(e.target.value); setCurrentPage(1); }} 
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer w-full" 
+                />
+              </div>
            </div>
-           <div className="h-14 bg-white border border-slate-100 rounded-2xl flex items-center px-5 shadow-sm">
-             <select 
-               value={selectedDoctor} 
-               onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
-               className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
-             >
-               {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-             </select>
+
+           <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Select Doctor</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-5 relative group hover:border-blue-primary transition-all shadow-sm">
+                <select 
+                  value={selectedDoctor} 
+                  onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
+                >
+                  {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
+              </div>
            </div>
-           <div className="h-14 bg-white border border-slate-100 rounded-2xl flex items-center px-5 shadow-sm">
-             <select 
-               value={selectedSession} 
-               onChange={e => { setSelectedSession(e.target.value); setCurrentPage(1); }} 
-               className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
-             >
-               {sessions.map(s => <option key={s.id} value={s.id}>{s.session_type} ({s.start_time.slice(0,5)})</option>)}
-             </select>
+
+           <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Time Slot</label>
+              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-5 relative group hover:border-blue-primary transition-all shadow-sm">
+                <select 
+                  value={selectedSession} 
+                  onChange={e => { setSelectedSession(e.target.value); setCurrentPage(1); }} 
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%20%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
+                >
+                  {sessions.map(s => <option key={s.id} value={s.id}>{s.session_type} ({s.start_time.slice(0,5)})</option>)}
+                </select>
+              </div>
            </div>
-           <button onClick={onAddPatient} className="bg-ink hover:bg-ink2 text-white font-bold h-14 px-8 rounded-2xl text-[14px] shadow-lg shadow-ink/10 transition-all duration-300 transform active:scale-[0.97]">
+
+           <button onClick={onAddPatient} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-14 w-full rounded-2xl text-[14px] shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.97]">
              Add patient
            </button>
         </div>
       </div>
 
-      {/* METRICS GRID */}
-      <div className="bg-gradient-to-br from-teal-500/90 to-emerald-600 rounded-[32px] p-6 md:p-8 mb-8 grid grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-0 relative overflow-hidden shadow-2xl shadow-teal-500/20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.2)_0%,transparent_70%)] opacity-50"></div>
+      {/* METRICS ROW */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
         {metricCards.map((m, i) => (
-          <div key={i} className={`relative z-10 lg:px-10 first:pl-0 last:pr-0 ${i !== metricCards.length-1 ? 'lg:border-r border-white/5' : ''} animate-fade-in`} style={{animationDelay: `${i * 100}ms`}}>
-             <p className={`text-[32px] md:text-[40px] font-serif font-medium leading-none mb-2 ${m.color.includes('ink') ? 'text-white' : m.color}`}>{m.val}</p>
-             <p className="text-[11px] font-bold text-white/30 uppercase tracking-widest">{m.label}</p>
+          <div key={i} className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm flex justify-between items-center group hover:scale-[1.02] transition-all">
+             <div>
+                <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-3 ${m.label === 'Total queue' ? 'text-slate-400' : m.color}`}>
+                   {m.label}
+                </p>
+                <p className="text-3xl font-bold text-ink leading-none">{m.val}</p>
+             </div>
+             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${m.iconColor}`}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={m.icon}/></svg>
+             </div>
           </div>
         ))}
       </div>
 
-      {/* TABLE CONTAINER */}
-      <div className="bg-white rounded-[24px] border border-slate-100 shadow-xl shadow-slate-200/40 relative z-10 overflow-hidden">
-         <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+      {/* NOW SERVING BAR */}
+      <div className="mb-10">
+        {nowServing ? (
+          <div className="bg-emerald-50/50 rounded-[28px] border border-emerald-100 p-4 md:p-5 flex items-center justify-between shadow-sm shadow-emerald-500/5">
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center font-bold text-2xl text-white shadow-lg shadow-emerald-600/20">
+                #{nowServing.token_number}
+              </div>
+              <div>
+                <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Now Serving</p>
+                <h3 className="text-3xl font-serif font-medium text-ink leading-none">{nowServing.patient_name}</h3>
+              </div>
+            </div>
+            <button 
+              onClick={() => handleAction(nowServing.id, 'complete')}
+              className="bg-white border border-emerald-500 text-emerald-600 hover:bg-emerald-600 hover:text-white font-black h-12 px-8 rounded-xl text-[11px] uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-sm"
+            >
+              Finish Session
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-50/80 rounded-[28px] border border-dashed border-slate-200 p-6 text-center">
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">No patient is currently being served</p>
+          </div>
+        )}
+      </div>
+
+      {/* TABLE SECTION */}
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
+         <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-6">
                <h3 className="text-xl font-bold text-ink">Queue timeline</h3>
                <button 
@@ -181,7 +222,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                </button>
             </div>
             
-            <div className="flex items-center gap-3 bg-teal-50/50 px-4 py-2 rounded-xl border border-teal-100/30">
+            <div className="flex items-center gap-3 bg-teal-50 px-4 py-2 rounded-xl border border-teal-100/50">
                <div className="relative flex h-2 w-2">
                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                  <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
@@ -190,27 +231,28 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             </div>
          </div>
 
-          <div className="overflow-x-auto overflow-y-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-[11px] uppercase font-bold tracking-widest text-ink/30">
-                  <th className="pl-10 pr-6 py-5">Appt. No</th>
-                  <th className="px-6 py-5">Patient Name</th>
-                  <th className="px-6 py-5">Mobile No</th>
-                  <th className="px-6 py-5">Primary Concern</th>
-                  <th className="px-6 py-5">Status</th>
-                  <th className="px-6 py-5 text-right pr-10">Actions</th>
+                <tr className="border-b border-slate-50 text-[11px] uppercase font-bold tracking-widest text-ink/30">
+                  <th className="pl-12 pr-6 py-6">Appt. No</th>
+                  <th className="px-6 py-6">Patient Name</th>
+                  <th className="px-6 py-6">Mobile No</th>
+                  <th className="px-6 py-6">Primary Concern</th>
+                  <th className="px-6 py-6">Status</th>
+                  <th className="px-6 py-6 text-right pr-12">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50/50">
                 {displayedTokens.map((t, idx) => {
+                  const isActive = t.status === 'called';
                   const initials = t.patient_name ? t.patient_name.trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'PN';
                   const avatarColors = ['bg-blue-50 text-blue-600', 'bg-orange-50 text-orange-600', 'bg-teal-50 text-teal-600', 'bg-pink-50 text-pink-600', 'bg-purple-50 text-purple-600'];
                   const colorClass = avatarColors[idx % avatarColors.length];
 
                   return (
-                    <tr key={t.id} className="group hover:bg-slate-50/50 transition-all duration-300">
-                      <td className="pl-10 pr-6 py-6">
+                    <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/30' : ''}`}>
+                      <td className="pl-12 pr-6 py-6">
                          <div className="text-[17px] font-black text-ink">
                             #{t.token_number}
                          </div>
@@ -240,7 +282,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          {t.status === 'completed' && <span className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Completed</span>}
                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
                       </td>
-                      <td className="px-6 py-6 text-right pr-10">
+                      <td className="px-6 py-6 text-right pr-12">
                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                             {t.status === 'confirmed' && (
                                <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-10 px-5 rounded-xl text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95">Call Staff</button>
@@ -261,20 +303,20 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             
             {/* PAGINATION FOOTER */}
             {totalPages > 1 && (
-              <div className="px-8 py-5 border-t border-slate-50 flex items-center justify-between">
+              <div className="px-12 py-8 border-t border-slate-50 flex items-center justify-between">
                 <p className="text-[12px] font-bold text-muted-text/50 uppercase tracking-widest">Page {currentPage} of {totalPages}</p>
                 <div className="flex items-center gap-2">
                   <button 
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(p => p - 1)}
-                    className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                    className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-hover:-translate-x-1 transition-transform"><path d="M15 18l-6-6 6-6"/></svg>
                   </button>
                   <button 
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(p => p + 1)}
-                    className="w-10 h-10 rounded-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+                    className="w-12 h-12 rounded-2xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="group-hover:translate-x-1 transition-transform"><path d="M9 18l6-6-6-6"/></svg>
                   </button>
@@ -284,7 +326,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
             {tokens.length === 0 && (
                <div className="py-24 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 bg-cream-base text-muted-text/30 rounded-2xl flex items-center justify-center mb-6">
+                  <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-3xl flex items-center justify-center mb-6">
                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
                   </div>
                   <h4 className="text-xl font-bold text-ink mb-2">Queue is empty</h4>

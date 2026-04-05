@@ -9,7 +9,11 @@ router.put('/bookings/:id/status', adminController.updateBookingStatus);
 router.post('/queue/call-next', adminController.callNext);
 router.get('/staff', adminController.getStaff);
 router.post('/staff', adminController.addStaff);
+router.put('/staff/:id', adminController.updateStaff);
+router.delete('/staff/:id', adminController.deleteStaff);
 router.get('/doctors', adminController.getDoctors);
 router.post('/doctors', adminController.addDoctor);
+router.put('/doctors/:id', adminController.updateDoctor);
+router.delete('/doctors/:id', adminController.deleteDoctor);
 
 module.exports = router;
