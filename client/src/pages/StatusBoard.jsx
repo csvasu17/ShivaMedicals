@@ -81,51 +81,51 @@ export default function StatusBoard() {
   }
 
   return (
-    <div className="relative min-h-screen pt-[88px] pb-20 px-6 md:px-12 lg:px-24 bg-transparent">
+    <div className="relative min-h-screen pt-20 md:pt-[88px] pb-12 md:pb-20 px-4 md:px-12 lg:px-24 bg-transparent">
       
       {/* HEADER SECTION */}
-      <header className="max-w-7xl mx-auto mb-16 animate-fade-in">
-        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-12">
+      <header className="max-w-7xl mx-auto mb-10 md:mb-16 animate-fade-in">
+        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 md:gap-12">
           <div className="max-w-3xl">
             <span className="eyebrow">
               <span className="h-1.5 w-1.5 rounded-full bg-teal-primary animate-pulse"></span>
               Public Queue Status
             </span>
-            <h1 className="sec-title">Live Appointment board for faster, calmer arrivals.</h1>
-            <p className="sec-sub">
+            <h1 className="text-3xl md:text-5xl lg:text-7xl font-serif font-medium leading-tight md:leading-[1.1] tracking-tight mb-4 md:mb-6">Live Appointment board for faster, calmer arrivals.</h1>
+            <p className="text-muted-text text-[15px] md:text-lg leading-relaxed max-w-2xl opacity-80">
               Check real-time consultation progress from anywhere. We update the board every few seconds to ensure you arrive exactly when needed.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-5 xl:min-w-[480px]">
-            <div className="p-card p-6 flex flex-col justify-between h-32 bg-slate-50/50">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-text/60">Current Time</p>
-              <p className="text-3xl font-serif text-ink">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 md:gap-5 xl:min-w-[480px]">
+            <div className="p-card p-5 md:p-6 flex flex-col justify-between h-28 md:h-32 bg-slate-50/50">
+              <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-muted-text/60">Current Time</p>
+              <p className="text-2xl md:text-3xl font-serif text-ink">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
             </div>
-            <div className="p-card p-6 flex flex-col justify-between h-32 bg-slate-50/50">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-text/60">Active Rooms</p>
+            <div className="p-card p-5 md:p-6 flex flex-col justify-between h-28 md:h-32 bg-slate-50/50">
+              <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-muted-text/60">Active Rooms</p>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-serif text-blue-primary">{liveCount}</span>
+                <span className="text-2xl md:text-3xl font-serif text-blue-primary">{liveCount}</span>
                 <span className="h-2 w-2 rounded-full bg-teal-primary animate-pulse"></span>
               </div>
             </div>
-            <div className="p-card p-6 flex flex-col justify-between h-32 bg-blue-primary text-white col-span-2 md:col-span-1 shadow-lg shadow-blue-primary/20">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Today</p>
-              <p className="text-lg font-bold leading-tight">{currentTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+            <div className="p-card p-5 md:p-6 flex flex-col justify-between h-28 md:h-32 bg-blue-primary text-white col-span-2 sm:col-span-1 shadow-lg shadow-blue-primary/20">
+              <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Today</p>
+              <p className="text-base md:text-lg font-bold leading-tight">{currentTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-10 px-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-10 px-2 gap-4">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-muted-text/50 mb-2">Clinical Excellence</p>
-            <h2 className="text-3xl font-serif font-medium text-ink">Active Consultation Status</h2>
+            <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] text-muted-text/50 mb-1 md:mb-2">Clinical Excellence</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-medium text-ink">Active Consultation Status</h2>
           </div>
-          <div className="hidden md:flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm text-[11px] font-bold text-muted-text/70 animate-pulse">
+          <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm text-[10px] md:text-[11px] font-bold text-muted-text/70 animate-pulse self-start sm:self-auto">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            AUTO-SYNC ENABLED
+            AUTO-SYNC ACTIVE
           </div>
         </div>
 
@@ -153,27 +153,27 @@ export default function StatusBoard() {
                   </div>
                 </div>
 
-                <div className="rounded-[32px] bg-slate-50 border border-slate-100 p-8 text-center mb-8 transition-all group-hover:bg-white group-hover:shadow-inner group-hover:border-blue-primary/5">
+                <div className="rounded-3xl md:rounded-[32px] bg-slate-50 border border-slate-100 p-6 md:p-8 text-center mb-8 transition-all group-hover:bg-white group-hover:shadow-inner group-hover:border-blue-primary/5">
                   {activeSession ? (
                     <div className="animate-fade-in text-center">
-                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-primary/40 mb-2">Now Calling</p>
-                      <div className="text-[84px] font-serif font-black leading-none text-ink group-hover:text-blue-primary transition-colors mb-4 italic tracking-tighter">
+                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-blue-primary/40 mb-2">Now Calling</p>
+                      <div className="text-6xl md:text-[84px] font-serif font-black leading-none text-ink group-hover:text-blue-primary transition-colors mb-4 italic tracking-tighter">
                         {activeSession.token}
                       </div>
-                      <div className="inline-block bg-blue-primary/5 text-blue-primary px-5 py-2 rounded-2xl text-xs font-bold border border-blue-primary/10">
+                      <div className="inline-block bg-blue-primary/5 text-blue-primary px-4 md:px-5 py-2 rounded-2xl text-[11px] md:text-xs font-bold border border-blue-primary/10 truncate max-w-full">
                         {activeSession.patientName}
                       </div>
-                      <div className="mt-6 flex items-center justify-center gap-3 text-[11px] font-bold text-muted-text/60 uppercase tracking-widest">
+                      <div className="mt-4 md:mt-6 flex items-center justify-center gap-2 md:gap-3 text-[10px] md:text-[11px] font-bold text-muted-text/60 uppercase tracking-widest">
                         <span>{activeSession.label}</span>
                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                         <span>Starts {activeSession.start}</span>
                       </div>
                     </div>
                   ) : (
-                    <div className="py-10 opacity-40">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-text mb-4">Current Appointment</p>
-                      <div className="text-4xl font-serif italic mb-4">Standby</div>
-                      <p className="text-[11px] font-medium text-muted-text px-4 leading-relaxed">System will update when active consultation begins.</p>
+                    <div className="py-8 md:py-10 opacity-40">
+                      <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-muted-text mb-3 md:mb-4">Current Appointment</p>
+                      <div className="text-3xl md:text-4xl font-serif italic mb-3 md:mb-4">Standby</div>
+                      <p className="text-[10px] md:text-[11px] font-medium text-muted-text px-4 leading-relaxed">System will update when sessions begin.</p>
                     </div>
                   )}
                 </div>
@@ -201,9 +201,9 @@ export default function StatusBoard() {
           })}
         </div>
         
-        <div className="mt-16 p-8 rounded-[32px] bg-ink text-white text-center animate-fade-in shadow-2xl shadow-ink/10">
-           <p className="text-[13px] md:text-base font-medium text-white/70 max-w-2xl mx-auto leading-relaxed">
-             The board refreshes every 5 seconds. To ensure a smooth experience, please arrive at the clinic <span className="text-blue-400 font-bold">10 minutes before</span> your appointment is expected to be called.
+        <div className="mt-12 md:mt-16 p-6 md:p-8 rounded-3xl md:rounded-[32px] bg-ink text-white text-center animate-fade-in shadow-2xl shadow-ink/10">
+           <p className="text-xs md:text-base font-medium text-white/70 max-w-2xl mx-auto leading-relaxed">
+             The board refreshes every 5 seconds. To ensure a smooth experience, please arrive at the clinic <span className="text-blue-400 font-bold">10 minutes before</span> your appointment is expected.
            </p>
         </div>
       </main>

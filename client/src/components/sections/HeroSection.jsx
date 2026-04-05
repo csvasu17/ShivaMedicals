@@ -12,7 +12,7 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
         />
         {/* Advanced overlay for depth and readability */}
         <div className="absolute inset-0 bg-transparent backdrop-blur-[1px]"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#F4F8FB] via-[#F4F8FB]/80 to-transparent md:w-[70%] lg:w-[60%]"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#F4F8FB] via-[#F4F8FB]/90 sm:via-[#F4F8FB]/80 to-transparent md:w-[70%] lg:w-[60%]"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-[#EAF2F8] via-transparent to-transparent h-1/3 bottom-0"></div>
       </div>
 
@@ -25,7 +25,7 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           </div>
 
           {/* Headline */}
-          <h1 className="sec-title animate-slide-up">
+          <h1 className="text-4xl md:text-6xl lg:text-8xl font-serif font-medium leading-[1.1] tracking-tight mb-6 animate-slide-up">
             Clinical <span className="text-[#438a4d] relative inline-block">
               Precision
               <svg className="absolute -bottom-2 left-0 w-full h-3 text-[#438a4d]/20" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -41,46 +41,46 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           </p>
 
           {/* Action Row */}
-          <div className="flex flex-wrap items-center gap-6 animate-slide-up stagger-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 md:gap-6 animate-slide-up stagger-2">
             <button
               onClick={() => setIsBookingModalOpen(true)}
-              className="btn-premium group"
+              className="btn-premium group flex justify-center w-full sm:w-auto"
             >
               <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
               Book Appointment
-              <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" strokeWidth="0" /><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
             <button 
               onClick={() => { window.location.href = '/status'; }}
-              className="px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest text-ink hover:bg-white bg-white/80 border border-white shadow-sm backdrop-blur-md transition-all transform active:scale-95 flex items-center gap-3"
+              className="px-8 md:px-10 h-14 rounded-2xl text-[13px] md:text-[14px] font-bold uppercase tracking-widest text-ink hover:bg-white bg-white/80 border border-white shadow-sm backdrop-blur-md transition-all transform active:scale-95 flex items-center justify-center gap-3 w-full sm:w-auto"
             >
-              View Live Wait Time
+              View Live Board
             </button>
           </div>
 
           {/* Floating Stats Quick-bar */}
-          <div className="mt-20 flex flex-wrap items-center gap-12 border-t border-slate-200/50 pt-10 animate-fade-in stagger-3">
+          <div className="mt-12 md:mt-20 flex flex-wrap items-center justify-center sm:justify-start gap-8 md:gap-12 border-t border-slate-200/50 pt-8 md:pt-10 animate-fade-in stagger-3">
              <div className="flex items-center gap-3">
-               <div className="flex">
+               <div className="flex scale-90 md:scale-100">
                  {[1,2,3,4,5].map(i => (
-                   <svg key={i} className="text-amber-400" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                   <svg key={i} className="text-amber-400" width="16" height="16" md:width="18" md:height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                  ))}
                </div>
-               <span className="font-bold text-ink">4.8 Rating</span>
+               <span className="font-bold text-ink text-sm md:text-base">4.8 Rating</span>
              </div>
              <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
              <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-blue-primary/10 flex items-center justify-center text-blue-primary">
-                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 14l-7 7-7-7m14-8l-7 7-7-7"/></svg>
+               <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-blue-primary/10 flex items-center justify-center text-blue-primary transition-transform hover:scale-110">
+                 <svg width="18" height="18" md:width="20" md:height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 14l-7 7-7-7m14-8l-7 7-7-7"/></svg>
                </div>
-               <span className="font-bold text-ink">10+ Specialists</span>
+               <span className="font-bold text-ink text-sm md:text-base">10+ Specialists</span>
              </div>
              <div className="h-6 w-px bg-slate-200 hidden md:block"></div>
              <div className="flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-500">
-                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+               <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-500 transition-transform hover:scale-110">
+                 <svg width="18" height="18" md:width="20" md:height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
                </div>
-               <span className="font-bold text-ink">5000+ Happy Patients</span>
+               <span className="font-bold text-ink text-sm md:text-base">5000+ Happy Patients</span>
              </div>
           </div>
         </div>

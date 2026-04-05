@@ -27,47 +27,47 @@ const AdminOverview = ({ user }) => {
   ];
 
   return (
-    <div className="animate-fade-in space-y-10">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+    <div className="animate-fade-in space-y-6 md:space-y-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-4">
          <div>
-            <h2 className="text-3xl font-serif font-medium text-ink tracking-tight mb-1">Performance Overview</h2>
-            <p className="text-muted-text text-sm">Real-time analytics and clinic activity logs.</p>
+            <h2 className="text-2xl md:text-3xl font-serif font-medium text-ink tracking-tight mb-1">Performance Overview</h2>
+            <p className="text-muted-text text-[13px] md:text-sm">Real-time analytics and clinic activity logs.</p>
          </div>
-         <button className="bg-white border text-ink h-11 px-6 rounded-xl flex items-center gap-2 font-bold text-[13px] shadow-sm hover:border-blue-primary/30 transition-all">
+         <button className="bg-white border text-ink h-11 px-6 rounded-xl flex items-center justify-center gap-2 font-bold text-[13px] shadow-sm hover:border-blue-primary/30 transition-all self-start md:self-auto">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 17v-2a4 4 0 014-4h5M20 20l-3-3m0 0l-3 3m3-3V4"/></svg>
             Export data
          </button>
       </div>
 
       {/* TREND SECTION MOCK */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-         <div className="lg:col-span-2 bg-ink rounded-[40px] p-10 relative overflow-hidden shadow-2xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+         <div className="lg:col-span-2 bg-ink rounded-3xl md:rounded-[40px] p-6 md:p-10 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-[40%] h-[120%] bg-blue-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
-            <div className="flex items-center justify-between mb-12">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-12 gap-4">
                <div>
-                  <h3 className="text-2xl font-serif font-medium text-white mb-1">Queue Traffic</h3>
-                  <p className="text-white/40 text-sm">Peak hours during the morning session.</p>
+                  <h3 className="text-xl md:text-2xl font-serif font-medium text-white mb-1">Queue Traffic</h3>
+                  <p className="text-white/40 text-xs md:text-sm">Peak hours during the morning session.</p>
                </div>
                <div className="flex gap-2">
-                  <div className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[11px] font-bold text-white/60 tracking-widest uppercase">Weekly view</div>
+                  <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[11px] font-bold text-white/60 tracking-widest uppercase">Weekly view</div>
                </div>
             </div>
             
-            <div className="h-64 flex items-end justify-between gap-4">
+            <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4">
                {[40, 65, 30, 85, 55, 90, 75].map((h, i) => (
                   <div key={i} className="flex-1 flex flex-col items-center group">
-                     <div className="w-full relative bg-white/5 rounded-t-xl overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${h}%` }}>
+                     <div className="w-full relative bg-white/5 rounded-t-lg md:rounded-t-xl overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${h}%` }}>
                         <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-1000 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*100}ms` }}></div>
                      </div>
-                     <p className="mt-4 text-[10px] font-black text-white/30 uppercase tracking-widest">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</p>
+                     <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-widest">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</p>
                   </div>
                ))}
             </div>
          </div>
 
-         <div className="p-card p-10">
-            <h3 className="text-2xl font-serif font-medium text-ink mb-10">Recent Activity</h3>
-            <div className="space-y-8">
+         <div className="p-card p-6 md:p-10">
+            <h3 className="text-xl md:text-2xl font-serif font-medium text-ink mb-6 md:mb-10">Recent Activity</h3>
+            <div className="space-y-6 md:space-y-8">
                {[
                  { t: "New admin user added", time: "2h ago", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
                  { t: "Dr. Sarah changed evening slot", time: "4h ago", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" },

@@ -44,18 +44,18 @@ const services = [
 
 const ServicesSection = ({ setIsBookingModalOpen }) => {
   return (
-    <section className="px-6 md:px-12 lg:px-24 py-32 bg-transparent relative overflow-hidden" id="services">
+    <section className="px-4 md:px-12 lg:px-24 py-16 md:py-32 bg-transparent relative overflow-hidden" id="services">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-24 animate-slide-up">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-ink mb-6">Our Medical Services</h2>
-          <p className="text-muted-text text-xl max-w-2xl mx-auto font-medium opacity-80">
+        <div className="text-center mb-12 md:mb-24 animate-slide-up">
+          <h2 className="text-3xl md:text-5xl lg:text-7xl font-serif font-medium leading-tight md:leading-[1.1] tracking-tight mb-4 md:mb-6 text-ink">Our Medical Services</h2>
+          <p className="text-muted-text text-lg md:text-xl max-w-2xl mx-auto font-medium opacity-80">
             Comprehensive Care Tailored to Your Needs
           </p>
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-16 md:mb-24">
           {services.map((s, idx) => (
             <div
               key={idx}
@@ -102,16 +102,16 @@ const ServicesSection = ({ setIsBookingModalOpen }) => {
         </div>
 
         {/* CTA Row */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-10 p-12 bg-slate-50/50 backdrop-blur-md rounded-[48px] border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] animate-fade-in relative z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-10 p-8 md:p-12 bg-slate-50/50 backdrop-blur-md rounded-3xl md:rounded-[48px] border border-slate-100 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.05)] animate-fade-in relative z-10">
           <div className="max-w-xl text-center md:text-left">
-            <h3 className="text-2xl md:text-3xl font-serif font-bold text-ink mb-2">Need a specialized consultation?</h3>
-            <p className="text-muted-text">Our specialists are available for both in-person and digital consultations.</p>
+            <h3 className="text-xl md:text-3xl font-serif font-bold text-ink mb-2">Need a special consultation?</h3>
+            <p className="text-muted-text text-sm md:text-base">Our specialists are available for both in-person and digital consultations.</p>
           </div>
           <button
             onClick={() => setIsBookingModalOpen(true)}
-            className="btn-premium whitespace-nowrap"
+            className="btn-premium whitespace-nowrap w-full md:w-auto flex justify-center"
           >
-            Book a consultation
+            Book Now
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
         </div>

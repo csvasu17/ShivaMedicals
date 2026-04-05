@@ -242,36 +242,37 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
 
   return (
     <div className="bg-transparent font-sans min-h-[calc(100vh-72px)]">
-      <main className="w-full max-w-7xl mx-auto px-6 lg:px-12 pt-[88px] pb-14 animate-fade-in relative z-10">
+      <main className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-12 pt-[88px] pb-14 animate-fade-in relative z-10">
         
         {/* LOGOUT BUTTON */}
-        <div className="absolute top-8 right-6 lg:right-12">
+        <div className="flex justify-end mb-6">
            <button 
              onClick={onLogout}
              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-xl text-ink font-bold text-[11px] uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-              Sign out
+              <span className="hidden sm:inline">Sign out</span>
+              <span className="sm:hidden">Exit</span>
            </button>
         </div>
 
         {/* PREMIUM STATS GRID */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5 mb-14">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5 mb-14">
            {cards.filter(c => c.show !== false).map((c, i) => (
-             <div key={i} className="p-card p-6 group transition-all hover:scale-[1.02]">
+             <div key={i} className="p-card p-5 md:p-6 group transition-all hover:scale-[1.02]">
                 <div className="flex justify-between items-start mb-4">
-                   <p className="text-3xl font-serif font-medium text-ink leading-tight">{c.val}</p>
-                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${c.bg} ${c.color}`}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={c.icon}/></svg>
+                   <p className="text-2xl md:text-3xl font-serif font-medium text-ink leading-tight">{c.val}</p>
+                   <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${c.bg} ${c.color}`}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={c.icon}/></svg>
                    </div>
                 </div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-text/60">{c.label}</p>
+                <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.1em] text-muted-text/60">{c.label}</p>
              </div>
            ))}
         </div>
 
         {/* Tab Toggle - Premium Navigation */}
-        <div className="flex items-center gap-6 border-b border-slate-200 pb-px mb-12">
+        <div className="flex items-center gap-2 md:gap-6 border-b border-slate-200 pb-px mb-12 overflow-x-auto scrollbar-hide flex-nowrap">
             {[
               { id: 'overview', label: 'Overview' },
               { id: 'patients', label: 'Patients' },
@@ -283,7 +284,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
               <button 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)} 
-                className={`h-12 px-6 text-[13px] font-bold uppercase tracking-widest transition-all relative ${
+                className={`h-12 px-4 md:px-6 text-[11px] md:text-[13px] font-bold uppercase tracking-widest transition-all relative flex-shrink-0 ${
                   activeTab === tab.id ? 'text-blue-primary' : 'text-muted-text hover:text-ink'
                 }`}
               >

@@ -5,10 +5,7 @@
   "private": true,
   "author": "Shiva Medicals, Aranthangi",
   "license": "ISC",
-  "workspaces": [
-    "client",
-    "server"
-  ],
+
   "scripts": {
     "dev":          "node dev.js",
     "start":        "node dev.js",
