@@ -135,7 +135,7 @@ export default function StatusBoard() {
             const activeSession = doctorQueue?.activeSession;
 
             return (
-              <article key={doc.id} className="p-card p-8 group animate-slide-up" style={{ animationDelay: `${idx * 150}ms` }}>
+              <article key={doc.id} className="p-card p-6 sm:p-8 group animate-slide-up" style={{ animationDelay: `${idx * 150}ms` }}>
                 <div className="mb-8 flex items-start justify-between">
                   <div>
                     <span className="inline-block bg-slate-100 text-muted-text px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-4">
@@ -153,7 +153,7 @@ export default function StatusBoard() {
                   </div>
                 </div>
 
-                <div className="rounded-3xl md:rounded-[32px] bg-slate-50 border border-slate-100 p-6 md:p-8 text-center mb-8 transition-all group-hover:bg-white group-hover:shadow-inner group-hover:border-blue-primary/5">
+                <div className="rounded-3xl md:rounded-[32px] bg-slate-50 border border-slate-100 p-5 sm:p-6 md:p-8 text-center mb-8 transition-all group-hover:bg-white group-hover:shadow-inner group-hover:border-blue-primary/5">
                   {activeSession ? (
                     <div className="animate-fade-in text-center">
                       <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-blue-primary/40 mb-2">Now Calling</p>

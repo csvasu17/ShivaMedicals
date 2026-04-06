@@ -464,29 +464,31 @@ const BookToken = ({ onClose }) => {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex justify-between items-start gap-4 pr-8 sm:pr-12 md:pr-14">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pr-8 sm:pr-12 md:pr-14">
         <div>
-          <h2 className="font-serif text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
-          <p className="text-muted-text text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
+          <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
+          <p className="text-muted-text text-xs sm:text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
         </div>
         <button 
           type="button" 
           onClick={() => setCancelMode(true)}
-          className="px-4 py-2 text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-600 hover:bg-red-100 bg-red-50/80 rounded-xl transition-colors border border-red-500/20 shadow-sm outline-none whitespace-nowrap mt-1"
+          className="px-4 py-2 text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-600 hover:bg-red-100 bg-red-50/80 rounded-xl transition-colors border border-red-500/20 shadow-sm outline-none whitespace-nowrap mt-1 self-start sm:self-center"
         >
           CANCEL APPOINTMENT
         </button>
       </div>
 
       {error && (
-        <div className="rounded-2xl bg-red-50 border border-red-100/50 p-3.5 text-[13px] text-red-600 font-medium flex items-center gap-3 animate-fade-in">
-          <svg className="shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          {error}
+        <div className="rounded-2xl bg-red-50 border border-red-100/50 p-4 text-[13px] text-red-600 font-medium flex items-center gap-3 animate-fade-in mb-2 shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <span className="flex-1 text-left">{error}</span>
         </div>
       )}
 
       {/* Main Form Fields */}
-      <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
         {/* Patient Name */}
         <div className="flex flex-col">
           <label className="form-label-premium">Patient Name *</label>
@@ -515,8 +517,7 @@ const BookToken = ({ onClose }) => {
           />
         </div>
 
-        {/* Email Address */}
-        <div className="flex flex-col col-span-2">
+        <div className="flex flex-col lg:col-span-2">
           <label className="form-label-premium">Email Address (Optional)</label>
           <input 
             type="email" 
@@ -565,7 +566,7 @@ const BookToken = ({ onClose }) => {
             Checking availability…
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => (
               <button 
                 key={s.id} 
