@@ -18,7 +18,13 @@ function App() {
   const [route, setRoute] = useState('home'); 
   const [user, setUser] = useState(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingInitialDoctorId, setBookingInitialDoctorId] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+
+  const openBookingModal = (doctorId = null) => {
+    setBookingInitialDoctorId(doctorId);
+    setIsBookingModalOpen(true);
+  };
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -92,6 +98,7 @@ function App() {
       <BookingModal 
         isOpen={isBookingModalOpen} 
         onClose={() => setIsBookingModalOpen(false)} 
+        initialDoctorId={bookingInitialDoctorId}
       />
 
       <LoginModal 
@@ -105,7 +112,7 @@ function App() {
         setRoute={setRoute} 
         user={user} 
         setIsLoginModalOpen={setIsLoginModalOpen} 
-        setIsBookingModalOpen={setIsBookingModalOpen} 
+        setIsBookingModalOpen={openBookingModal} 
         isScrolled={isScrolled || route === 'admin' || route === 'doctors' || route === 'features' || route === 'status' || route === 'contact'} 
         currentRoute={route}
         onLogout={logout}
@@ -114,24 +121,24 @@ function App() {
       <main className="flex-1 transition-all duration-500">
         {route === 'home' && (
           <div className="animate-fade-in">
-            <HeroSection setIsBookingModalOpen={setIsBookingModalOpen} />
-            <ServicesSection setIsBookingModalOpen={setIsBookingModalOpen} />
+            <HeroSection setIsBookingModalOpen={openBookingModal} />
+            <ServicesSection setIsBookingModalOpen={openBookingModal} />
             <TestimonialsSection />
-            <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+            <FinalCTA setIsBookingModalOpen={openBookingModal} />
           </div>
         )}
 
         {route === 'doctors' && (
           <div className="animate-fade-in">
-            <DoctorsSection setIsBookingModalOpen={setIsBookingModalOpen} />
-            <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+            <DoctorsSection setIsBookingModalOpen={openBookingModal} />
+            <FinalCTA setIsBookingModalOpen={openBookingModal} />
           </div>
         )}
 
         {route === 'features' && (
           <div className="animate-fade-in">
             <FeaturesSection />
-            <FinalCTA setIsBookingModalOpen={setIsBookingModalOpen} />
+            <FinalCTA setIsBookingModalOpen={openBookingModal} />
           </div>
         )}
 
@@ -152,7 +159,7 @@ function App() {
             <Dashboard 
               user={user} 
               setRoute={setRoute} 
-              onAddPatient={() => setIsBookingModalOpen(true)}
+              onAddPatient={() => openBookingModal()}
               onLogout={logout}
             />
           </div>

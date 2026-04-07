@@ -127,8 +127,11 @@ const initialFormState = {
   doctorId:'', sessionId:'', date:'', reasonForVisit:'',
 };
 
-const BookToken = ({ onClose }) => {
-  const [form, setForm] = useState(initialFormState);
+const BookToken = ({ onClose, initialDoctorId }) => {
+  const [form, setForm] = useState({
+    ...initialFormState,
+    doctorId: initialDoctorId || '',
+  });
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);

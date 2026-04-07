@@ -108,14 +108,6 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
     setEditingDoctor(null);
   };
 
-  const cards = [
-    { label: "Total Patients", val: stats.totalPatients, icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 7a4 4 0 11-8 0 4 4 0 018 0", color: "text-blue-primary", bg: "bg-blue-primary/5" },
-    { label: "Waiting", val: stats.waiting, icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-orange-500", bg: "bg-orange-50" },
-    { label: "Present", val: stats.present, icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z", color: "text-blue-mid", bg: "bg-blue-mid/5" },
-    { label: "Served", val: stats.served, icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z", color: "text-teal-primary", bg: "bg-teal-primary/5" },
-    { label: "Absent", val: stats.absent, icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z M3 20a6 6 0 0112 0v1H3v-1z", color: "text-red-500", bg: "bg-red-50" },
-    { label: "Staff Members", val: stats.staffMembers, icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z M3 20a6 6 0 0112 0v1H3v-1z", color: "text-purple-600", bg: "bg-purple-50", show: user?.role === 'admin' || user?.role === 'superadmin' },
-  ];
 
   const renderContent = () => {
     switch (activeTab) {
@@ -244,31 +236,26 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
     <div className="bg-transparent font-sans min-h-[calc(100vh-72px)]">
       <main className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-12 pt-[88px] pb-14 animate-fade-in relative z-10">
         
-        {/* LOGOUT BUTTON */}
-        <div className="flex justify-end mb-6">
+        {/* DYNAMIC HEADER SECTION */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+           <div>
+              <h1 className="text-4xl md:text-5xl font-serif font-medium text-ink tracking-tight">
+                 {(user?.role === 'admin' || user?.role === 'superadmin') ? 'Admin Dashboard' : 'Staff Board'}
+              </h1>
+              <p className="mt-3 text-muted-text/70 font-medium max-w-xl">
+                 {(user?.role === 'admin' || user?.role === 'superadmin') 
+                   ? 'Manage your clinical operations, monitor staff performance, and oversee patient flow in real-time.' 
+                   : 'Access patient records, manage the active consultation queue, and coordinate daily clinic visits.'}
+              </p>
+           </div>
+           
            <button 
              onClick={onLogout}
-             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-xl text-ink font-bold text-[11px] uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
+             className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-ink font-bold text-[13px] uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-95 group self-start md:self-center"
            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-              <span className="hidden sm:inline">Sign out</span>
-              <span className="sm:hidden">Exit</span>
+              <svg className="transition-transform group-hover:-translate-x-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+              Sign out
            </button>
-        </div>
-
-        {/* PREMIUM STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5 mb-14">
-           {cards.filter(c => c.show !== false).map((c, i) => (
-             <div key={i} className="p-card p-5 md:p-6 group transition-all hover:scale-[1.02]">
-                <div className="flex justify-between items-start mb-4">
-                   <p className="text-2xl md:text-3xl font-serif font-medium text-ink leading-tight">{c.val}</p>
-                   <div className={`w-8 h-8 md:w-10 md:h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 ${c.bg} ${c.color}`}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={c.icon}/></svg>
-                   </div>
-                </div>
-                <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.1em] text-muted-text/60">{c.label}</p>
-             </div>
-           ))}
         </div>
 
         {/* Tab Toggle - Premium Navigation */}

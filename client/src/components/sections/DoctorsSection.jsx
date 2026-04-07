@@ -41,7 +41,7 @@ const DoctorsSection = ({ setIsBookingModalOpen }) => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsBookingModalOpen(true)}
+                  onClick={() => setIsBookingModalOpen('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5')}
                   className="bg-ink hover:bg-blue-primary text-white h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl font-bold text-[11px] md:text-[13px] uppercase tracking-widest transition-all transform active:scale-95 shadow-xl shadow-ink/10"
                 >
                   Book Now
@@ -72,7 +72,7 @@ const DoctorsSection = ({ setIsBookingModalOpen }) => {
                   </div>
                 </div>
                 <button 
-                  onClick={() => setIsBookingModalOpen(true)}
+                  onClick={() => setIsBookingModalOpen('70fae1bd-1974-4b95-a8fa-7ca2acbf9368')}
                   className="bg-ink hover:bg-blue-primary text-white h-12 md:h-14 px-6 md:px-8 rounded-xl md:rounded-2xl font-bold text-[11px] md:text-[13px] uppercase tracking-widest transition-all transform active:scale-95 shadow-xl shadow-ink/10"
                 >
                   Book Now

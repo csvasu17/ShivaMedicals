@@ -75,7 +75,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
               onClick={() => { setIsBookingModalOpen(true); setIsMobileMenuOpen(false); }} 
               className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-4 md:px-5 h-[38px] md:h-[42px] rounded-full text-[11px] md:text-[13px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-lg shadow-teal-500/20 hover:shadow-teal-600/40 flex items-center gap-2 group whitespace-nowrap"
             >
-              <span className="hidden sm:inline">Book Token</span>
+              <span className="hidden sm:inline">Book Appointment</span>
               <span className="sm:hidden">Book</span>
               <svg className="group-hover:translate-x-1 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
