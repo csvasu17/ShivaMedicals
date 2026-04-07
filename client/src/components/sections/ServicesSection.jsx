@@ -84,7 +84,7 @@ const ServicesSection = ({ setIsBookingModalOpen }) => {
                   <div className={`w-14 h-14 rounded-[24px] ${s.bg} ${s.color} flex items-center justify-center mb-10 p-card-icon border border-white/50 backdrop-blur-md`}>
                     {s.icon}
                   </div>
-                  <h4 className="text-2xl font-serif font-bold text-ink mb-4 tracking-tight leading-tight p-card-title">{s.title}</h4>
+                  <h4 className="text-xl sm:text-2xl font-serif font-bold text-ink mb-4 tracking-tight leading-tight p-card-title">{s.title}</h4>
                   <p className="text-muted-text text-[15px] leading-relaxed mb-10 flex-grow font-medium opacity-80">
                     {s.desc}
                   </p>

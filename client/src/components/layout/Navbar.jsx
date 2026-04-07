@@ -4,9 +4,9 @@ import ClinicLogo from './ClinicLogo';
 const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, isScrolled, currentRoute, onLogout }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-[2000] flex items-center justify-between px-6 md:px-12 h-[72px] transition-all duration-500 ${
+    <nav className={`fixed top-0 left-0 right-0 z-[1000] flex items-center justify-between px-6 md:px-12 h-[72px] transition-all duration-500 ${
       isScrolled 
-        ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-sm' 
+        ? 'bg-white/95 backdrop-blur-xl border-b border-slate-200/50 shadow-md' 
         : 'bg-transparent'
     }`}>
       <div 
@@ -99,7 +99,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
 
       {/* MOBILE MENU OVERLAY */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-[72px] bg-white z-[1999] animate-fade-in xl:hidden">
+        <div className="fixed inset-0 top-[72px] bg-white z-[999] animate-fade-in xl:hidden overflow-y-auto pb-10">
           <div className="flex flex-col p-8 gap-6">
             {[
               { id: 'home', label: 'Home' },

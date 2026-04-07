@@ -25,10 +25,10 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           </div>
 
           {/* Headline */}
-          <h1 className="text-4xl md:text-6xl lg:text-8xl font-serif font-medium leading-[1.1] tracking-tight mb-6 animate-slide-up">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-serif font-medium leading-[1.1] tracking-tight mb-6 animate-slide-up">
             Clinical <span className="text-[#438a4d] relative inline-block">
               Precision
-              <svg className="absolute -bottom-2 left-0 w-full h-3 text-[#438a4d]/20" viewBox="0 0 100 10" preserveAspectRatio="none">
+              <svg className="absolute -bottom-1 sm:-bottom-2 left-0 w-full h-2 sm:h-3 text-[#438a4d]/20" viewBox="0 0 100 10" preserveAspectRatio="none">
                 <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
               </svg>
             </span><br />
@@ -59,7 +59,7 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           </div>
 
           {/* Floating Stats Quick-bar */}
-          <div className="mt-12 md:mt-20 flex flex-wrap items-center justify-center sm:justify-start gap-8 md:gap-12 border-t border-slate-200/50 pt-8 md:pt-10 animate-fade-in stagger-3">
+          <div className="mt-8 md:mt-20 flex flex-wrap items-center justify-center sm:justify-start gap-6 md:gap-12 border-t border-slate-200/50 pt-8 md:pt-10 animate-fade-in stagger-3">
              <div className="flex items-center gap-3">
                <div className="flex scale-90 md:scale-100">
                  {[1,2,3,4,5].map(i => (
