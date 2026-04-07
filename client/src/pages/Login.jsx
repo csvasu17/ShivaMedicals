@@ -27,22 +27,6 @@ export default function Login({ onLoginSuccess }) {
       localStorage.setItem('adminUser', JSON.stringify(data.user));
       onLoginSuccess(data.user);
     } catch (err) {
-      console.error('Login error:', err);
-      // Fallback to relative URL if localhost fails (useful for remote dev/mixed content)
-      if (API_URL.includes('localhost')) {
-         try {
-            const relRes = await fetch(`/api/admin/login`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password })
-            });
-            const relData = await relRes.json();
-            if (relRes.ok) {
-              localStorage.setItem('adminToken', relData.token);
-              localStorage.setItem('adminUser', JSON.stringify(relData.user));
-              onLoginSuccess(relData.user);
-              return;
-            }
-         } catch(e) {}
-      }
       setError(err.message === 'Failed to fetch' ? 'Connection failed. Please ensure the server is running.' : err.message);
     } finally {
       setLoading(false);

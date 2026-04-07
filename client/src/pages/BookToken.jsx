@@ -223,17 +223,6 @@ const BookToken = ({ onClose }) => {
         setError(data.message || data.error || 'Server rejected the booking. Try another token.');
       }
     } catch (err) {
-      console.error('Submit error:', err);
-      // Fallback relative fetch if localhost fails (helps with mixed content/remote dev)
-      if (API_URL.includes('localhost')) {
-         try {
-           const relRes = await fetch(`/api/bookings`, {
-             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form)
-           });
-           const relData = await relRes.json();
-           if (relRes.ok) { setSuccess(relData); return; }
-         } catch(e) {}
-      }
       setError('Connection failed. Ensure you are connected and try again.');
     } finally {
       setLoading(false);
