@@ -154,7 +154,7 @@
   }
 
   .form-label-premium {
-    @apply block text-[13px] font-bold text-ink mb-2 ml-1 uppercase tracking-wider;
+    @apply block text-[13px] font-bold text-ink mb-1 ml-1 uppercase tracking-wider;
   }
 
   .btn-dark {

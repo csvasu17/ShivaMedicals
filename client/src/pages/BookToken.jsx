@@ -452,18 +452,19 @@ const BookToken = ({ onClose }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pr-8 sm:pr-12 md:pr-14">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <div className="flex flex-row justify-between items-center gap-3 pr-8 sm:pr-12 md:pr-14 mb-1">
         <div>
-          <h2 className="font-serif text-2xl sm:text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
-          <p className="text-muted-text text-xs sm:text-sm mt-0.5 opacity-60 italic font-medium">Reserve your spot in minutes — hassle-free visit.</p>
+          <h2 className="font-serif text-xl sm:text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
+          <p className="text-muted-text text-[10px] sm:text-sm mt-0.5 opacity-60 italic font-medium hidden xs:block">Reserve your spot in minutes.</p>
         </div>
         <button 
           type="button" 
           onClick={() => setCancelMode(true)}
-          className="px-4 py-2 text-[10px] md:text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-600 hover:bg-red-100 bg-red-50/80 rounded-xl transition-colors border border-red-500/20 shadow-sm outline-none whitespace-nowrap mt-1 self-start sm:self-center"
+          className="px-3 py-1.5 text-[9px] sm:text-[11px] font-bold tracking-widest uppercase text-red-500 hover:text-red-600 hover:bg-red-100 bg-red-50/80 rounded-lg transition-colors border border-red-500/20 shadow-sm outline-none whitespace-nowrap"
         >
-          CANCEL APPOINTMENT
+          <span className="hidden sm:inline">CANCEL APPOINTMENT</span>
+          <span className="sm:hidden">CANCEL</span>
         </button>
       </div>
 
@@ -477,7 +478,7 @@ const BookToken = ({ onClose }) => {
       )}
 
       {/* Main Form Fields */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2">
         {/* Patient Name */}
         <div className="flex flex-col">
           <label className="form-label-premium">Patient Name *</label>
@@ -555,14 +556,14 @@ const BookToken = ({ onClose }) => {
             Checking availability…
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
             {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => (
               <button 
                 key={s.id} 
                 type="button" 
                 disabled={s.id === 'none'}
                 onClick={() => setForm(p => ({ ...p, sessionId: String(s.id) }))}
-                className={`flex flex-col items-start px-3 py-2 rounded-2xl border text-left transition-all duration-500 relative overflow-hidden group ${
+                className={`flex flex-col items-start px-3 py-1.5 rounded-xl border text-left transition-all duration-500 relative overflow-hidden group ${
                   form.sessionId === String(s.id)
                     ? 'bg-ink text-white border-ink shadow-2xl shadow-ink/10 scale-[1.01]'
                     : s.id === 'none' 
@@ -572,7 +573,7 @@ const BookToken = ({ onClose }) => {
               >
                 <span className="text-[11px] font-black uppercase tracking-[0.15em] mb-1">{s.session_type}</span>
                 {s.start_time && (
-                  <span className={`text-[10px] font-medium tracking-tight ${form.sessionId === String(s.id) ? 'text-white/40' : 'text-muted-text/60'}`}>
+                  <span className={`text-[9.5px] font-medium tracking-tight ${form.sessionId === String(s.id) ? 'text-white/40' : 'text-muted-text/60'}`}>
                     Slots: {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
                   </span>
                 )}
@@ -591,16 +592,16 @@ const BookToken = ({ onClose }) => {
           onChange={handleChange} 
           placeholder="Briefly describe your concern..." 
           rows="1"
-          className="input-premium py-2.5 resize-none h-[42px] focus:ring-teal-500"
+          className="input-premium py-2 resize-none h-[38px] focus:border-teal-500"
         />
       </div>
 
       {/* Footer CTA */}
-      <div className="flex flex-col items-center gap-2 mt-4 w-full">
+      <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <button 
           type="submit" 
           disabled={loading} 
-          className="w-full h-12 rounded-xl bg-[#00c389] text-white font-bold text-base shadow-lg shadow-[#00c389]/20 hover:opacity-90 hover:shadow-2xl hover:shadow-[#00c389]/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
+          className="w-full h-11 sm:h-12 rounded-xl bg-[#00c389] text-white font-bold text-base shadow-lg shadow-[#00c389]/20 hover:opacity-90 hover:shadow-2xl hover:shadow-[#00c389]/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
         >
           {loading ? (
             <div className="flex items-center gap-3 justify-center">

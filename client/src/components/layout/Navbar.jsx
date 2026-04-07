@@ -99,7 +99,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
 
       {/* MOBILE MENU OVERLAY */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-[72px] bg-white z-[999] animate-fade-in xl:hidden overflow-y-auto pb-10">
+        <div className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-[1001] xl:hidden overflow-y-auto pb-10 shadow-2xl">
           <div className="flex flex-col p-8 gap-6">
             {[
               { id: 'home', label: 'Home' },
