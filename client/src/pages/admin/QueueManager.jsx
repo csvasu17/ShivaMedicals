@@ -246,10 +246,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
               <tbody className="divide-y divide-slate-50/50">
                 {displayedTokens.map((t, idx) => {
                   const isActive = t.status === 'called';
-                  const initials = t.patient_name ? t.patient_name.trim().split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'PN';
-                  const avatarColors = ['bg-blue-50 text-blue-600', 'bg-orange-50 text-orange-600', 'bg-teal-50 text-teal-600', 'bg-pink-50 text-pink-600', 'bg-purple-50 text-purple-600'];
-                  const colorClass = avatarColors[idx % avatarColors.length];
-
                   return (
                     <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/30' : ''}`}>
                       <td className="pl-6 md:pl-12 pr-4 py-4 md:py-6">
@@ -258,14 +254,9 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          </div>
                       </td>
                       <td className="px-4 md:px-6 py-4 md:py-6 transition-all border-b border-transparent">
-                         <div className="flex items-center gap-3 md:gap-5">
-                            <div className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-[11px] md:text-[13px] tracking-tight shrink-0 shadow-sm ${colorClass}`}>
-                               {initials}
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                               <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
-                               <div className="hidden sm:block text-[11px] md:text-[12px] font-medium text-muted-text/30 mt-0.5 truncate">{t.patient_email || 'No email provided'}</div>
-                            </div>
+                         <div className="flex flex-col min-w-0">
+                            <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
+                            <div className="hidden sm:block text-[11px] md:text-[12px] font-medium text-muted-text/30 mt-0.5 truncate">{t.patient_email || 'No email provided'}</div>
                          </div>
                       </td>
                       <td className="hidden lg:table-cell px-6 py-6">

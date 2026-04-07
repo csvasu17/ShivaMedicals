@@ -237,25 +237,15 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
       <main className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-12 pt-[88px] pb-14 animate-fade-in relative z-10">
         
         {/* DYNAMIC HEADER SECTION */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-           <div>
-              <h1 className="text-4xl md:text-5xl font-serif font-medium text-ink tracking-tight">
-                 {(user?.role === 'admin' || user?.role === 'superadmin') ? 'Admin Dashboard' : 'Staff Board'}
-              </h1>
-              <p className="mt-3 text-muted-text/70 font-medium max-w-xl">
-                 {(user?.role === 'admin' || user?.role === 'superadmin') 
-                   ? 'Manage your clinical operations, monitor staff performance, and oversee patient flow in real-time.' 
-                   : 'Access patient records, manage the active consultation queue, and coordinate daily clinic visits.'}
-              </p>
-           </div>
-           
-           <button 
-             onClick={onLogout}
-             className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-100 rounded-2xl text-ink font-bold text-[13px] uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-95 group self-start md:self-center"
-           >
-              <svg className="transition-transform group-hover:-translate-x-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-              Sign out
-           </button>
+        <div className="mb-12">
+           <h1 className="text-4xl md:text-5xl font-serif font-medium text-ink tracking-tight">
+              {(user?.role === 'admin' || user?.role === 'superadmin') ? 'Admin Dashboard' : 'Staff Board'}
+           </h1>
+           <p className="mt-3 text-muted-text/70 font-medium max-w-xl">
+              {(user?.role === 'admin' || user?.role === 'superadmin') 
+                ? 'Manage your clinical operations, monitor staff performance, and oversee patient flow in real-time.' 
+                : 'Access patient records, manage the active consultation queue, and coordinate daily clinic visits.'}
+           </p>
         </div>
 
         {/* Tab Toggle - Premium Navigation */}
