@@ -170,11 +170,18 @@ const BookToken = ({ onClose, initialDoctorId }) => {
       fetch(`${API_URL}/api/sessions/${form.doctorId}`)
         .then(r => r.json())
         .then(data => {
-          setSessions(data);
-          // Auto-select if solo session
-          if (data.length === 1) setForm(p => ({ ...p, sessionId: String(data[0].id) }));
+          if (Array.isArray(data)) {
+            setSessions(data);
+            // Auto-select if solo session
+            if (data.length === 1) setForm(p => ({ ...p, sessionId: String(data[0].id) }));
+          } else {
+            setSessions([]);
+          }
         })
-        .catch((e) => console.error('Fetch sessions error:', e));
+        .catch((e) => {
+          console.error('Fetch sessions error:', e);
+          setSessions([]);
+        });
     } else {
       setSessions([]);
       setForm(p => ({ ...p, sessionId: '' }));
@@ -198,7 +205,7 @@ const BookToken = ({ onClose, initialDoctorId }) => {
   , [doctors, form.doctorId]);
 
   const selectedSession = useMemo(() => 
-    sessions.find(s => String(s.id) === String(form.sessionId))
+    Array.isArray(sessions) ? sessions.find(s => String(s.id) === String(form.sessionId)) : null
   , [sessions, form.sessionId]);
 
   const handleSubmit = async (e) => {

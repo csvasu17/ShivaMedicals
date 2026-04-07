@@ -72,7 +72,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
                <svg className="group-hover:rotate-12 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </button>
             <button 
-              onClick={() => { setIsBookingModalOpen(true); setIsMobileMenuOpen(false); }} 
+              onClick={() => { setIsBookingModalOpen(); setIsMobileMenuOpen(false); }} 
               className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-4 md:px-5 h-[38px] md:h-[42px] rounded-full text-[11px] md:text-[13px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-lg shadow-teal-500/20 hover:shadow-teal-600/40 flex items-center gap-2 group whitespace-nowrap"
             >
               <span className="hidden sm:inline">Book Appointment</span>
@@ -82,25 +82,32 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
           </>
         )}
 
-        {/* MOBILE MENU TOGGLE */}
-        {!user && (
-          <button 
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="xl:hidden w-10 h-10 flex items-center justify-center text-ink"
-          >
-            {isMobileMenuOpen ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 8h16M4 16h16"/></svg>
-            )}
-          </button>
-        )}
+      {/* MOBILE MENU TOGGLE BUTTON */}
+      {!user && (
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="xl:hidden w-10 h-10 flex items-center justify-center text-ink rounded-lg hover:bg-slate-50 transition-colors z-[2100]"
+          aria-label="Toggle Menu"
+        >
+          {isMobileMenuOpen ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+          )}
+        </button>
+      )}
       </div>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* MOBILE MENU OVERLAY - FULL SCREEN COVERAGE */}
       {isMobileMenuOpen && (
-        <div className="fixed top-[72px] left-0 right-0 bottom-0 bg-white z-[1001] xl:hidden overflow-y-auto pb-10 shadow-2xl">
-          <div className="flex flex-col p-8 gap-6">
+        <div 
+          className="fixed inset-0 bg-white z-[2000] xl:hidden overflow-hidden flex flex-col"
+          style={{ top: '0', left: '0', height: '100vh', width: '100vw' }}
+        >
+          {/* Menu Top padding (matching navbar) */}
+          <div className="h-[72px] flex-shrink-0 border-b border-slate-50"></div>
+          
+          <div className="flex-1 overflow-y-auto px-8 py-10 flex flex-col gap-10">
             {[
               { id: 'home', label: 'Home' },
               { id: 'doctors', label: 'Doctors' },
@@ -108,7 +115,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
               { id: 'status', label: 'Live Board' },
               { id: 'contact', label: 'Contact' },
               { id: 'login', label: 'Staff Login', action: () => setIsLoginModalOpen(true) },
-            ].map(item => (
+            ].map((item) => (
               <button 
                 key={item.id}
                 onClick={() => {
@@ -121,7 +128,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
                   }
                   setIsMobileMenuOpen(false);
                 }} 
-                className={`text-left text-2xl font-serif font-medium tracking-tight ${
+                className={`text-left text-4xl font-serif font-bold tracking-tight transition-colors duration-200 ${
                   currentRoute === item.id ? 'text-blue-primary' : 'text-ink'
                 }`}
               >

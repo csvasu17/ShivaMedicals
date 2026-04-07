@@ -184,19 +184,19 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       {/* NOW SERVING BAR */}
       <div className="mb-6 md:mb-10">
         {nowServing ? (
-          <div className="bg-emerald-50/50 rounded-2xl md:rounded-[28px] border border-emerald-100 p-4 md:p-5 flex flex-col sm:flex-row items-center sm:justify-between gap-4 shadow-sm shadow-emerald-500/5">
+          <div className="bg-blue-50 rounded-2xl md:rounded-[28px] border border-blue-200 p-4 md:p-5 flex flex-col sm:flex-row items-center sm:justify-between gap-4 shadow-sm shadow-blue-500/5">
             <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
-              <div className="w-12 h-12 md:w-14 md:h-14 bg-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center font-bold text-xl md:text-2xl text-white shadow-lg shadow-emerald-600/20 flex-shrink-0">
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center font-bold text-xl md:text-2xl text-white shadow-lg shadow-blue-600/20 flex-shrink-0">
                 #{nowServing.token_number}
               </div>
               <div className="min-w-0">
-                <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Now Serving</p>
+                <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Now Serving</p>
                 <h3 className="text-xl md:text-3xl font-serif font-medium text-ink leading-none truncate">{nowServing.patient_name}</h3>
               </div>
             </div>
             <button 
               onClick={() => handleAction(nowServing.id, 'complete')}
-              className="bg-white border border-emerald-500 text-emerald-600 hover:bg-emerald-600 hover:text-white font-black h-11 md:h-12 w-full sm:w-auto px-6 md:px-8 rounded-xl text-[10px] md:text-[11px] uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-sm"
+              className="bg-green-600 text-white hover:bg-green-700 font-bold h-11 md:h-12 w-full sm:w-auto px-10 md:px-12 rounded-xl text-[12px] md:text-[13px] uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-md"
             >
               Finish Case
             </button>
@@ -232,9 +232,10 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
          </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            {/* DESKTOP VIEW */}
+            <table className="w-full text-left border-collapse hidden md:table">
               <thead>
-                <tr className="border-b border-slate-50 text-[10px] md:text-[11px] uppercase font-bold tracking-widest text-ink/30">
+                <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
                   <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
                   <th className="px-4 md:px-6 py-6">Patient Name</th>
                   <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
@@ -247,7 +248,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 {displayedTokens.map((t, idx) => {
                   const isActive = t.status === 'called';
                   return (
-                    <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/30' : ''}`}>
+                    <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/40' : ''}`}>
                       <td className="pl-6 md:pl-12 pr-4 py-4 md:py-6">
                          <div className="text-[15px] md:text-[17px] font-black text-ink">
                             #{t.token_number}
@@ -268,7 +269,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          {t.reason_for_visit || 'General Consultation'}
                       </td>
                       <td className="px-4 md:px-6 py-4 md:py-6">
-                         {t.status === 'confirmed' && <span className="bg-slate-100 text-slate-500 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-slate-200/50">Waiting</span>}
+                         {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest">Waiting</span>}
                          {t.status === 'called' && <span className="bg-blue-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
                          {t.status === 'completed' && <span className="bg-emerald-500 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
@@ -294,6 +295,50 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 })}
               </tbody>
             </table>
+
+            {/* MOBILE VIEW */}
+            <div className="md:hidden divide-y divide-slate-50">
+              {displayedTokens.map((t) => {
+                const isActive = t.status === 'called';
+                return (
+                  <div key={t.id} className={`p-4 flex flex-col gap-4 ${isActive ? 'bg-blue-50/40' : ''}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[16px] font-black text-ink">#{t.token_number}</span>
+                          <span className="font-bold text-ink text-[15px] truncate max-w-[150px]">{t.patient_name}</span>
+                        </div>
+                        <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[200px]">
+                          {t.patient_phone} • {t.reason_for_visit || 'Consultation'}
+                        </span>
+                      </div>
+                      <div>
+                        {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Waiting</span>}
+                        {t.status === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
+                        {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
+                        {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] font-black uppercase tracking-widest line-through">Absent</span>}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-end gap-2">
+                      {t.status === 'confirmed' && (
+                         <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Call</button>
+                      )}
+                      {t.status === 'called' && (
+                         <>
+                            <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Finish</button>
+                            <button onClick={() => handleAction(t.id, 'noshow')} className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center transition-all"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                         </>
+                      )}
+                      {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
+                         <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[11px] font-bold uppercase tracking-widest flex-1">Re-call</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>  
             
             {/* PAGINATION FOOTER */}
             {totalPages > 1 && (
@@ -329,6 +374,5 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             )}
          </div>
       </div>
-    </div>
   );
 }

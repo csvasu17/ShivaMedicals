@@ -32,7 +32,7 @@ const FinalCTA = ({ setIsBookingModalOpen }) => {
           
           <div className="flex flex-wrap items-center justify-center gap-6 animate-slide-up stagger-2">
             <button 
-              onClick={() => setIsBookingModalOpen(true)}
+              onClick={() => setIsBookingModalOpen()}
               className="bg-white hover:bg-teal-50 text-teal-600 px-10 h-14 rounded-2xl text-[14px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-xl shadow-teal-500/30 flex items-center gap-3 group"
             >
               Book Appointment

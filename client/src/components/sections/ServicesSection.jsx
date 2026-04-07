@@ -108,7 +108,7 @@ const ServicesSection = ({ setIsBookingModalOpen }) => {
             <p className="text-muted-text text-sm md:text-base">Our specialists are available for both in-person and digital consultations.</p>
           </div>
           <button
-            onClick={() => setIsBookingModalOpen(true)}
+            onClick={() => setIsBookingModalOpen()}
             className="btn-premium whitespace-nowrap w-full md:w-auto flex justify-center"
           >
             Book Now

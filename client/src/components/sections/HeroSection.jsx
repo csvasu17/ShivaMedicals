@@ -43,7 +43,7 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
           {/* Action Row */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 md:gap-6 animate-slide-up stagger-2">
             <button
-              onClick={() => setIsBookingModalOpen(true)}
+              onClick={() => setIsBookingModalOpen()}
               className="btn-premium group flex justify-center w-full sm:w-auto"
             >
               <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
