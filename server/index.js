@@ -9,8 +9,25 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
-app.use(cors());
+
+// Configure CORS
+app.use(cors({
+    origin: [
+        'https://shiva-medicals.vercel.app',
+        'http://localhost:5173',
+        'http://localhost:6002'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
+
 app.use(express.json());
+
+// Health check
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
