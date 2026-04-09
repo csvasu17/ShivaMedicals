@@ -11,6 +11,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]); 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(window.innerWidth < 768 ? 15 : 25);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(window.innerWidth < 768 ? 15 : 25);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     fetch(`${API_URL}/api/doctors`)
@@ -93,7 +102,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
   const totalPages = Math.ceil(tokens.length / itemsPerPage);
   const displayedTokens = tokens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
