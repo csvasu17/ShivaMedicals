@@ -51,10 +51,11 @@ const HeroSection = ({ setIsBookingModalOpen }) => {
               <svg className="group-hover:translate-x-1 transition-transform" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
             <button 
-              onClick={() => { window.location.href = '/status'; }}
-              className="px-8 md:px-10 h-14 rounded-2xl text-[13px] md:text-[14px] font-bold uppercase tracking-widest text-ink hover:bg-white bg-white/80 border border-white shadow-sm backdrop-blur-md transition-all transform active:scale-95 flex items-center justify-center gap-3 w-full sm:w-auto"
+              onClick={() => setIsBookingModalOpen(null, true)}
+              className="px-7 md:px-9 h-14 rounded-2xl text-[13px] md:text-[14px] font-bold uppercase tracking-widest text-red-600 hover:bg-red-100 bg-red-50 border border-red-200 shadow-sm transition-all transform active:scale-95 flex items-center justify-center gap-2.5 w-full sm:w-auto"
             >
-              View Live Board
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="opacity-80"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Cancel Booking
             </button>
           </div>
 

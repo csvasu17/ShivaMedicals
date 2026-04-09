@@ -1,7 +1,7 @@
 import React from 'react';
 import BookToken from '../../pages/BookToken';
 
-const BookingModal = ({ isOpen, onClose, initialDoctorId }) => {
+const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = false }) => {
   if (!isOpen) return null;
 
   return (
@@ -25,7 +25,11 @@ const BookingModal = ({ isOpen, onClose, initialDoctorId }) => {
         {/* Modal Body */}
         <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
           <div className="p-4 sm:p-6 md:px-10 md:py-6">
-            <BookToken onClose={onClose} initialDoctorId={initialDoctorId} />
+            <BookToken 
+              onClose={onClose} 
+              initialDoctorId={initialDoctorId} 
+              initialCancelMode={initialCancelMode} 
+            />
           </div>
         </div>
       </div>

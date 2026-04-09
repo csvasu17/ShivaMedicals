@@ -127,7 +127,7 @@ const initialFormState = {
   doctorId:'', sessionId:'', date:'', reasonForVisit:'',
 };
 
-const BookToken = ({ onClose, initialDoctorId }) => {
+const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
   const [form, setForm] = useState({
     ...initialFormState,
     doctorId: initialDoctorId || '',
@@ -139,7 +139,7 @@ const BookToken = ({ onClose, initialDoctorId }) => {
   const [success, setSuccess] = useState(null);
 
   // Cancellation state
-  const [cancelMode, setCancelMode] = useState(false);
+  const [cancelMode, setCancelMode] = useState(initialCancelMode);
   const [cancelPhone, setCancelPhone] = useState('');
   const [myBookings, setMyBookings] = useState(null);
   const [cancelLoading, setCancelLoading] = useState(false);

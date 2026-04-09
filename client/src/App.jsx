@@ -21,8 +21,11 @@ function App() {
   const [bookingInitialDoctorId, setBookingInitialDoctorId] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const openBookingModal = (doctorId = null) => {
+  const [bookingCancelMode, setBookingCancelMode] = useState(false);
+
+  const openBookingModal = (doctorId = null, isCancel = false) => {
     setBookingInitialDoctorId(doctorId);
+    setBookingCancelMode(isCancel);
     setIsBookingModalOpen(true);
   };
   const [isScrolled, setIsScrolled] = useState(false);
@@ -99,6 +102,7 @@ function App() {
         isOpen={isBookingModalOpen} 
         onClose={() => setIsBookingModalOpen(false)} 
         initialDoctorId={bookingInitialDoctorId}
+        initialCancelMode={bookingCancelMode}
       />
 
       <LoginModal 

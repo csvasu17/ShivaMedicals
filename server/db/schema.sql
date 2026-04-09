@@ -67,10 +67,10 @@ INSERT INTO doctors (id, name, type, is_active) VALUES
 ('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'Dr. Sarah (Child Specialist)', 'child', true);
 
 INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens, booking_opens_at, booking_closes_before_minutes, is_active) VALUES
-('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5', 'morning', '09:00:00', '12:00:00', 30, '22:00:00', 60, true),
-('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5', 'evening', '17:00:00', '20:00:00', 30, '22:00:00', 60, true),
-('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'morning', '09:30:00', '11:30:00', 20, '22:00:00', 60, true),
-('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'evening', '17:30:00', '19:30:00', 20, '22:00:00', 60, true);
+('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5', 'morning', '09:00:00', '12:00:00', 200, '22:00:00', 60, true),
+('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5', 'evening', '17:00:00', '20:00:00', 200, '22:00:00', 60, true),
+('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'morning', '09:30:00', '11:30:00', 200, '22:00:00', 60, true),
+('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'evening', '17:30:00', '19:30:00', 200, '22:00:00', 60, true);
 
 -- Default Superadmin (password: admin)
 INSERT INTO users (name, phone, username, password, role) VALUES
