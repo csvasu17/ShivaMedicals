@@ -325,13 +325,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                              {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
                                 <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
                              )}
-                             <button 
-                                onClick={() => handleDelete(t.id)} 
-                                className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                                title="Delete Patient"
-                             >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                             </button>
+                             {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                                <button 
+                                   onClick={() => handleDelete(t.id)} 
+                                   className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                                   title="Delete Patient"
+                                >
+                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                                </button>
+                             )}
                           </div>
                       </td>
                     </tr>
@@ -378,12 +380,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
                          <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[11px] font-bold uppercase tracking-widest flex-1">Re-call</button>
                       )}
-                      <button 
-                        onClick={() => handleDelete(t.id)} 
-                        className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                      </button>
+                       {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                          <button 
+                            onClick={() => handleDelete(t.id)} 
+                            className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                          </button>
+                       )}
                     </div>
                   </div>
                 );
