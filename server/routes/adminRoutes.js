@@ -6,6 +6,7 @@ const authController = require('../controllers/authController');
 router.post('/login', authController.adminLogin);
 router.get('/bookings', adminController.getBookings);
 router.put('/bookings/:id/status', adminController.updateBookingStatus);
+router.delete('/bookings/:id', adminController.deleteBooking);
 router.post('/queue/call-next', adminController.callNext);
 router.get('/staff', adminController.getStaff);
 router.post('/staff', adminController.addStaff);

@@ -63,6 +63,24 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this patient? This will automatically reassign tokens for all subsequent patients in this session.')) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/bookings/${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        fetchTokens();
+      } else {
+        const errorData = await res.json();
+        alert(`Error: ${errorData.error || 'Failed to delete'}`);
+      }
+    } catch (err) {
+      console.error('Error deleting booking', err);
+      alert('Network error while deleting booking');
+    }
+  };
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -275,20 +293,27 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
                       </td>
                       <td className="px-4 md:px-6 py-4 md:py-6 text-right pr-6 md:pr-12">
-                         <div className="flex justify-end gap-2 transition-all duration-300">
-                            {t.status === 'confirmed' && (
-                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
-                            )}
-                            {t.status === 'called' && (
-                               <>
-                                  <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
-                                  <button onClick={() => handleAction(t.id, 'noshow')} className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                               </>
-                            )}
-                            {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
-                               <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
-                            )}
-                         </div>
+                          <div className="flex justify-end gap-2 transition-all duration-300">
+                             {t.status === 'confirmed' && (
+                                <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
+                             )}
+                             {t.status === 'called' && (
+                                <>
+                                   <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
+                                   <button onClick={() => handleAction(t.id, 'noshow')} className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0" title="Mark as No-Show"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                                </>
+                             )}
+                             {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
+                                <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
+                             )}
+                             <button 
+                                onClick={() => handleDelete(t.id)} 
+                                className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                                title="Delete Patient"
+                             >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                             </button>
+                          </div>
                       </td>
                     </tr>
                   );
@@ -333,6 +358,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
                          <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[11px] font-bold uppercase tracking-widest flex-1">Re-call</button>
                       )}
+                      <button 
+                        onClick={() => handleDelete(t.id)} 
+                        className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                      </button>
                     </div>
                   </div>
                 );

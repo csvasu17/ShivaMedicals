@@ -175,3 +175,79 @@ exports.deleteDoctor = async (req, res) => {
     }
 };
 
+exports.deleteBooking = async (req, res) => {
+    const { id } = req.params;
+    const client = await db.pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Get metadata of the booking to be deleted
+        const bookingRes = await client.query(
+            'SELECT session_id, booking_date, token_number FROM bookings WHERE id = $1',
+            [id]
+        );
+
+        if (bookingRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+
+        const { session_id, booking_date, token_number } = bookingRes.rows[0];
+
+        // 2. Delete the booking
+        await client.query('DELETE FROM bookings WHERE id = $1', [id]);
+
+        // 3. Reassign subsequent tokens
+        await client.query(
+            `UPDATE bookings 
+             SET token_number = token_number - 1 
+             WHERE session_id = $1 AND booking_date = $2 AND token_number > $3`,
+            [session_id, booking_date, token_number]
+        );
+
+        // 4. Update estimated times for all bookings in this session/date after the deleted one
+        const remainingBookings = await client.query(
+            `SELECT id, token_number FROM bookings 
+             WHERE session_id = $1 AND booking_date = $2 AND token_number >= $3
+             ORDER BY token_number ASC`,
+            [session_id, booking_date, token_number]
+        );
+
+        // We need start_time, end_time and max_tokens for this session to recalculate
+        const sessionRes = await client.query('SELECT start_time, end_time, max_tokens FROM sessions WHERE id = $1', [session_id]);
+        const { start_time, end_time, max_tokens } = sessionRes.rows[0];
+
+        // Helper to convert HH:MM:SS to minutes since midnight
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        // Helper to convert minutes to HH:MM:SS
+        function minutesToTime(minutes) {
+            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+            const m = (minutes % 60).toString().padStart(2, '0');
+            return `${h}:${m}:00`;
+        }
+
+        const startMins = timeToMinutes(start_time);
+        const endMins = timeToMinutes(end_time);
+        const totalDurationMins = endMins - startMins;
+        const avgMinutesPerPatient = Math.max(1, Math.floor(totalDurationMins / max_tokens));
+
+        for (const booking of remainingBookings.rows) {
+            const estMins = startMins + ((booking.token_number - 1) * avgMinutesPerPatient);
+            const estTime = minutesToTime(estMins);
+            await client.query('UPDATE bookings SET estimated_time = $1 WHERE id = $2', [estTime, booking.id]);
+        }
+
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Booking deleted and tokens reassigned' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Delete booking transaction failed:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        client.release();
+    }
+};
