@@ -31,7 +31,7 @@ exports.getAvailability = async (req, res) => {
 };
 
 exports.createBooking = async (req, res) => {
-    const { patientName, phone, email, reasonForVisit, doctorId, sessionId, date } = req.body;
+    const { patientName, phone, email, location, doctorId, sessionId, date } = req.body;
     console.log('[BOOKING REQUEST]', req.body);
     try {
         const isOpen = await tokenService.isBookingOpen(sessionId, date);
@@ -52,9 +52,9 @@ exports.createBooking = async (req, res) => {
         const bookingRef = `CLN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
         const result = await db.query(
-            `INSERT INTO bookings (booking_ref, patient_name, patient_phone, patient_email, reason_for_visit, doctor_id, session_id, booking_date, token_number, estimated_time) 
+            `INSERT INTO bookings (booking_ref, patient_name, patient_phone, patient_email, location, doctor_id, session_id, booking_date, token_number, estimated_time) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-            [bookingRef, patientName, phone, email, reasonForVisit, doctorId, sessionId, date, tokenNumber, estimatedTime]
+            [bookingRef, patientName, phone, email, location, doctorId, sessionId, date, tokenNumber, estimatedTime]
         );
 
         res.status(201).json(result.rows[0]);

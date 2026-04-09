@@ -124,7 +124,7 @@ const DatePicker = ({ value, onChange }) => {
 ───────────────────────────────────────── */
 const initialFormState = {
   patientName:'', phone:'', email:'',
-  doctorId:'', sessionId:'', date:'', reasonForVisit:'',
+  doctorId:'', sessionId:'', date:'', location:'',
 };
 
 const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
@@ -374,7 +374,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
             required
           />
           <button type="submit" disabled={cancelLoading} className="px-6 h-12 bg-ink text-white font-bold rounded-xl hover:bg-ink2 transition-colors disabled:opacity-50">
-            {cancelLoading ? 'Searching...' : 'Find tokens'}
+            {cancelLoading ? 'Searching...' : 'Find Appointment'}
           </button>
         </form>
 
@@ -593,16 +593,16 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
         )}
       </div>
 
-      {/* Reason for Visit */}
+      {/* Location */}
       <div className="flex flex-col">
-        <label className="form-label-premium">Reason for consultation (Optional)</label>
-        <textarea 
-          name="reasonForVisit" 
-          value={form.reasonForVisit} 
+        <label className="form-label-premium">Location(Area)</label>
+        <input 
+          type="text"
+          name="location" 
+          value={form.location} 
           onChange={handleChange} 
-          placeholder="Briefly describe your concern..." 
-          rows="1"
-          className="input-premium py-2 resize-none h-[38px] focus:border-teal-500"
+          placeholder="e.g. City or Area name" 
+          className="input-premium h-[42px] focus:ring-teal-500"
         />
       </div>
 

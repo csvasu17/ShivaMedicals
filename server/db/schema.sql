@@ -31,7 +31,7 @@ CREATE TABLE bookings (
     patient_name VARCHAR NOT NULL,
     patient_phone VARCHAR NOT NULL,
     patient_email VARCHAR,
-    reason_for_visit TEXT,
+    location TEXT,
     doctor_id UUID REFERENCES doctors(id),
     session_id UUID REFERENCES sessions(id),
     booking_date DATE NOT NULL,

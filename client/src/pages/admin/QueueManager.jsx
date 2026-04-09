@@ -9,6 +9,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [selectedSession, setSelectedSession] = useState('');
   const [tokens, setTokens] = useState([]);
   const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]); 
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetch(`${API_URL}/api/doctors`)
@@ -63,14 +65,20 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this patient? This will automatically reassign tokens for all subsequent patients in this session.')) return;
+  const handleDelete = (id) => {
+    setDeleteConfirm(id);
+  };
+
+  const executeDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleteLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/admin/bookings/${id}`, {
+      const res = await fetch(`${API_URL}/api/admin/bookings/${deleteConfirm}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         fetchTokens();
+        setDeleteConfirm(null);
       } else {
         const errorData = await res.json();
         alert(`Error: ${errorData.error || 'Failed to delete'}`);
@@ -78,6 +86,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     } catch (err) {
       console.error('Error deleting booking', err);
       alert('Network error while deleting booking');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -89,15 +99,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const headers = ["Token No", "Patient Name", "Mobile", "Email", "Reason", "Status", "Date"];
+    const headers = ["Token No", "Patient Name", "Mobile", "Email", "Location", "Status", "Date"];
     const csvContent = [
       headers.join(","),
       ...tokens.map(t => [
         t.token_number,
         `"${t.patient_name}"`,
-        `"\t${t.patient_phone}"`, 
+        t.patient_phone, 
         t.patient_email || "",
-        `"${t.reason_for_visit || '-'}"`,
+        `"${t.location || '-'}"`,
         t.status,
         `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"` // Force text DD-MM-YYYY
       ].join(","))
@@ -257,7 +267,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                   <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
                   <th className="px-4 md:px-6 py-6">Patient Name</th>
                   <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
-                  <th className="hidden xl:table-cell px-6 py-6">Primary Concern</th>
+                  <th className="hidden xl:table-cell px-6 py-6">Location</th>
                   <th className="px-4 md:px-6 py-6">Status</th>
                   <th className="px-4 md:px-6 py-6 text-right pr-6 md:pr-12">Actions</th>
                 </tr>
@@ -284,7 +294,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          </div>
                       </td>
                       <td className="hidden xl:table-cell px-6 py-6 text-[14px] font-semibold text-ink/40 max-w-[200px] truncate">
-                         {t.reason_for_visit || 'General Consultation'}
+                         {t.location || 'Not provided'}
                       </td>
                       <td className="px-4 md:px-6 py-4 md:py-6">
                          {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest">Waiting</span>}
@@ -294,13 +304,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       </td>
                       <td className="px-4 md:px-6 py-4 md:py-6 text-right pr-6 md:pr-12">
                           <div className="flex justify-end gap-2 transition-all duration-300">
-                             {t.status === 'confirmed' && (
-                                <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
-                             )}
-                             {t.status === 'called' && (
+                             {(t.status === 'confirmed' || t.status === 'called') && (
                                 <>
-                                   <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
-                                   <button onClick={() => handleAction(t.id, 'noshow')} className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0" title="Mark as No-Show"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                                   {t.status === 'confirmed' ? (
+                                      <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
+                                   ) : (
+                                      <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
+                                   )}
+                                   <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-rose-600/10 transition-all active:scale-95 whitespace-nowrap" title="Mark as Absent">Absent</button>
                                 </>
                              )}
                              {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
@@ -334,7 +345,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           <span className="font-bold text-ink text-[15px] truncate max-w-[150px]">{t.patient_name}</span>
                         </div>
                         <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[200px]">
-                          {t.patient_phone} • {t.reason_for_visit || 'Consultation'}
+                          {t.patient_phone} • {t.location || 'Location N/A'}
                         </span>
                       </div>
                       <div>
@@ -346,13 +357,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                     </div>
                     
                     <div className="flex items-center justify-end gap-2">
-                      {t.status === 'confirmed' && (
-                         <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Call</button>
-                      )}
-                      {t.status === 'called' && (
+                      {(t.status === 'confirmed' || t.status === 'called') && (
                          <>
-                            <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Finish</button>
-                            <button onClick={() => handleAction(t.id, 'noshow')} className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center transition-all"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                            {t.status === 'confirmed' ? (
+                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Call</button>
+                            ) : (
+                               <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Finish</button>
+                            )}
+                            <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Absent</button>
                          </>
                       )}
                       {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
@@ -404,6 +416,49 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                </div>
             )}
          </div>
-      </div>
+
+      {/* DELETE CONFIRMATION POPUP */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-[400px] bg-white shadow-2xl rounded-[32px] border border-slate-100 p-8 animate-scale-up flex flex-col gap-6 text-center">
+            <div className="mx-auto w-16 h-16 rounded-3xl bg-red-50 text-red-500 flex items-center justify-center shadow-inner relative overflow-hidden group">
+               <div className="absolute inset-0 bg-red-100 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+               <svg className="relative z-10" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="font-serif text-2xl font-bold text-ink">Delete Patient?</h3>
+              <p className="text-slate-500 text-[14px] leading-relaxed px-2">
+                This will remove the patient and <span className="font-bold text-red-500/80">automatically reassign tokens</span> for everyone waiting in this session.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
+              <button 
+                type="button"
+                onClick={() => setDeleteConfirm(null)} 
+                disabled={deleteLoading}
+                className="w-full h-14 rounded-2xl text-slate-600 bg-slate-100 hover:bg-slate-200 font-bold text-[14px] transition-all outline-none"
+              >
+                No, Keep
+              </button>
+              <button 
+                type="button"
+                onClick={executeDelete} 
+                disabled={deleteLoading}
+                className="w-full h-14 rounded-2xl text-white bg-red-500 hover:bg-red-600 font-bold text-[14px] transition-all shadow-lg shadow-red-500/20 active:scale-95 outline-none flex items-center justify-center gap-2"
+              >
+                {deleteLoading ? (
+                  <>
+                    <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle className="opacity-25" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                    Deleting...
+                  </>
+                ) : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
