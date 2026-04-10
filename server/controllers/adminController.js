@@ -251,3 +251,25 @@ exports.deleteBooking = async (req, res) => {
         client.release();
     }
 };
+
+exports.updateBooking = async (req, res) => {
+    const { id } = req.params;
+    const { patient_name, patient_phone, patient_email, location } = req.body;
+    try {
+        const query = `
+            UPDATE bookings 
+            SET patient_name = $1, patient_phone = $2, patient_email = $3, location = $4 
+            WHERE id = $5 
+            RETURNING *
+        `;
+        const values = [patient_name, patient_phone, patient_email, location, id];
+        const result = await db.query(query, values);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error updating booking:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
