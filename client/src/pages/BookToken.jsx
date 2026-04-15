@@ -123,8 +123,9 @@ const DatePicker = ({ value, onChange }) => {
    Main BookToken
 ───────────────────────────────────────── */
 const initialFormState = {
-  patientName:'', phone:'', email:'',
-  doctorId:'', sessionId:'', date:'', location:'',
+  patientName: '', phone: '',
+  patientAgeYears: '', patientAgeMonths: '',
+  doctorId: '', sessionId: '', date: '', location: '',
 };
 
 const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
@@ -210,7 +211,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.patientName || !form.phone || !form.doctorId || !form.date || !form.sessionId) {
+    if (!form.patientName || !form.phone || !form.doctorId || !form.date || !form.sessionId || !form.location || form.patientAgeYears === '' || form.patientAgeMonths === '') {
       setError('Please complete all required fields (*)'); 
       return;
     }
@@ -311,6 +312,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
               </div>
               <div className="flex flex-col justify-center gap-3 pl-4 text-[15px]">
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Patient:</span> <span className="text-white font-medium truncate">{success.patient_name}</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Age:</span> <span className="text-white font-medium truncate">{success.patient_age_years}y {success.patient_age_months}m</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Date:</span> <span className="text-white font-medium">{formatDateDisplay(success.booking_date)}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Time:</span> <span className="text-white font-medium">{formatTimeAMPM(selectedSession?.start_time || success.estimated_time)}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Depart:</span> <span className="text-white font-medium capitalize">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
@@ -518,15 +520,39 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
         </div>
 
         <div className="flex flex-col lg:col-span-2">
-          <label className="form-label-premium">Email Address (Optional)</label>
-          <input 
-            type="email" 
-            name="email" 
-            value={form.email} 
-            onChange={handleChange} 
-            placeholder="e.g. name@example.com" 
-            className="input-premium h-[42px] focus:ring-teal-500" 
-          />
+          <label className="form-label-premium">Patient Age *</label>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="relative group">
+              <select 
+                name="patientAgeYears" 
+                value={form.patientAgeYears} 
+                onChange={handleChange} 
+                className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
+                required
+              >
+                <option value="">Years</option>
+                {[...Array(111).keys()].map(y => <option key={y} value={y}>{y} Years</option>)}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+            <div className="relative group">
+              <select 
+                name="patientAgeMonths" 
+                value={form.patientAgeMonths} 
+                onChange={handleChange} 
+                className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
+                required
+              >
+                <option value="">Months</option>
+                {[...Array(12).keys()].map(m => <option key={m} value={m}>{m} Months</option>)}
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Doctor Selection */}
@@ -595,7 +621,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
 
       {/* Location */}
       <div className="flex flex-col">
-        <label className="form-label-premium">Location(Area)</label>
+        <label className="form-label-premium">Location(Area) *</label>
         <input 
           type="text"
           name="location" 
@@ -603,6 +629,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
           onChange={handleChange} 
           placeholder="e.g. City or Area name" 
           className="input-premium h-[42px] focus:ring-teal-500"
+          required
         />
       </div>
 

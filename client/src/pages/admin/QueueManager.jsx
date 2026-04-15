@@ -109,15 +109,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const headers = ["Token No", "Patient Name", "Mobile", "Email", "Location", "Status", "Date"];
+    const headers = ["Token No", "Patient Name", "Age", "Mobile", "Location", "Status", "Date"];
     const csvContent = [
       headers.join(","),
       ...tokens.map(t => [
         t.token_number,
         `"${t.patient_name}"`,
+        `"${t.patient_age_years}y ${t.patient_age_months}m"`,
         t.patient_phone, 
-        t.patient_email || "",
-        `"${t.location || '-'}"`,
+        `"${t.location}"`,
         t.status,
         `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"` // Force text DD-MM-YYYY
       ].join(","))
@@ -276,6 +276,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
                   <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
                   <th className="px-4 md:px-6 py-6">Patient Name</th>
+                  <th className="hidden lg:table-cell px-6 py-6">Age</th>
                   <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
                   <th className="hidden xl:table-cell px-6 py-6">Location</th>
                   <th className="px-4 md:px-6 py-6">Status</th>
@@ -295,7 +296,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       <td className="px-4 md:px-6 py-4 md:py-6 transition-all border-b border-transparent">
                          <div className="flex flex-col min-w-0">
                             <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
-                            <div className="hidden sm:block text-[11px] md:text-[12px] font-medium text-muted-text/30 mt-0.5 truncate">{t.patient_email || 'No email provided'}</div>
+                         </div>
+                      </td>
+                      <td className="hidden lg:table-cell px-6 py-6">
+                         <div className="text-[14px] font-bold text-ink/70 tracking-tight">
+                            {t.patient_age_years}y {t.patient_age_months}m
                          </div>
                       </td>
                       <td className="hidden lg:table-cell px-6 py-6">
@@ -366,7 +371,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           <span className="font-bold text-ink text-[15px] truncate max-w-[150px]">{t.patient_name}</span>
                         </div>
                         <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[200px]">
-                          {t.patient_phone} • {t.location || 'Location N/A'}
+                          {t.patient_phone} • {t.patient_age_years}y {t.patient_age_months}m • {t.location}
                         </span>
                       </div>
                       <div>

@@ -5,7 +5,8 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
   const [formData, setFormData] = useState({
     patient_name: '',
     patient_phone: '',
-    patient_email: '',
+    patient_age_years: '',
+    patient_age_months: '',
     location: ''
   });
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,8 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
       setFormData({
         patient_name: patient.patient_name || '',
         patient_phone: patient.patient_phone || '',
-        patient_email: patient.patient_email || '',
+        patient_age_years: patient.patient_age_years ?? '',
+        patient_age_months: patient.patient_age_months ?? '',
         location: patient.location || ''
       });
     }
@@ -112,20 +114,37 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Email Address (Optional)</label>
-              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
-                <input 
-                  type="email" 
-                  name="patient_email"
-                  value={formData.patient_email}
-                  onChange={handleChange}
-                  className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
-                />
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Patient Age *</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                  <select 
+                    name="patient_age_years" 
+                    value={formData.patient_age_years} 
+                    onChange={handleChange} 
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
+                    required
+                  >
+                    <option value="">Years</option>
+                    {[...Array(111).keys()].map(y => <option key={y} value={y}>{y}y</option>)}
+                  </select>
+                </div>
+                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                  <select 
+                    name="patient_age_months" 
+                    value={formData.patient_age_months} 
+                    onChange={handleChange} 
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
+                    required
+                  >
+                    <option value="">Months</option>
+                    {[...Array(12).keys()].map(m => <option key={m} value={m}>{m}m</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Location</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Location *</label>
               <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
                 <input 
                   type="text" 
@@ -133,6 +152,7 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
                   value={formData.location}
                   onChange={handleChange}
                   className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                  required
                 />
               </div>
             </div>
