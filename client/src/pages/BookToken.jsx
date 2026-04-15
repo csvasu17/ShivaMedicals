@@ -314,7 +314,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Patient:</span> <span className="text-white font-medium truncate">{success.patient_name}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Age:</span> <span className="text-white font-medium truncate">{success.patient_age_years}y {success.patient_age_months}m</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Date:</span> <span className="text-white font-medium">{formatDateDisplay(success.booking_date)}</span></div>
-                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Time:</span> <span className="text-white font-medium">{formatTimeAMPM(selectedSession?.start_time || success.estimated_time)}</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-32 font-medium">Estimated Arrival:</span> <span className="text-white font-medium">{formatTimeAMPM(success.estimated_time)}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Depart:</span> <span className="text-white font-medium capitalize">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
               </div>
             </div>

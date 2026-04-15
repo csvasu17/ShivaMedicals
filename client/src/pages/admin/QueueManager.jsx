@@ -109,12 +109,13 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const headers = ["Token No", "Patient Name", "Age", "Mobile", "Location", "Status", "Date"];
+    const headers = ["Token No", "Patient Name", "Arrival Time", "Age", "Mobile", "Location", "Status", "Date"];
     const csvContent = [
       headers.join(","),
       ...tokens.map(t => [
         t.token_number,
         `"${t.patient_name}"`,
+        t.estimated_time ? t.estimated_time.substring(0, 5) : '-',
         `"${t.patient_age_years}y ${t.patient_age_months}m"`,
         t.patient_phone, 
         `"${t.location}"`,
@@ -276,6 +277,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
                   <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
                   <th className="px-4 md:px-6 py-6">Patient Name</th>
+                  <th className="hidden lg:table-cell px-6 py-6 font-bold text-teal-600">Arrival Time</th>
                   <th className="hidden lg:table-cell px-6 py-6">Age</th>
                   <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
                   <th className="hidden xl:table-cell px-6 py-6">Location</th>
@@ -296,6 +298,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       <td className="px-4 md:px-6 py-4 md:py-6 transition-all border-b border-transparent">
                          <div className="flex flex-col min-w-0">
                             <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
+                         </div>
+                      </td>
+                      <td className="hidden lg:table-cell px-6 py-6">
+                         <div className="text-[14px] font-bold text-teal-600 tracking-tight">
+                            {t.estimated_time ? t.estimated_time.substring(0, 5) : '-'}
                          </div>
                       </td>
                       <td className="hidden lg:table-cell px-6 py-6">

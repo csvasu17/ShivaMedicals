@@ -23,16 +23,15 @@ function minutesToTime(minutes) {
 }
 
 async function calculateEstimatedTime(sessionId, tokenNumber) {
-    const result = await db.query('SELECT start_time, end_time, max_tokens FROM sessions WHERE id = $1', [sessionId]);
+    const result = await db.query('SELECT start_time FROM sessions WHERE id = $1', [sessionId]);
     if (result.rows.length === 0) throw new Error('Session not found');
-    const { start_time, end_time, max_tokens } = result.rows[0];
+    const { start_time } = result.rows[0];
     
     const startMins = timeToMinutes(start_time);
-    const endMins = timeToMinutes(end_time);
-    const totalDurationMins = endMins - startMins;
-    const avgMinutesPerPatient = Math.max(1, Math.floor(totalDurationMins / max_tokens));
-
-    const estMins = startMins + ((tokenNumber - 1) * avgMinutesPerPatient);
+    
+    // One appointment per minute
+    const estMins = startMins + (tokenNumber - 1); 
+    
     return minutesToTime(estMins);
 }
 
