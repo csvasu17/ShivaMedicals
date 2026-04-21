@@ -193,6 +193,56 @@ exports.updateDoctor = async (req, res) => {
     }
 };
 
+exports.toggleDoctorAvailability = async (req, res) => {
+    const { id } = req.params;
+    const { date, is_available, session_type } = req.body; // is_available = true means PRESENT
+    try {
+        if (is_available) {
+            // Remove from blocked_dates (Make Present)
+            if (session_type === 'both') {
+                await db.query('DELETE FROM blocked_dates WHERE doctor_id = $1 AND blocked_date = $2', [id, date]);
+            } else {
+                await db.query('DELETE FROM blocked_dates WHERE doctor_id = $1 AND blocked_date = $2 AND (session_type = $3 OR session_type IS NULL)', [id, date, session_type]);
+            }
+        } else {
+            // Add to blocked_dates (Make Absent)
+            if (session_type === 'both') {
+                // Delete specific ones first to avoid conflict when adding NULL (full day)
+                await db.query('DELETE FROM blocked_dates WHERE doctor_id = $1 AND blocked_date = $2', [id, date]);
+                await db.query(
+                    'INSERT INTO blocked_dates (doctor_id, blocked_date, session_type, reason) VALUES ($1, $2, $3, $4)',
+                    [id, date, null, 'Manual Block (Full Day)']
+                );
+            } else {
+                await db.query(
+                    'INSERT INTO blocked_dates (doctor_id, blocked_date, session_type, reason) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING',
+                    [id, date, session_type, 'Manual Block']
+                );
+            }
+        }
+        res.json({ success: true, is_available, date, session_type });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getDoctorAvailability = async (req, res) => {
+    const { id } = req.params;
+    const { date } = req.query;
+    try {
+        const result = await db.query('SELECT session_type FROM blocked_dates WHERE doctor_id = $1 AND blocked_date = $2', [id, date]);
+        // If any row has session_type NULL, it's a full day block
+        const blocks = result.rows.map(r => r.session_type);
+        const is_full_day = blocks.includes(null);
+        res.json({ 
+            is_full_day,
+            blocked_sessions: blocks
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.deleteDoctor = async (req, res) => {
     const { id } = req.params;
     try {

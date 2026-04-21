@@ -1,7 +1,7 @@
 import React from 'react';
 import BookToken from '../../pages/BookToken';
 
-const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = false }) => {
+const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = false, isExtra = false }) => {
   if (!isOpen) return null;
 
   return (
@@ -29,6 +29,7 @@ const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = fa
               onClose={onClose} 
               initialDoctorId={initialDoctorId} 
               initialCancelMode={initialCancelMode} 
+              isExtra={isExtra}
             />
           </div>
         </div>

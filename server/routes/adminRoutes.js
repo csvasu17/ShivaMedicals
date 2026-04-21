@@ -17,6 +17,8 @@ router.delete('/staff/:id', adminController.deleteStaff);
 router.get('/doctors', adminController.getDoctors);
 router.post('/doctors', adminController.addDoctor);
 router.put('/doctors/:id', adminController.updateDoctor);
+router.get('/doctors/:id/availability', adminController.getDoctorAvailability);
+router.put('/doctors/:id/availability', adminController.toggleDoctorAvailability);
 router.delete('/doctors/:id', adminController.deleteDoctor);
 
 module.exports = router;

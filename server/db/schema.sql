@@ -48,8 +48,9 @@ CREATE TABLE blocked_dates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     doctor_id UUID REFERENCES doctors(id) ON DELETE CASCADE,
     blocked_date DATE NOT NULL,
+    session_type session_type_enum, -- NULL means full day
     reason VARCHAR,
-    UNIQUE(doctor_id, blocked_date)
+    UNIQUE(doctor_id, blocked_date, session_type)
 );
 
 CREATE TABLE users (

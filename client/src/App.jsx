@@ -20,12 +20,13 @@ function App() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookingInitialDoctorId, setBookingInitialDoctorId] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
   const [bookingCancelMode, setBookingCancelMode] = useState(false);
+  const [bookingIsExtra, setBookingIsExtra] = useState(false);
 
-  const openBookingModal = (doctorId = null, isCancel = false) => {
+  const openBookingModal = (doctorId = null, isCancel = false, isExtra = false) => {
     setBookingInitialDoctorId(doctorId);
     setBookingCancelMode(isCancel);
+    setBookingIsExtra(isExtra);
     setIsBookingModalOpen(true);
   };
   const [isScrolled, setIsScrolled] = useState(false);
@@ -103,6 +104,7 @@ function App() {
         onClose={() => setIsBookingModalOpen(false)} 
         initialDoctorId={bookingInitialDoctorId}
         initialCancelMode={bookingCancelMode}
+        isExtra={bookingIsExtra}
       />
 
       <LoginModal 
@@ -163,7 +165,7 @@ function App() {
             <Dashboard 
               user={user} 
               setRoute={setRoute} 
-              onAddPatient={() => openBookingModal()}
+              onAddPatient={openBookingModal}
               onLogout={logout}
             />
           </div>

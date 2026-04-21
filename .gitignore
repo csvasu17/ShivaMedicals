@@ -1,6 +1,21 @@
-# Node modules
+# Dependencies
 node_modules/
+dist/
 
 # Environment files
 .env
 .env.*
+!.env.example
+
+# OS / IDE
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+
+# AI metadata
+brain/
+
+# Build outputs
+build/
+coverage/

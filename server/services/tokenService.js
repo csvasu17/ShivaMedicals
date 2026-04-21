@@ -36,10 +36,24 @@ async function calculateEstimatedTime(sessionId, tokenNumber) {
 }
 
 async function isBookingOpen(sessionId, bookingDateStr) {
-    const result = await db.query('SELECT start_time, booking_closes_before_minutes FROM sessions WHERE id = $1', [sessionId]);
+    const result = await db.query(`
+        SELECT s.start_time, s.booking_closes_before_minutes, s.doctor_id, s.session_type
+        FROM sessions s 
+        WHERE s.id = $1
+    `, [sessionId]);
     if (result.rows.length === 0) return false;
+
+    const { doctor_id, start_time, booking_closes_before_minutes, session_type } = result.rows[0];
     
-    const { start_time, booking_closes_before_minutes } = result.rows[0];
+    // Check if the doctor has blocked this specific date/session
+    const blockedRes = await db.query(
+        `SELECT 1 FROM blocked_dates 
+         WHERE doctor_id = $1 AND blocked_date = $2 
+         AND (session_type = $3 OR session_type IS NULL)`,
+        [doctor_id, bookingDateStr, session_type]
+    );
+
+    if (blockedRes.rows.length > 0) return false;
     
     const today = new Date();
     const [by, bm, bd] = bookingDateStr.split('-').map(Number);

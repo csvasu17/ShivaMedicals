@@ -14,7 +14,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [remarkingPatient, setRemarkingPatient] = useState(null);
+  const [isFullDayBlocked, setIsFullDayBlocked] = useState(false);
+  const [blockedSessions, setBlockedSessions] = useState([]);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(window.innerWidth < 768 ? 15 : 25);
+  const [isExtraMode, setIsExtraMode] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,6 +37,17 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       })
       .catch(err => console.error('Error fetching doctors:', err));
   }, [API_URL]);
+
+  useEffect(() => {
+    if (!selectedDoctor || !dateStr) return;
+    fetch(`${API_URL}/api/admin/doctors/${selectedDoctor}/availability?date=${dateStr}`)
+      .then(res => res.json())
+      .then(data => {
+        setIsFullDayBlocked(data.is_full_day);
+        setBlockedSessions(data.blocked_sessions);
+      })
+      .catch(err => console.error('Error fetching availability:', err));
+  }, [selectedDoctor, dateStr, API_URL]);
 
   useEffect(() => {
     if (!selectedDoctor) return;
@@ -102,6 +117,31 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       setRemarkingPatient(null);
     } catch (err) {
       console.error('Error updating remark', err);
+    }
+  };
+  
+  const handlePresenceToggle = async (sessionType, shouldBlock) => {
+    if (!selectedDoctor || !dateStr) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/doctors/${selectedDoctor}/availability`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ 
+          is_available: !shouldBlock, 
+          date: dateStr,
+          session_type: sessionType 
+        })
+      });
+      if (res.ok) {
+        // Refresh availability
+        const refresh = await fetch(`${API_URL}/api/admin/doctors/${selectedDoctor}/availability?date=${dateStr}`);
+        const data = await refresh.json();
+        setIsFullDayBlocked(data.is_full_day);
+        setBlockedSessions(data.blocked_sessions);
+        setShowAvailabilityModal(false);
+      }
+    } catch (err) {
+      console.error('Error updating doctor availability', err);
     }
   };
 
@@ -202,15 +242,39 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
            </div>
 
            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Select Doctor</label>
-              <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-5 relative group hover:border-blue-primary transition-all shadow-sm">
-                <select 
-                  value={selectedDoctor} 
-                  onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
-                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
-                >
-                  {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                </select>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 flex justify-between items-center">
+                <span>Select Doctor</span>
+                {selectedDoctor && (
+                   <span className={`text-[9px] font-black tracking-widest ${isFullDayBlocked ? 'text-rose-500' : (blockedSessions.length > 0 ? 'text-amber-500' : 'text-emerald-500')}`}>
+                      {isFullDayBlocked ? 'ABSENT' : (blockedSessions.length > 0 ? 'PARTIAL' : 'PRESENT')}
+                   </span>
+                )}
+              </label>
+              <div className="flex gap-2">
+                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-5 relative group hover:border-blue-primary transition-all shadow-sm flex-1">
+                  <select 
+                    value={selectedDoctor} 
+                    onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
+                  >
+                    {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                {(user?.role === 'superadmin' || user?.role === 'admin') && (
+                  <button 
+                    onClick={() => setShowAvailabilityModal(true)}
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-sm border ${
+                      isFullDayBlocked
+                        ? 'bg-rose-50 border-rose-100 text-rose-600 hover:bg-rose-100'
+                        : (blockedSessions.length > 0 ? 'bg-amber-50 border-amber-100 text-amber-600 hover:bg-amber-100' : 'bg-emerald-50 border-emerald-100 text-emerald-600 hover:bg-emerald-100')
+                    }`}
+                    title="Manage Availability"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </button>
+                )}
               </div>
            </div>
 
@@ -227,9 +291,28 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
               </div>
            </div>
 
-           <button onClick={onAddPatient} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-14 w-full rounded-2xl text-[14px] shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.97]">
-             Add patient
-           </button>
+           <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Extra Option</label>
+              <button 
+                onClick={() => setIsExtraMode(!isExtraMode)}
+                className={`h-14 w-full rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-[12px] uppercase tracking-widest ${
+                  isExtraMode 
+                    ? 'bg-purple-50 border-purple-200 text-purple-600 shadow-lg shadow-purple-500/10' 
+                    : 'bg-white border-slate-200 text-slate-400 hover:border-purple-200 hover:text-purple-400'
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${isExtraMode ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-300'}`}>
+                   {isExtraMode ? (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6L9 17l-5-5"/></svg>
+                   ) : (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                   )}
+                </div>
+                Extra
+              </button>
+           </div>
+
+
         </div>
       </div>
 
@@ -289,6 +372,13 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-text group-hover:text-ink transition-colors"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-text group-hover:text-ink">Export</span>
                </button>
+               <button 
+                  onClick={() => onAddPatient(selectedDoctor, false, isExtraMode)}
+                  className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-lg shadow-emerald-600/10 active:scale-95"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <span className="text-[11px] font-bold uppercase tracking-widest">Add Patient</span>
+                </button>
             </div>
             
             <div className="flex items-center gap-3 bg-teal-50 px-4 py-2 rounded-xl border border-teal-100/50 self-start md:self-auto">
@@ -627,7 +717,78 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
              </div>
           </div>
         </div>
+      )}      {/* Availability Selection Modal */}
+      {showAvailabilityModal && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
+           {/* Backdrop */}
+           <div 
+             className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm cursor-pointer" 
+             onClick={() => setShowAvailabilityModal(false)}
+           />
+
+           {/* Modal Container */}
+           <div className="relative z-[6010] bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate-scale-up border border-slate-100 max-h-[90vh] flex flex-col">
+              {/* Header */}
+              <div className="p-6 pb-0 flex items-center justify-between">
+                 <div>
+                    <h3 className="text-xl font-serif font-medium text-ink">Manage Availability</h3>
+                    <p className="text-[11px] font-bold text-muted-text/60 uppercase tracking-widest mt-1">
+                       {doctors.find(d => d.id === selectedDoctor)?.name || 'Doctor'} • {dateStr}
+                    </p>
+                 </div>
+                 <button onClick={() => setShowAvailabilityModal(false)} className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-ink/40 hover:text-ink transition-all">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                 </button>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-3 scrollbar-hide">
+                 {[
+                   { id: 'morning', label: 'Morning Session' },
+                   { id: 'evening', label: 'Evening Session' },
+                   { id: 'both', label: 'Full Day Absence' }
+                 ].map((opt) => {
+                    const isBlocked = opt.id === 'both' ? isFullDayBlocked : blockedSessions.includes(opt.id);
+                    return (
+                       <button 
+                         key={opt.id}
+                         onClick={() => handlePresenceToggle(opt.id, !isBlocked)}
+                         className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all group ${
+                           isBlocked 
+                             ? 'bg-rose-50/50 border-rose-200 text-rose-700' 
+                             : 'bg-white border-slate-100 text-ink/60 hover:border-blue-primary/30'
+                         }`}
+                       >
+                          <div className="flex items-center gap-3">
+                             <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${isBlocked ? 'bg-rose-100' : 'bg-slate-50 group-hover:scale-110'}`}>
+                                {opt.id === 'both' ? (
+                                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                ) : (
+                                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                      {opt.id === 'morning' ? <path d="M12 7V3M5 12H1M23 12h-4M7.05 7.05L4.22 4.22M19.78 19.78l-2.83-2.83M12 17v4M7.05 16.95l-2.83 2.83M19.78 4.22l-2.83 2.83M12 8a4 4 0 100 8 4 4 0 000-8z"/> : <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>}
+                                   </svg>
+                                )}
+                             </div>
+                             <span className="font-bold text-[13px] tracking-tight">{opt.label}</span>
+                          </div>
+                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isBlocked ? 'border-rose-500 bg-rose-500 text-white' : 'border-slate-200 bg-white'}`}>
+                             {isBlocked && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6L9 17l-5-5"/></svg>}
+                          </div>
+                       </button>
+                    );
+                 })}
+              </div>
+
+              {/* Footer */}
+              <div className="p-5 bg-slate-50/50 border-t border-slate-100">
+                 <p className="text-[10px] font-bold text-muted-text/40 uppercase tracking-[0.2em] text-center px-4 leading-relaxed">
+                    Changes will disable online bookings for selected sessions on this date.
+                 </p>
+              </div>
+           </div>
+        </div>
       )}
+
     </div>
   );
-}
+};

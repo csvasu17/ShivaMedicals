@@ -128,10 +128,11 @@ const initialFormState = {
   doctorId: '', sessionId: '', date: '', location: '',
 };
 
-const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
+const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtra = false }) => {
   const [form, setForm] = useState({
     ...initialFormState,
     doctorId: initialDoctorId || '',
+    isExtra: isExtra,
   });
   const [isDays, setIsDays] = useState(false);
   const [doctors, setDoctors] = useState([]);
@@ -139,6 +140,8 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
+  const [isDoctorAvailable, setIsDoctorAvailable] = useState(true);
+  const [blockedSessions, setBlockedSessions] = useState([]);
 
   // Cancellation state
   const [cancelMode, setCancelMode] = useState(initialCancelMode);
@@ -165,6 +168,21 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
         setDoctors([]);
       });
   }, []);
+
+  useEffect(() => {
+    if (form.doctorId && form.date) {
+      fetch(`${API_URL}/api/admin/doctors/${form.doctorId}/availability?date=${form.date}`)
+        .then(r => r.json())
+        .then(data => {
+          setIsDoctorAvailable(!data.is_full_day);
+          setBlockedSessions(data.blocked_sessions || []);
+        })
+        .catch(e => console.error('Error fetching doctor availability:', e));
+    } else {
+      setIsDoctorAvailable(true);
+      setBlockedSessions([]);
+    }
+  }, [form.doctorId, form.date]);
 
   // Sync sessions when doctor selection changes
   useEffect(() => {
@@ -287,21 +305,23 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
     return (
       <div className="flex flex-col items-center text-center py-2 animate-fade-in relative w-full">
         {/* Top Header */}
-        <div className="w-[60px] h-[60px] rounded-full bg-[#00c389] shadow-lg shadow-[#00c389]/30 text-white flex items-center justify-center mb-5 rotate-0">
+        <div className={`w-[60px] h-[60px] rounded-full shadow-lg text-white flex items-center justify-center mb-5 rotate-0 ${form.isExtra ? 'bg-purple-500 shadow-purple-500/30' : 'bg-[#00c389] shadow-[#00c389]/30'}`}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <p className="text-[12px] font-bold tracking-[0.2em] text-[#00c389] mb-2 uppercase">Success</p>
-        <h2 className="font-serif text-3xl font-bold text-slate-800 mb-2">Appointment Confirmed.</h2>
+        <p className={`text-[12px] font-bold tracking-[0.2em] mb-2 uppercase ${form.isExtra ? 'text-purple-500' : 'text-[#00c389]'}`}>Success</p>
+        <h2 className="font-serif text-3xl font-bold text-slate-800 mb-2">
+          {form.isExtra ? 'Extra Appointment Confirmed.' : 'Appointment Confirmed.'}
+        </h2>
         <p className="text-[15px] text-slate-500 mb-8">Show this token number at reception for your turn.</p>
 
         {/* The Card */}
         <div className="w-full bg-[#111c24] rounded-[24px] overflow-hidden shadow-2xl mb-7 relative group text-left border border-slate-800">
-          <div className="absolute top-0 left-0 w-full h-[140px] bg-gradient-to-b from-[#00c389]/40 to-transparent mix-blend-screen pointer-events-none" />
+          <div className={`absolute top-0 left-0 w-full h-[140px] bg-gradient-to-b to-transparent mix-blend-screen pointer-events-none ${form.isExtra ? 'from-purple-500/40' : 'from-[#00c389]/40'}`} />
           
           <div className="relative p-7 sm:px-9">
             {/* Card Header */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="bg-[#00c389]/20 p-1.5 rounded-lg text-[#00c389]">
+              <div className={`p-1.5 rounded-lg ${form.isExtra ? 'bg-purple-500/20 text-purple-500' : 'bg-[#00c389]/20 text-[#00c389]'}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </div>
               <span className="text-white font-medium text-base">Token Number</span>
@@ -316,7 +336,9 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Patient:</span> <span className="text-white font-medium truncate">{success.patient_name}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Age:</span> <span className="text-white font-medium truncate">{success.patient_age_days > 0 ? `${success.patient_age_days}d` : `${success.patient_age_years}y ${success.patient_age_months}m`}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Date:</span> <span className="text-white font-medium">{formatDateDisplay(success.booking_date)}</span></div>
-                <div className="flex items-start"><span className="text-slate-400/80 w-32 font-medium">Estimated Arrival:</span> <span className="text-white font-medium">{formatTimeAMPM(success.estimated_time)}</span></div>
+                {!form.isExtra && (
+                  <div className="flex items-start"><span className="text-slate-400/80 w-32 font-medium">Estimated Arrival:</span> <span className="text-white font-medium">{formatTimeAMPM(success.estimated_time)}</span></div>
+                )}
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Depart:</span> <span className="text-white font-medium capitalize">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
               </div>
             </div>
@@ -469,8 +491,12 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <div className="flex flex-row justify-between items-center gap-3 pr-8 sm:pr-12 md:pr-14 mb-1">
         <div>
-          <h2 className="font-serif text-xl sm:text-3xl font-semibold text-ink leading-tight">Book Appointment</h2>
-          <p className="text-muted-text text-[10px] sm:text-sm mt-0.5 opacity-60 italic font-medium hidden xs:block">Reserve your spot in minutes.</p>
+          <h2 className="font-serif text-xl sm:text-3xl font-semibold text-ink leading-tight">
+            {form.isExtra ? 'Extra Appointment' : 'Book Appointment'}
+          </h2>
+          <p className="text-muted-text text-[10px] sm:text-sm mt-0.5 opacity-60 italic font-medium hidden xs:block">
+            {form.isExtra ? 'Bypass current booking restrictions.' : 'Reserve your spot in minutes.'}
+          </p>
         </div>
         <button 
           type="button" 
@@ -620,10 +646,20 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
         {/* Date Picker */}
         <div className="flex flex-col">
           <label className="form-label-premium">Preferred Date *</label>
-          {/* Ensure datepicker also uses h-12 if I can find the class inside */}
           <DatePicker value={form.date} onChange={handleDateChange} />
         </div>
       </div>
+
+      {selectedDoctor && !isDoctorAvailable && (
+        <div className="rounded-2xl bg-amber-50 border border-amber-100 p-4 text-[13px] text-amber-700 font-medium flex items-center gap-3 animate-fade-in mb-2 shadow-sm">
+          <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <span className="flex-1 text-left line-clamp-2">
+            Doctor is not available on {formatDateDisplay(form.date)}. Please choose another date.
+          </span>
+        </div>
+      )}
 
       {/* Session Selection Section */}
       <div className={`transition-all duration-700 transform ${form.doctorId ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
@@ -634,30 +670,40 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
             Checking availability…
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
-            {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => (
-              <button 
-                key={s.id} 
-                type="button" 
-                disabled={s.id === 'none'}
-                onClick={() => setForm(p => ({ ...p, sessionId: String(s.id) }))}
-                className={`flex flex-col items-start px-3 py-1.5 rounded-xl border text-left transition-all duration-500 relative overflow-hidden group ${
-                  form.sessionId === String(s.id)
-                    ? 'bg-ink text-white border-ink shadow-2xl shadow-ink/10 scale-[1.01]'
-                    : s.id === 'none' 
-                      ? 'bg-slate-50 border-slate-100 text-slate-300' 
-                      : 'bg-slate-50/50 border-slate-100 hover:border-teal-500/40 hover:bg-white text-ink hover:shadow-lg active:scale-95'
-                }`}
-              >
-                <span className="text-[11px] font-black uppercase tracking-[0.15em] mb-1">{s.session_type}</span>
-                {s.start_time && (
-                  <span className={`text-[9.5px] font-medium tracking-tight ${form.sessionId === String(s.id) ? 'text-white/40' : 'text-muted-text/60'}`}>
-                    Slots: {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+             {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => {
+               const isBlocked = s.id !== 'none' && (blockedSessions.includes(s.session_type) || !isDoctorAvailable);
+               return (
+                 <button 
+                   key={s.id} 
+                   type="button" 
+                   disabled={s.id === 'none' || isBlocked}
+                   onClick={() => setForm(p => ({ ...p, sessionId: String(s.id) }))}
+                   className={`flex flex-col items-start px-4 py-3 rounded-2xl border text-left transition-all relative overflow-hidden group ${
+                     form.sessionId === String(s.id)
+                       ? 'bg-ink text-white border-ink shadow-lg'
+                       : s.id === 'none' 
+                         ? 'bg-slate-50 border-slate-100 text-slate-300' 
+                         : isBlocked
+                           ? 'bg-rose-50 border-rose-100 text-rose-400 opacity-60 cursor-not-allowed'
+                           : 'bg-white border-slate-100 hover:border-blue-primary/40 text-ink shadow-sm'
+                   }`}
+                 >
+                   <div className="flex w-full items-center justify-between pointer-events-none">
+                     <span className="text-[11px] font-black uppercase tracking-[0.15em]">{s.session_type}</span>
+                     {isBlocked && (
+                       <span className="text-[8px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">UNAVAILABLE</span>
+                     )}
+                   </div>
+                   {s.start_time && (
+                     <span className={`text-[10px] font-medium mt-1 ${form.sessionId === String(s.id) ? 'text-white/60' : 'text-slate-400'}`}>
+                       Time: {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                     </span>
+                   )}
+                 </button>
+               );
+             })}
+           </div>
         )}
       </div>
 
@@ -679,8 +725,10 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
       <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <button 
           type="submit" 
-          disabled={loading} 
-          className="w-full h-11 sm:h-12 rounded-xl bg-[#00c389] text-white font-bold text-base shadow-lg shadow-[#00c389]/20 hover:opacity-90 hover:shadow-2xl hover:shadow-[#00c389]/30 transition-all duration-300 active:scale-[0.98] disabled:opacity-40"
+          disabled={loading || (!form.isExtra && !isDoctorAvailable)} 
+          className={`w-full h-11 sm:h-12 rounded-xl text-white font-bold text-base shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-40 ${
+            form.isExtra ? 'bg-purple-600 shadow-purple-600/20' : 'bg-[#00c389] shadow-[#00c389]/20'
+          }`}
         >
           {loading ? (
             <div className="flex items-center gap-3 justify-center">

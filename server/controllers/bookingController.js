@@ -40,16 +40,22 @@ exports.createBooking = async (req, res) => {
     }
 
     try {
-        const isOpen = await tokenService.isBookingOpen(sessionId, date);
-        if (!isOpen) {
-            console.log('[BOOKING REJECTED] Not open:', { sessionId, date });
-            return res.status(400).json({ message: 'Booking is not open for this session.', error: 'Booking is not open for this session.' });
-        }
+        const { isExtra } = req.body;
         
-        const slots = await tokenService.getAvailableSlots(sessionId, date);
-        if (slots <= 0) {
-            console.log('[BOOKING REJECTED] No slots:', { sessionId, date });
-            return res.status(400).json({ message: 'Session is fully booked.', error: 'Session is fully booked.' });
+        if (!isExtra) {
+            const isOpen = await tokenService.isBookingOpen(sessionId, date);
+            if (!isOpen) {
+                console.log('[BOOKING REJECTED] Not open:', { sessionId, date });
+                return res.status(400).json({ message: 'Booking is not open for this session.', error: 'Booking is not open for this session.' });
+            }
+            
+            const slots = await tokenService.getAvailableSlots(sessionId, date);
+            if (slots <= 0) {
+                console.log('[BOOKING REJECTED] No slots:', { sessionId, date });
+                return res.status(400).json({ message: 'Session is fully booked.', error: 'Session is fully booked.' });
+            }
+        } else {
+            console.log('[EXTRA BOOKING] Bypassing restrictions:', { sessionId, date });
         }
 
         const tokenNumber = await tokenService.getNextTokenNumber(sessionId, date);
