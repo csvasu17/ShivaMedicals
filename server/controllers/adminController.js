@@ -30,6 +30,34 @@ exports.updateBookingStatus = async (req, res) => {
     }
 };
 
+exports.updatePaymentStatus = async (req, res) => {
+    const { payment_status, remarks } = req.body;
+    try {
+        let query = 'UPDATE bookings SET ';
+        const values = [];
+        const updates = [];
+
+        if (payment_status !== undefined) {
+            values.push(payment_status);
+            updates.push(`payment_status = $${values.length}`);
+        }
+        if (remarks !== undefined) {
+            values.push(remarks);
+            updates.push(`remarks = $${values.length}`);
+        }
+
+        if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });
+
+        values.push(req.params.id);
+        query += updates.join(', ') + ` WHERE id = $${values.length} RETURNING *`;
+        
+        const result = await db.query(query, values);
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.callNext = async (req, res) => {
     const { sessionId, date } = req.body;
     try {
@@ -254,20 +282,20 @@ exports.deleteBooking = async (req, res) => {
 
 exports.updateBooking = async (req, res) => {
     const { id } = req.params;
-    const { patient_name, patient_phone, patient_age_years, patient_age_months, location } = req.body;
+    const { patient_name, patient_phone, patient_age_years, patient_age_months, patient_age_days, location, remarks } = req.body;
     
-    if (!patient_name || !patient_phone || !location || patient_age_years === undefined || patient_age_months === undefined) {
+    if (!patient_name || !patient_phone || !location || patient_age_years === undefined || patient_age_months === undefined || patient_age_days === undefined) {
         return res.status(400).json({ error: 'Missing mandatory fields' });
     }
 
     try {
         const query = `
             UPDATE bookings 
-            SET patient_name = $1, patient_phone = $2, patient_age_years = $3, patient_age_months = $4, location = $5 
-            WHERE id = $6 
+            SET patient_name = $1, patient_phone = $2, patient_age_years = $3, patient_age_months = $4, patient_age_days = $5, location = $6, remarks = $7 
+            WHERE id = $8 
             RETURNING *
         `;
-        const values = [patient_name, patient_phone, patient_age_years, patient_age_months, location, id];
+        const values = [patient_name, patient_phone, patient_age_years, patient_age_months, patient_age_days, location, remarks || '', id];
         const result = await db.query(query, values);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Booking not found' });

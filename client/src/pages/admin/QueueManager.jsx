@@ -13,6 +13,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
+  const [remarkingPatient, setRemarkingPatient] = useState(null);
   const [itemsPerPage, setItemsPerPage] = useState(window.innerWidth < 768 ? 15 : 25);
 
   useEffect(() => {
@@ -76,6 +77,34 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     }
   };
 
+  const handlePaymentStatus = async (id, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
+      await fetch(`${API_URL}/api/admin/bookings/${id}/payment`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ payment_status: newStatus })
+      });
+      fetchTokens();
+    } catch (err) {
+      console.error('Error updating payment status', err);
+    }
+  };
+
+  const handleRemark = async (id, remark) => {
+    try {
+      await fetch(`${API_URL}/api/admin/bookings/${id}/payment`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ remarks: remark })
+      });
+      fetchTokens();
+      setRemarkingPatient(null);
+    } catch (err) {
+      console.error('Error updating remark', err);
+    }
+  };
+
   const handleDelete = (id) => {
     setDeleteConfirm(id);
   };
@@ -109,18 +138,19 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const headers = ["Token No", "Patient Name", "Arrival Time", "Age", "Mobile", "Location", "Status", "Date"];
+    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Location", "Status", "Date", "Payment", "Remarks"];
     const csvContent = [
-      headers.join(","),
+      finalHeaders.join(","),
       ...tokens.map(t => [
         t.token_number,
         `"${t.patient_name}"`,
-        t.estimated_time ? t.estimated_time.substring(0, 5) : '-',
-        `"${t.patient_age_years}y ${t.patient_age_months}m"`,
+        `"${t.patient_age_days > 0 ? t.patient_age_days + 'd' : t.patient_age_years + 'y ' + t.patient_age_months + 'm'}"`,
         t.patient_phone, 
         `"${t.location}"`,
         t.status,
-        `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"` // Force text DD-MM-YYYY
+        `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"`,
+        t.payment_status === 'paid' ? 'Paid' : 'Pending',
+        `"${t.remarks || ''}"`
       ].join(","))
     ].join("\n");
 
@@ -132,7 +162,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
   };
 
   const metrics = {
@@ -190,7 +220,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 <select 
                   value={selectedSession} 
                   onChange={e => { setSelectedSession(e.target.value); setCurrentPage(1); }} 
-                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%20%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
                 >
                   {sessions.map(s => <option key={s.id} value={s.id}>{s.session_type} ({s.start_time.slice(0,5)})</option>)}
                 </select>
@@ -277,12 +307,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
                   <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
                   <th className="px-4 md:px-6 py-6">Patient Name</th>
-                  <th className="hidden lg:table-cell px-6 py-6 font-bold text-teal-600">Arrival Time</th>
                   <th className="hidden lg:table-cell px-6 py-6">Age</th>
                   <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
                   <th className="hidden xl:table-cell px-6 py-6">Location</th>
                   <th className="px-4 md:px-6 py-6">Status</th>
-                  <th className="px-4 md:px-6 py-6 text-right pr-6 md:pr-12">Actions</th>
+                  <th className="px-4 md:px-6 py-6 text-right">Actions</th>
+                  <th className="px-4 md:px-6 py-6 text-center">Payment Confirmation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50/50">
@@ -301,13 +331,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          </div>
                       </td>
                       <td className="hidden lg:table-cell px-6 py-6">
-                         <div className="text-[14px] font-bold text-teal-600 tracking-tight">
-                            {t.estimated_time ? t.estimated_time.substring(0, 5) : '-'}
-                         </div>
-                      </td>
-                      <td className="hidden lg:table-cell px-6 py-6">
                          <div className="text-[14px] font-bold text-ink/70 tracking-tight">
-                            {t.patient_age_years}y {t.patient_age_months}m
+                            {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}
                          </div>
                       </td>
                       <td className="hidden lg:table-cell px-6 py-6">
@@ -324,40 +349,71 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                          {t.status === 'completed' && <span className="bg-emerald-500 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
                       </td>
-                      <td className="px-4 md:px-6 py-4 md:py-6 text-right pr-6 md:pr-12">
-                          <div className="flex justify-end gap-2 transition-all duration-300">
+                      <td className="px-4 md:px-6 py-4 md:py-6">
+                          <div className="flex items-center justify-end gap-2">
                              {(t.status === 'confirmed' || t.status === 'called') && (
-                                <>
+                                <div className="flex gap-2">
                                    {t.status === 'confirmed' ? (
                                       <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
                                    ) : (
                                       <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
                                    )}
                                    <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-rose-600/10 transition-all active:scale-95 whitespace-nowrap" title="Mark as Absent">Absent</button>
-                                </>
+                                </div>
                              )}
                              {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
                                 <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
                              )}
                              {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 border-l border-slate-100 pl-2 ml-1">
                                   <button 
                                      onClick={() => setEditingPatient(t)} 
-                                     className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all flex-shrink-0 shadow-sm shadow-blue-500/5"
+                                     className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all flex-shrink-0"
                                      title="Edit Patient"
                                   >
-                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                   </button>
                                   <button 
                                      onClick={() => handleDelete(t.id)} 
-                                     className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                                     className="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
                                      title="Delete Patient"
                                   >
-                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
                                   </button>
                                 </div>
                              )}
                           </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-4 md:py-6 text-center border-l border-slate-50">
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="flex items-center justify-center gap-2">
+                              <button 
+                                onClick={() => handlePaymentStatus(t.id, t.payment_status)}
+                                className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all ${
+                                  t.payment_status === 'paid' 
+                                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                                    : 'bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-colors'
+                                }`}
+                                title={t.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                              </button>
+                              
+                              <button 
+                                onClick={() => setRemarkingPatient(t)}
+                                className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all ${
+                                  t.remarks
+                                    ? 'bg-ink text-white shadow-lg shadow-ink/20' 
+                                    : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-ink hover:text-white'
+                                }`}
+                                title={t.remarks || 'Add Remark'}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                              </button>
+                            </div>
+                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Remark</div>
+                          </div>
+                          {t.remarks && <div className="text-[10px] mt-2 font-bold text-ink/60 italic leading-snug max-w-[150px] mx-auto break-words">"{t.remarks}"</div>}
                       </td>
                     </tr>
                   );
@@ -378,32 +434,57 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           <span className="font-bold text-ink text-[15px] truncate max-w-[150px]">{t.patient_name}</span>
                         </div>
                         <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[200px]">
-                          {t.patient_phone} • {t.patient_age_years}y {t.patient_age_months}m • {t.location}
+                          {t.patient_phone} • {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`} • {t.location}
                         </span>
                       </div>
-                      <div>
-                        {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Waiting</span>}
-                        {t.status === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
-                        {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
-                        {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] font-black uppercase tracking-widest line-through">Absent</span>}
-                      </div>
+                        <div className="flex items-center gap-2">
+                          {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Waiting</span>}
+                          {t.status === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
+                          {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
+                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] font-black uppercase tracking-widest line-through">Absent</span>}
+                          {t.payment_status === 'paid' && (
+                            <span className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                            </span>
+                          )}
+                        </div>
                     </div>
                     
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
+                       <button 
+                         onClick={() => handlePaymentStatus(t.id, t.payment_status)}
+                         className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${
+                           t.payment_status === 'paid' 
+                             ? 'bg-emerald-500 text-white' 
+                             : 'bg-slate-100 text-slate-400'
+                         }`}
+                       >
+                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                       </button>
+                       <button 
+                         onClick={() => setRemarkingPatient(t)}
+                         className={`h-10 w-10 border flex items-center justify-center rounded-xl transition-all shadow-sm ${
+                           t.remarks ? 'bg-ink text-white border-ink' : 'bg-white border-slate-200 text-slate-400'
+                         }`}
+                       >
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                       </button>
                       {(t.status === 'confirmed' || t.status === 'called') && (
                          <>
                             {t.status === 'confirmed' ? (
-                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Call</button>
+                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Call</button>
                             ) : (
-                               <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Finish</button>
+                               <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Finish</button>
                             )}
-                            <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-6 rounded-xl text-[11px] uppercase tracking-widest flex-1">Absent</button>
+                            <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Absent</button>
                          </>
                       )}
                       {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
-                         <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[11px] font-bold uppercase tracking-widest flex-1">Re-call</button>
+                         <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1">Re-call</button>
                       )}
-                       {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                    </div>
+                    {t.remarks && <div className="text-[10px] font-bold text-ink/40 italic px-1">"{t.remarks}"</div>}
+                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
                           <div className="flex gap-2">
                             <button 
                               onClick={() => setEditingPatient(t)} 
@@ -419,7 +500,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                             </button>
                           </div>
                        )}
-                    </div>
                   </div>
                 );
               })}
@@ -506,10 +586,48 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       {/* EDIT PATIENT MODAL */}
       <EditPatientModal 
         isOpen={!!editingPatient} 
-        patient={editingPatient} 
         onClose={() => setEditingPatient(null)} 
-        onUpdated={fetchTokens} 
+        patient={editingPatient} 
+        onUpdated={() => {
+          fetchTokens();
+          setEditingPatient(null);
+        }} 
       />
+
+      {remarkingPatient && (
+        <div className="fixed inset-0 z-[7000] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setRemarkingPatient(null)}>
+          <div className="bg-white rounded-[32px] w-full max-w-sm shadow-2xl relative overflow-hidden animate-scale-up p-8" onClick={e => e.stopPropagation()}>
+             <h3 className="text-2xl font-serif text-ink font-semibold mb-2">Patient Remark</h3>
+             <p className="text-muted-text text-[13px] mb-6">Add a note for <span className="font-bold text-ink">{remarkingPatient.patient_name}</span></p>
+             
+             <textarea 
+                autoFocus
+                className="w-full h-32 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm font-medium text-ink focus:border-blue-primary focus:ring-1 focus:ring-blue-primary outline-none transition-all resize-none"
+                placeholder="Enter payment details or notes..."
+                defaultValue={remarkingPatient.remarks || ''}
+                id="remarkInput"
+             />
+             
+             <div className="flex gap-3 mt-6">
+                <button 
+                  onClick={() => setRemarkingPatient(null)}
+                  className="flex-1 h-12 rounded-xl border border-slate-200 text-slate-500 font-bold text-[11px] uppercase tracking-widest hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => {
+                    const val = document.getElementById('remarkInput').value;
+                    handleRemark(remarkingPatient.id, val);
+                  }}
+                  className="flex-1 h-12 rounded-xl bg-ink text-white font-bold text-[11px] uppercase tracking-widest hover:bg-blue-primary transition-all shadow-lg shadow-ink/20"
+                >
+                  Save Remark
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

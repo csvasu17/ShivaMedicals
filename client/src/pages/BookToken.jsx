@@ -124,7 +124,7 @@ const DatePicker = ({ value, onChange }) => {
 ───────────────────────────────────────── */
 const initialFormState = {
   patientName: '', phone: '',
-  patientAgeYears: '', patientAgeMonths: '',
+  patientAgeYears: '', patientAgeMonths: '', patientAgeDays: 0,
   doctorId: '', sessionId: '', date: '', location: '',
 };
 
@@ -133,6 +133,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
     ...initialFormState,
     doctorId: initialDoctorId || '',
   });
+  const [isDays, setIsDays] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -211,7 +212,8 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.patientName || !form.phone || !form.doctorId || !form.date || !form.sessionId || !form.location || form.patientAgeYears === '' || form.patientAgeMonths === '') {
+    const isAgeComplete = isDays ? form.patientAgeDays !== '' : (form.patientAgeYears !== '' && form.patientAgeMonths !== '');
+    if (!form.patientName || !form.phone || !form.doctorId || !form.date || !form.sessionId || !form.location || !isAgeComplete) {
       setError('Please complete all required fields (*)'); 
       return;
     }
@@ -312,7 +314,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
               </div>
               <div className="flex flex-col justify-center gap-3 pl-4 text-[15px]">
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Patient:</span> <span className="text-white font-medium truncate">{success.patient_name}</span></div>
-                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Age:</span> <span className="text-white font-medium truncate">{success.patient_age_years}y {success.patient_age_months}m</span></div>
+                <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Age:</span> <span className="text-white font-medium truncate">{success.patient_age_days > 0 ? `${success.patient_age_days}d` : `${success.patient_age_years}y ${success.patient_age_months}m`}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Date:</span> <span className="text-white font-medium">{formatDateDisplay(success.booking_date)}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-32 font-medium">Estimated Arrival:</span> <span className="text-white font-medium">{formatTimeAMPM(success.estimated_time)}</span></div>
                 <div className="flex items-start"><span className="text-slate-400/80 w-20 font-medium">Depart:</span> <span className="text-white font-medium capitalize">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
@@ -520,38 +522,78 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false }) => {
         </div>
 
         <div className="flex flex-col lg:col-span-2">
-          <label className="form-label-premium">Patient Age *</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="form-label-premium mb-0">Patient Age *</label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input 
+                type="checkbox" 
+                checked={isDays} 
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setIsDays(checked);
+                  if (checked) {
+                    setForm(p => ({ ...p, patientAgeYears: 0, patientAgeMonths: 0, patientAgeDays: '' }));
+                  } else {
+                    setForm(p => ({ ...p, patientAgeYears: '', patientAgeMonths: '', patientAgeDays: 0 }));
+                  }
+                }}
+                className="w-4 h-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500 transition-all cursor-pointer"
+              />
+              <span className="text-[11px] font-bold text-muted-text/60 group-hover:text-teal-600 transition-colors uppercase tracking-wider">Include Days?</span>
+            </label>
+          </div>
+          
           <div className="grid grid-cols-2 gap-4">
-            <div className="relative group">
-              <select 
-                name="patientAgeYears" 
-                value={form.patientAgeYears} 
-                onChange={handleChange} 
-                className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
-                required
-              >
-                <option value="">Years</option>
-                {[...Array(111).keys()].map(y => <option key={y} value={y}>{y} Years</option>)}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            {!isDays ? (
+              <>
+                <div className="relative group">
+                  <select 
+                    name="patientAgeYears" 
+                    value={form.patientAgeYears} 
+                    onChange={handleChange} 
+                    className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
+                    required={!isDays}
+                  >
+                    <option value="">Years</option>
+                    {[...Array(111).keys()].map(y => <option key={y} value={y}>{y} Years</option>)}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
+                <div className="relative group">
+                  <select 
+                    name="patientAgeMonths" 
+                    value={form.patientAgeMonths} 
+                    onChange={handleChange} 
+                    className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
+                    required={!isDays}
+                  >
+                    <option value="">Months</option>
+                    {[...Array(12).keys()].map(m => <option key={m} value={m}>{m} Months</option>)}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="col-span-2 relative group">
+                <select 
+                  name="patientAgeDays" 
+                  value={form.patientAgeDays} 
+                  onChange={handleChange} 
+                  className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
+                  required={isDays}
+                >
+                  <option value="">Select Days</option>
+                  {[...Array(31).keys()].map(d => <option key={d+1} value={d+1}>{d+1} Days</option>)}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
               </div>
-            </div>
-            <div className="relative group">
-              <select 
-                name="patientAgeMonths" 
-                value={form.patientAgeMonths} 
-                onChange={handleChange} 
-                className="input-premium h-[42px] appearance-none pr-10 cursor-pointer focus:ring-teal-500 w-full" 
-                required
-              >
-                <option value="">Months</option>
-                {[...Array(12).keys()].map(m => <option key={m} value={m}>{m} Months</option>)}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-text/30 group-focus-within:text-teal-600 transition-colors">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

@@ -36,31 +36,23 @@ async function calculateEstimatedTime(sessionId, tokenNumber) {
 }
 
 async function isBookingOpen(sessionId, bookingDateStr) {
-    const result = await db.query('SELECT booking_opens_at, booking_closes_before_minutes, start_time FROM sessions WHERE id = $1', [sessionId]);
+    const result = await db.query('SELECT start_time, booking_closes_before_minutes FROM sessions WHERE id = $1', [sessionId]);
     if (result.rows.length === 0) return false;
     
-    const { booking_opens_at, booking_closes_before_minutes, start_time } = result.rows[0];
+    const { start_time, booking_closes_before_minutes } = result.rows[0];
     
-    // bookingDateStr is YYYY-MM-DD
     const today = new Date();
     const [by, bm, bd] = bookingDateStr.split('-').map(Number);
-    const bookingDate = new Date(by, bm - 1, bd); // Local midnight of the booking date
+    const sessionStartTime = new Date(by, bm - 1, bd); 
+    const [sh, sm, ss] = start_time.split(':').map(Number);
+    sessionStartTime.setHours(sh, sm, ss || 0, 0);
     
-    // Check if booking is in the past
-    if (bookingDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) return false;
-
-    // Check opening time (usually previous night)
-    const opensAtDate = new Date(bookingDate);
-    opensAtDate.setDate(opensAtDate.getDate() - 1);
-    const [oh, om, os] = booking_opens_at.split(':').map(Number);
-    opensAtDate.setHours(oh, om, os || 0, 0);
+    const opensAtDate = new Date(sessionStartTime);
+    opensAtDate.setHours(opensAtDate.getHours() - 24);
 
     if (today < opensAtDate) return false;
 
-    // Check closing time
-    const closesAtDate = new Date(bookingDate);
-    const [sh, sm, ss] = start_time.split(':').map(Number);
-    closesAtDate.setHours(sh, sm, ss || 0, 0);
+    const closesAtDate = new Date(sessionStartTime);
     closesAtDate.setMinutes(closesAtDate.getMinutes() - booking_closes_before_minutes);
 
     if (today > closesAtDate) return false;

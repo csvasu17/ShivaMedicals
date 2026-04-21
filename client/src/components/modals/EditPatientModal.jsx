@@ -7,8 +7,11 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
     patient_phone: '',
     patient_age_years: '',
     patient_age_months: '',
-    location: ''
+    patient_age_days: 0,
+    location: '',
+    remarks: ''
   });
+  const [isDays, setIsDays] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -19,8 +22,11 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
         patient_phone: patient.patient_phone || '',
         patient_age_years: patient.patient_age_years ?? '',
         patient_age_months: patient.patient_age_months ?? '',
-        location: patient.location || ''
+        patient_age_days: patient.patient_age_days ?? 0,
+        location: patient.location || '',
+        remarks: patient.remarks || ''
       });
+      setIsDays(!!patient.patient_age_days && patient.patient_age_days > 0);
     }
   }, [patient, isOpen]);
 
@@ -114,32 +120,69 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Patient Age *</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Patient Age *</label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={isDays} 
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsDays(checked);
+                      if (checked) {
+                        setFormData(p => ({ ...p, patient_age_years: 0, patient_age_months: 0, patient_age_days: '' }));
+                      } else {
+                        setFormData(p => ({ ...p, patient_age_years: '', patient_age_months: '', patient_age_days: 0 }));
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-primary focus:ring-blue-primary transition-all cursor-pointer"
+                  />
+                  <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-primary transition-colors uppercase tracking-[0.1em]">Include Days?</span>
+                </label>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
-                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
-                  <select 
-                    name="patient_age_years" 
-                    value={formData.patient_age_years} 
-                    onChange={handleChange} 
-                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
-                    required
-                  >
-                    <option value="">Years</option>
-                    {[...Array(111).keys()].map(y => <option key={y} value={y}>{y}y</option>)}
-                  </select>
-                </div>
-                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
-                  <select 
-                    name="patient_age_months" 
-                    value={formData.patient_age_months} 
-                    onChange={handleChange} 
-                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
-                    required
-                  >
-                    <option value="">Months</option>
-                    {[...Array(12).keys()].map(m => <option key={m} value={m}>{m}m</option>)}
-                  </select>
-                </div>
+                {!isDays ? (
+                  <>
+                    <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                      <select 
+                        name="patient_age_years" 
+                        value={formData.patient_age_years} 
+                        onChange={handleChange} 
+                        className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
+                        required={!isDays}
+                      >
+                        <option value="">Years</option>
+                        {[...Array(111).keys()].map(y => <option key={y} value={y}>{y}y</option>)}
+                      </select>
+                    </div>
+                    <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                      <select 
+                        name="patient_age_months" 
+                        value={formData.patient_age_months} 
+                        onChange={handleChange} 
+                        className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
+                        required={!isDays}
+                      >
+                        <option value="">Months</option>
+                        {[...Array(12).keys()].map(m => <option key={m} value={m}>{m}m</option>)}
+                      </select>
+                    </div>
+                  </>
+                ) : (
+                  <div className="col-span-2 h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                    <select 
+                      name="patient_age_days" 
+                      value={formData.patient_age_days} 
+                      onChange={handleChange} 
+                      className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full appearance-none cursor-pointer" 
+                      required={isDays}
+                    >
+                      <option value="">Select Days</option>
+                      {[...Array(31).keys()].map(d => <option key={d+1} value={d+1}>{d+1} Days</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -153,6 +196,19 @@ const EditPatientModal = ({ isOpen, onClose, patient, onUpdated }) => {
                   onChange={handleChange}
                   className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
                   required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Remarks</label>
+              <div className="h-24 bg-white border border-slate-200 rounded-2xl flex items-start p-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                <textarea 
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleChange}
+                  placeholder="Add any specific notes or remarks here..."
+                  className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full h-full resize-none"
                 />
               </div>
             </div>

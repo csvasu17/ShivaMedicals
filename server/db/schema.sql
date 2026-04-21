@@ -32,6 +32,7 @@ CREATE TABLE bookings (
     patient_phone VARCHAR NOT NULL,
     patient_age_years INT NOT NULL,
     patient_age_months INT NOT NULL,
+    patient_age_days INT NOT NULL,
     location TEXT NOT NULL,
     doctor_id UUID REFERENCES doctors(id),
     session_id UUID REFERENCES sessions(id),
