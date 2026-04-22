@@ -356,3 +356,85 @@ exports.updateBooking = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.getDashboardStats = async (req, res) => {
+    try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // Today's total patients
+        const todayRes = await db.query('SELECT COUNT(*) FROM bookings WHERE booking_date = $1', [todayStr]);
+        const todayPatients = parseInt(todayRes.rows[0].count);
+
+        // Active sessions today
+        const sessionRes = await db.query('SELECT COUNT(*) FROM sessions WHERE id IN (SELECT DISTINCT session_id FROM bookings WHERE booking_date = $1)', [todayStr]);
+        const activeSessions = parseInt(sessionRes.rows[0].count);
+
+        // Top Doctor
+        const topDoctorRes = await db.query(`
+            SELECT d.name, COUNT(b.id) as count 
+            FROM bookings b 
+            JOIN doctors d ON b.doctor_id = d.id 
+            GROUP BY d.name 
+            ORDER BY count DESC 
+            LIMIT 1
+        `);
+        const topDoctor = topDoctorRes.rows[0]?.name || '—';
+
+        // Weekly Traffic
+        // Get counts grouped by date for the last 7 days
+        const weeklyRes = await db.query(`
+            SELECT 
+                to_char(booking_date, 'Dy') as day,
+                booking_date as full_date,
+                COUNT(*) as count 
+            FROM bookings 
+            WHERE booking_date >= CURRENT_DATE - INTERVAL '6 days'
+            GROUP BY booking_date 
+            ORDER BY booking_date ASC
+        `);
+        
+        const trafficMap = {};
+        weeklyRes.rows.forEach(r => {
+            trafficMap[r.day] = parseInt(r.count);
+        });
+
+        // Generate full 7 day list to ensure no gaps
+        const weeklyTraffic = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+            weeklyTraffic.push({
+                day: dayName,
+                count: trafficMap[dayName] || 0
+            });
+        }
+
+        res.json({
+            todayPatients,
+            activeSessions,
+            topDoctor,
+            weeklyTraffic,
+            // Estimated revenue (mock logic: number of patients * average fee)
+            monthRevenue: `₹${(todayPatients * 350).toLocaleString()}` 
+        });
+    } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getActiveStaff = async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT id, name, username, role, last_active_at 
+            FROM users 
+            WHERE last_active_at >= NOW() - INTERVAL '10 minutes'
+            ORDER BY last_active_at DESC
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching active staff:', err);
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QueueManager from './admin/QueueManager';
 import AdminOverview from './admin/AdminOverview';
+import ActiveStaffMonitor from './admin/ActiveStaffMonitor';
 import AddStaffModal from '../components/modals/AddStaffModal';
 import AddDoctorModal from '../components/modals/AddDoctorModal';
 import { API_URL } from '../constants/api';
@@ -33,6 +34,27 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
       fetchDoctors();
     }
   }, [user]);
+
+  // Pulse activity to tracking last active timestamp
+  useEffect(() => {
+    if (user?.id) {
+      const pulseActivity = async () => {
+        try {
+          await fetch(`${API_URL}/api/auth/active`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id })
+          });
+        } catch (err) {
+          console.error('Activity pulse failed', err);
+        }
+      };
+      
+      pulseActivity();
+      const interval = setInterval(pulseActivity, 60000 * 2); // Pulse every 2 minutes
+      return () => clearInterval(interval);
+    }
+  }, [user, API_URL]);
 
   const fetchStaffs = async () => {
     try {
@@ -220,6 +242,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
         </div>
       );
       case 'analytics': return <AdminOverview user={user} />;
+      case 'monitoring': return <ActiveStaffMonitor />;
       case 'settings': return (
         <div className="animate-fade-in space-y-8">
            <h3 className="text-3xl font-serif font-medium text-ink">System Settings</h3>
@@ -256,6 +279,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
               { id: 'doctors', label: 'Doctors', show: user?.role === 'admin' || user?.role === 'superadmin' },
               { id: 'staff', label: 'Staff', show: user?.role === 'admin' || user?.role === 'superadmin' },
               { id: 'analytics', label: 'Analytics', show: user?.role === 'admin' || user?.role === 'superadmin' },
+              { id: 'monitoring', label: 'Monitor', show: user?.role === 'admin' || user?.role === 'superadmin' },
               { id: 'settings', label: 'Settings', show: user?.role === 'admin' || user?.role === 'superadmin' },
             ].filter(t => t.show !== false).map(tab => (
               <button 

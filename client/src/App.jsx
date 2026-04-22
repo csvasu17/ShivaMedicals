@@ -13,6 +13,7 @@ import FeaturesSection from './components/sections/FeaturesSection';
 import TestimonialsSection from './components/sections/TestimonialsSection';
 import FinalCTA from './components/sections/FinalCTA';
 import ContactPage from './pages/ContactPage';
+import { API_URL } from './constants/api';
 
 function App() {
   const [route, setRoute] = useState('home'); 
@@ -82,7 +83,18 @@ function App() {
     window.history.pushState({}, '', '/staff/dashboard');
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (user?.id) {
+      try {
+        await fetch(`${API_URL}/api/auth/logout-activity`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+      } catch (err) {
+        console.error('Logout activity clear failed', err);
+      }
+    }
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
     setUser(null);

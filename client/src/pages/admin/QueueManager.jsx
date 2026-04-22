@@ -19,6 +19,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(window.innerWidth < 768 ? 15 : 25);
   const [isExtraMode, setIsExtraMode] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -172,9 +173,18 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   };
 
   // Pagination State
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(tokens.length / itemsPerPage);
-  const displayedTokens = tokens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Search and Pagination Logic
+  const filteredTokens = tokens.filter(t => 
+    t.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.patient_phone.includes(searchTerm) ||
+    String(t.token_number).includes(searchTerm)
+  );
+
+  const totalPages = Math.ceil(filteredTokens.length / itemsPerPage);
+  const displayedTokens = filteredTokens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
@@ -381,6 +391,21 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 </button>
             </div>
             
+            <div className="flex-1 max-w-sm hidden lg:block">
+               <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-primary transition-colors">
+                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  </div>
+                  <input 
+                     type="text" 
+                     placeholder="Search name, mobile or token..."
+                     value={searchTerm}
+                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                     className="w-full h-11 bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 text-sm font-medium text-ink placeholder:text-slate-400 focus:bg-white focus:border-blue-primary/30 focus:ring-4 focus:ring-blue-primary/5 transition-all outline-none"
+                  />
+               </div>
+            </div>
+
             <div className="flex items-center gap-3 bg-teal-50 px-4 py-2 rounded-xl border border-teal-100/50 self-start md:self-auto">
                <div className="relative flex h-2 w-2">
                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
@@ -454,7 +479,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                              {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
                                 <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
                              )}
-                             {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                             {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
                                 <div className="flex gap-2 border-l border-slate-100 pl-2 ml-1">
                                   <button 
                                      onClick={() => setEditingPatient(t)} 
@@ -463,13 +488,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                                   >
                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                   </button>
-                                  <button 
-                                     onClick={() => handleDelete(t.id)} 
-                                     className="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                                     title="Delete Patient"
-                                  >
-                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                                  </button>
+                                  {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                                    <button 
+                                       onClick={() => handleDelete(t.id)} 
+                                       className="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                                       title="Delete Patient"
+                                    >
+                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                                    </button>
+                                  )}
                                 </div>
                              )}
                           </div>
@@ -574,7 +601,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       )}
                     </div>
                     {t.remarks && <div className="text-[10px] font-bold text-ink/40 italic px-1">"{t.remarks}"</div>}
-                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                    {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
                           <div className="flex gap-2">
                             <button 
                               onClick={() => setEditingPatient(t)} 
@@ -582,12 +609,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                             >
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
-                            <button 
-                              onClick={() => handleDelete(t.id)} 
-                              className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                            </button>
+                            {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                              <button 
+                                onClick={() => handleDelete(t.id)} 
+                                className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                              </button>
+                            )}
                           </div>
                        )}
                   </div>

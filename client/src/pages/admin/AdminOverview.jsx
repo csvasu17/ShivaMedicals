@@ -4,19 +4,25 @@ import { API_URL } from '../../constants/api';
 const AdminOverview = ({ user }) => {
   const [stats, setStats] = useState({
     todayPatients: 0,
-    monthRevenue: '—',
+    monthRevenue: '₹0',
     topDoctor: '—',
     activeSessions: 0,
+    weeklyTraffic: []
   });
 
   useEffect(() => {
-    // Mocking some stats for the overview
-    setStats({
-      todayPatients: 42,
-      monthRevenue: '₹12,450',
-      topDoctor: 'Dr. Ramesh Kumar',
-      activeSessions: 2,
-    });
+    fetch(`${API_URL}/api/admin/stats`)
+      .then(r => r.json())
+      .then(data => {
+        setStats({
+          todayPatients: data.todayPatients || 0,
+          monthRevenue: data.monthRevenue || '₹0',
+          topDoctor: data.topDoctor || '—',
+          activeSessions: data.activeSessions || 0,
+          weeklyTraffic: data.weeklyTraffic || []
+        });
+      })
+      .catch(err => console.error('Error fetching stats:', err));
   }, []);
 
   const cards = [
@@ -39,29 +45,38 @@ const AdminOverview = ({ user }) => {
          </button>
       </div>
 
-      {/* TREND SECTION MOCK */}
+      {/* TREND SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
          <div className="lg:col-span-2 bg-ink rounded-3xl md:rounded-[40px] p-6 md:p-10 relative overflow-hidden shadow-2xl">
             <div className="absolute top-0 right-0 w-[40%] h-[120%] bg-blue-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-12 gap-4">
                <div>
                   <h3 className="text-xl md:text-2xl font-serif font-medium text-white mb-1">Queue Traffic</h3>
-                  <p className="text-white/40 text-xs md:text-sm">Peak hours during the morning session.</p>
+                  <p className="text-white/40 text-xs md:text-sm">Daily booking volume over the last 7 days.</p>
                </div>
                <div className="flex gap-2">
                   <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[11px] font-bold text-white/60 tracking-widest uppercase">Weekly view</div>
                </div>
             </div>
             
-            <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4">
-               {[40, 65, 30, 85, 55, 90, 75].map((h, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center group">
-                     <div className="w-full relative bg-white/5 rounded-t-lg md:rounded-t-xl overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${h}%` }}>
-                        <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-1000 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*100}ms` }}></div>
-                     </div>
-                     <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-widest">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]}</p>
-                  </div>
-               ))}
+            <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4 relative px-2">
+               {stats.weeklyTraffic.map((t, i) => {
+                  const maxCount = Math.max(...stats.weeklyTraffic.map(x => x.count), 1);
+                  const barHeight = Math.max((t.count / maxCount) * 80, 2); // 80% max to leave space for text
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
+                       {/* Count Label */}
+                       <div className={`mb-2 text-[10px] md:text-[12px] font-black transition-all duration-300 ${t.count > 0 ? 'text-white' : 'text-white/10'}`}>
+                         {t.count}
+                       </div>
+                       
+                       <div className="w-full relative bg-white/5 rounded-t-lg md:rounded-t-xl overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${barHeight}%` }}>
+                          <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-1000 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*100}ms` }}></div>
+                       </div>
+                       <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-widest">{t.day}</p>
+                    </div>
+                  );
+               })}
             </div>
          </div>
 

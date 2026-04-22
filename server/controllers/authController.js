@@ -55,3 +55,27 @@ exports.getMe = (req, res) => {
     // This would normally decode the JWT
     res.json({ user: { username: 'admin', role: 'superadmin' } });
 };
+
+exports.updateLastActive = async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    try {
+        await db.query('UPDATE users SET last_active_at = NOW() WHERE id = $1', [userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error updating activity:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.clearLastActive = async (req, res) => {
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'User ID required' });
+    try {
+        await db.query('UPDATE users SET last_active_at = NULL WHERE id = $1', [userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error clearing activity:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
