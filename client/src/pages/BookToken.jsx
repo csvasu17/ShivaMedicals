@@ -354,13 +354,41 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
             </div>
           </div>
         </div>
+        
+        {/* Arrival Time Notice */}
+        <div className="bg-amber-50/70 border border-amber-200/50 rounded-[22px] p-6 mb-8 w-full text-left animate-fade-in">
+          <div className="flex items-start gap-4">
+             <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+             </div>
+             <div className="flex flex-col gap-2.5">
+               <p className="text-amber-900 font-bold text-[14px] sm:text-[15px] leading-relaxed">
+                 பதிவு செய்யப்பட்ட நேரத்திலிருந்து ஒரு மணி நேரத்திற்கு தாங்கள் வரவில்லை என்றால் டோக்கன் காலாவதி ஆகிவிடும்.
+               </p>
+               <div className="h-px bg-amber-200/40 w-full" />
+               <p className="text-amber-800/80 font-semibold text-[13px] sm:text-[14px] leading-relaxed">
+                 If you do not arrive within one hour of the registered time, the token will expire.
+               </p>
+             </div>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <button 
-          onClick={onClose} 
-          className="w-full bg-[#00c389] text-white font-medium text-[17px] py-4 rounded-xl shadow-[0_8px_20px_rgba(0,195,137,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all outline-none"
+          onClick={() => {
+            const isAdmin = localStorage.getItem('adminToken');
+            if (!isAdmin) {
+              // Not admin/staff, go to home page
+              onClose();
+              window.location.href = '/';
+            } else {
+              // Admin/staff, stay in dashboard
+              onClose();
+            }
+          }} 
+          className="w-full bg-[#00c389] text-white font-semibold text-[17px] py-4 rounded-xl shadow-[0_8px_20px_rgba(0,195,137,0.3)] hover:opacity-90 hover:-translate-y-0.5 transition-all outline-none"
         >
-          Go to Dashboard
+          Submit
         </button>
         
         <div className="mt-8 flex items-center justify-center gap-4 w-full text-slate-400">

@@ -110,7 +110,7 @@ exports.createBooking = async (req, res) => {
         const tokenNumber = await tokenService.getNextTokenNumber(sessionId, date);
         const estimatedTime = await tokenService.calculateEstimatedTime(sessionId, tokenNumber);
         
-        const bookingRef = `CLN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        const bookingRef = `BK-${Date.now().toString().slice(-4)}${Math.floor(100000 + Math.random() * 899999)}`;
 
         const result = await db.query(
             `INSERT INTO bookings (booking_ref, patient_name, patient_phone, patient_age_years, patient_age_months, patient_age_days, location, doctor_id, session_id, booking_date, token_number, estimated_time) 
