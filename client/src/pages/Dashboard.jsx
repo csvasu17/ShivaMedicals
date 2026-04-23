@@ -21,6 +21,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [editingDoctor, setEditingDoctor] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, type, name }
   const [staffs, setStaffs] = useState([]);
   const [doctors, setDoctors] = useState([]);
 
@@ -82,29 +83,32 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
     }
   };
 
-  const handleDeleteStaff = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this staff member?')) return;
-    try {
-      const res = await fetch(`${API_URL}/api/admin/staff/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        setStaffs(staffs.filter(s => s.id !== id));
-        setStats(prev => ({ ...prev, staffMembers: staffs.length - 1 }));
-      }
-    } catch (err) {
-      console.error('Failed to delete staff', err);
-    }
+  const handleDeleteStaff = (staff) => {
+    setDeleteConfirm({ id: staff.id, type: 'staff', name: staff.name });
   };
 
-  const handleDeleteDoctor = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this doctor?')) return;
+  const handleDeleteDoctor = (doctor) => {
+    setDeleteConfirm({ id: doctor.id, type: 'doctor', name: doctor.name });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteConfirm) return;
+    const { id, type } = deleteConfirm;
     try {
-      const res = await fetch(`${API_URL}/api/admin/doctors/${id}`, { method: 'DELETE' });
+      const endpoint = type === 'staff' ? `/api/admin/staff/${id}` : `/api/admin/doctors/${id}`;
+      const res = await fetch(`${API_URL}${endpoint}`, { method: 'DELETE' });
       if (res.ok) {
-        setDoctors(doctors.filter(d => d.id !== id));
-        setStats(prev => ({ ...prev, doctors: doctors.length - 1 }));
+        if (type === 'staff') {
+          setStaffs(staffs.filter(s => s.id !== id));
+          setStats(prev => ({ ...prev, staffMembers: staffs.length - 1 }));
+        } else {
+          setDoctors(doctors.filter(d => d.id !== id));
+          setStats(prev => ({ ...prev, doctors: doctors.length - 1 }));
+        }
+        setDeleteConfirm(null);
       }
     } catch (err) {
-      console.error('Failed to delete doctor', err);
+      console.error(`Failed to delete ${type}`, err);
     }
   };
 
@@ -169,7 +173,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
                       <button 
-                        onClick={() => handleDeleteStaff(s.id)}
+                        onClick={() => handleDeleteStaff(s)}
                         className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
                       >
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -223,7 +227,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
                       <button 
-                        onClick={() => handleDeleteDoctor(d.id)}
+                        onClick={() => handleDeleteDoctor(d)}
                         className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm"
                       >
                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -297,6 +301,38 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
 
         {renderContent()}
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+         <div className="fixed inset-0 z-[5000] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-ink/60 backdrop-blur-md cursor-pointer" onClick={() => setDeleteConfirm(null)} />
+           <div className="relative z-10 w-full max-w-md bg-white rounded-[40px] p-10 shadow-2xl animate-scale-up border border-slate-100 flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-[28px] bg-red-50 text-red-500 flex items-center justify-center mb-6 shadow-xl shadow-red-500/10">
+                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              </div>
+              <h3 className="text-2xl font-bold text-ink mb-3 leading-tight">Remove {deleteConfirm.type}?</h3>
+              <p className="text-[15px] text-slate-500 font-medium leading-relaxed mb-10 px-4">
+                Are you sure you want to remove <span className="text-ink font-bold text-lg pr-1">"{deleteConfirm.name}"</span>? 
+                This action may affect historical schedules, and you will need to re-add them manually if needed.
+              </p>
+              
+              <div className="flex items-center gap-4 w-full">
+                 <button 
+                   onClick={() => setDeleteConfirm(null)}
+                   className="flex-1 h-14 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-95 outline-none"
+                 >
+                   Keep It
+                 </button>
+                 <button 
+                    onClick={executeDelete}
+                    className="flex-1 h-14 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-xl shadow-red-500/20 transition-all active:scale-95 outline-none"
+                 >
+                   Yes, Remove
+                 </button>
+              </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 };

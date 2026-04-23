@@ -92,7 +92,7 @@ exports.getStaff = async (req, res) => {
 
 exports.getDoctors = async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM doctors ORDER BY created_at DESC');
+        const result = await db.query('SELECT * FROM doctors WHERE is_active = true ORDER BY created_at DESC');
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -321,9 +321,19 @@ exports.getDoctorAvailability = async (req, res) => {
 exports.deleteDoctor = async (req, res) => {
     const { id } = req.params;
     try {
-        await db.query('DELETE FROM doctors WHERE id = $1', [id]);
-        res.json({ success: true, message: 'Doctor deleted successfully' });
+        // Check if doctor has bookings
+        const bookingRes = await db.query('SELECT COUNT(*) FROM bookings WHERE doctor_id = $1::uuid', [id]);
+        if (parseInt(bookingRes.rows[0].count) > 0) {
+            // Soft delete
+            await db.query('UPDATE doctors SET is_active = false WHERE id = $1::uuid', [id]);
+            res.json({ success: true, message: 'Doctor marked as inactive due to existing bookings' });
+        } else {
+            // Hard delete (will also cascade delete sessions)
+            await db.query('DELETE FROM doctors WHERE id = $1::uuid', [id]);
+            res.json({ success: true, message: 'Doctor deleted successfully' });
+        }
     } catch (err) {
+        console.error('Delete doctor error:', err.message);
         res.status(500).json({ error: err.message });
     }
 };

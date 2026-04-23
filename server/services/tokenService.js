@@ -37,13 +37,13 @@ async function calculateEstimatedTime(sessionId, tokenNumber) {
 
 async function isBookingOpen(sessionId, bookingDateStr) {
     const result = await db.query(`
-        SELECT s.start_time, s.booking_closes_before_minutes, s.doctor_id, s.session_type
+        SELECT s.start_time, s.end_time, s.booking_closes_before_minutes, s.doctor_id, s.session_type
         FROM sessions s 
         WHERE s.id = $1
     `, [sessionId]);
     if (result.rows.length === 0) return false;
 
-    const { doctor_id, start_time, booking_closes_before_minutes, session_type } = result.rows[0];
+    const { doctor_id, start_time, end_time, booking_closes_before_minutes, session_type } = result.rows[0];
     
     // Check if the doctor has blocked this specific date/session
     const blockedRes = await db.query(
@@ -57,19 +57,24 @@ async function isBookingOpen(sessionId, bookingDateStr) {
     
     const today = new Date();
     const [by, bm, bd] = bookingDateStr.split('-').map(Number);
+    
     const sessionStartTime = new Date(by, bm - 1, bd); 
     const [sh, sm, ss] = start_time.split(':').map(Number);
     sessionStartTime.setHours(sh, sm, ss || 0, 0);
     
+    const sessionEndTime = new Date(by, bm - 1, bd);
+    const [eh, em, es] = end_time.split(':').map(Number);
+    sessionEndTime.setHours(eh, em, es || 0, 0);
+    
+    // Check if it's too early (more than 24h before)
     const opensAtDate = new Date(sessionStartTime);
-    opensAtDate.setHours(opensAtDate.getHours() - 24);
+    opensAtDate.setHours(opensAtDate.getHours() - 36); // Open 36h before
 
     if (today < opensAtDate) return false;
 
-    const closesAtDate = new Date(sessionStartTime);
-    closesAtDate.setMinutes(closesAtDate.getMinutes() - booking_closes_before_minutes);
-
-    if (today > closesAtDate) return false;
+    // Check if it's too late (session ended)
+    // We allow booking until the session ends for better flexibility
+    if (today > sessionEndTime) return false;
 
     return true;
 }

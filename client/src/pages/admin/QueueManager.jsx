@@ -55,11 +55,13 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     fetch(`${API_URL}/api/sessions/${selectedDoctor}?date=${dateStr}`)
       .then(res => res.json())
       .then(data => {
-        setSessions(data);
-        if (data.length > 0) setSelectedSession(data[0].id);
+        // Handle both old (array) and new (object with sessions key) response formats
+        const sessionList = Array.isArray(data) ? data : (data.sessions || []);
+        setSessions(sessionList);
+        if (sessionList.length > 0) setSelectedSession(sessionList[0].id);
         else setSelectedSession('');
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error('Error fetching sessions:', err));
   }, [selectedDoctor, dateStr, API_URL]);
 
   const fetchTokens = () => {
