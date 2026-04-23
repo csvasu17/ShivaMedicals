@@ -188,7 +188,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Location", "Status", "Date", "Payment", "Remarks"];
+    const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist';
+    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Arrival Time", "Location", "Status", "Date", "Payment", "Remarks"];
     const csvContent = [
       finalHeaders.join(","),
       ...tokens.map(t => [
@@ -196,6 +197,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
         `"${t.patient_name}"`,
         `"${t.patient_age_days > 0 ? t.patient_age_days + 'd' : t.patient_age_years + 'y ' + t.patient_age_months + 'm'}"`,
         t.patient_phone, 
+        `"${t.estimated_time || ''}"`,
         `"${t.location}"`,
         t.status,
         `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"`,
@@ -232,6 +234,20 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   ];
 
   const nowServing = tokens.find(t => t.status === 'called');
+
+  const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist';
+
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '--:--';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let h = parseInt(parts[0]);
+    const m = parts[1];
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12;
+    return `${h}:${m} ${ampm}`;
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-12 animate-fade-in relative z-10">
@@ -420,14 +436,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             <table className="w-full text-left border-collapse hidden md:table">
               <thead>
                 <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
-                  <th className="pl-6 md:pl-12 pr-4 py-6">Appt. No</th>
-                  <th className="px-4 md:px-6 py-6">Patient Name</th>
-                  <th className="hidden lg:table-cell px-6 py-6">Age</th>
-                  <th className="hidden lg:table-cell px-6 py-6">Mobile No</th>
-                  <th className="hidden xl:table-cell px-6 py-6">Location</th>
-                  <th className="px-4 md:px-6 py-6">Status</th>
-                  <th className="px-4 md:px-6 py-6 text-right">Actions</th>
-                  <th className="px-4 md:px-6 py-6 text-center">Payment Confirmation</th>
+                  <th className="pl-6 md:pl-10 pr-2 py-6">No</th>
+                  <th className="px-4 py-6">Patient Name</th>
+                  <th className="hidden lg:table-cell px-4 py-6">Age</th>
+                  <th className="hidden xl:table-cell px-4 py-6">Mobile</th>
+                  {isStaffOrAdmin && <th className="px-4 py-6">Arrival Time</th>}
+                  <th className="hidden 2xl:table-cell px-4 py-6">Location</th>
+                  <th className="px-4 py-6">Status</th>
+                  <th className="px-4 py-6 text-right">Actions</th>
+                  <th className="px-4 py-6 text-center">Payment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50/50">
@@ -435,36 +452,39 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                   const isActive = t.status === 'called';
                   return (
                     <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/40' : ''}`}>
-                      <td className="pl-6 md:pl-12 pr-4 py-4 md:py-6">
+                      <td className="pl-6 md:pl-10 pr-2 py-4 md:py-6 whitespace-nowrap">
                          <div className="text-[15px] md:text-[17px] font-black text-ink">
                             #{t.token_number}
                          </div>
                       </td>
-                      <td className="px-4 md:px-6 py-4 md:py-6 transition-all border-b border-transparent">
+                      <td className="px-4 py-4 md:py-6 transition-all border-b border-transparent">
                          <div className="flex flex-col min-w-0">
                             <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
                          </div>
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-6">
-                         <div className="text-[14px] font-bold text-ink/70 tracking-tight">
-                            {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}
-                         </div>
+                      <td className="hidden lg:table-cell px-4 py-6 font-bold text-[13px] text-ink/70 tracking-tight">
+                         {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}
                       </td>
-                      <td className="hidden lg:table-cell px-6 py-6">
-                         <div className="text-[14px] font-bold text-ink/70 tracking-tight">
-                            {t.patient_phone}
-                         </div>
+                      <td className="hidden xl:table-cell px-4 py-6 font-bold text-[13px] text-ink/70 tracking-tight">
+                         {t.patient_phone}
                       </td>
-                      <td className="hidden xl:table-cell px-6 py-6 text-[14px] font-semibold text-ink/40 max-w-[200px] truncate">
-                         {t.location || 'Not provided'}
+                      {isStaffOrAdmin && (
+                        <td className="px-4 py-4 md:py-6 whitespace-nowrap text-center">
+                          <div className="text-[12px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100 inline-block">
+                            {formatTime(t.estimated_time)}
+                          </div>
+                        </td>
+                      )}
+                      <td className="hidden 2xl:table-cell px-4 py-6 text-[13px] font-semibold text-ink/40 truncate max-w-[150px]">
+                         {t.location || '--'}
                       </td>
-                      <td className="px-4 md:px-6 py-4 md:py-6">
-                         {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest">Waiting</span>}
-                         {t.status === 'called' && <span className="bg-blue-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
-                         {t.status === 'completed' && <span className="bg-emerald-500 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
+                      <td className="px-4 py-4 md:py-6">
+                         {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest">Waiting</span>}
+                         {t.status === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
+                         {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
                       </td>
-                      <td className="px-4 md:px-6 py-4 md:py-6">
+                      <td className="px-4 py-4 md:py-6">
                           <div className="flex items-center justify-end gap-2">
                              {(t.status === 'confirmed' || t.status === 'called') && (
                                 <div className="flex gap-2">
@@ -501,7 +521,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                              )}
                           </div>
                       </td>
-                      <td className="px-4 md:px-6 py-4 md:py-6 text-center border-l border-slate-50">
+                      <td className="px-4 py-4 md:py-6 text-center border-l border-slate-50">
                           <div className="flex flex-col items-center gap-1">
                             <div className="flex items-center justify-center gap-2">
                               <button 
@@ -550,9 +570,17 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           <span className="text-[16px] font-black text-ink">#{t.token_number}</span>
                           <span className="font-bold text-ink text-[15px] truncate max-w-[150px]">{t.patient_name}</span>
                         </div>
-                        <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[200px]">
-                          {t.patient_phone} • {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`} • {t.location}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-medium text-muted-text/50">
+                            {t.patient_phone} • {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}
+                          </span>
+                          {isStaffOrAdmin && (
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">LOC: <span className="text-slate-600 font-bold">{t.location || '--'}</span></span>
+                            </div>
+                          )}
+                          {!isStaffOrAdmin && <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[180px] mt-0.5">{t.location}</span>}
+                        </div>
                       </div>
                         <div className="flex items-center gap-2">
                           {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Waiting</span>}
@@ -617,6 +645,13 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
                               </button>
                             )}
+                            {isStaffOrAdmin && (
+                               <div className="flex-1 flex justify-end items-center">
+                                 <span className="text-[10px] font-black text-amber-600 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-100 uppercase tracking-widest shadow-sm">
+                                   ARRIVAL: {formatTime(t.estimated_time)}
+                                 </span>
+                               </div>
+                             )}
                           </div>
                        )}
                   </div>
