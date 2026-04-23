@@ -119,18 +119,39 @@ exports.addStaff = async (req, res) => {
 };
 
 exports.addDoctor = async (req, res) => {
-    const { name, type, specialty } = req.body;
+    const { name, type, specialty, sessions } = req.body;
+    let client;
     try {
+        client = await db.pool.connect();
+        await client.query('BEGIN');
+        
         const query = `
-            INSERT INTO doctors (name, type, specialty) 
-            VALUES ($1, $2, $3) 
+            INSERT INTO doctors ("name", "type", "specialty") 
+            VALUES ($1, $2::doctor_type, $3) 
             RETURNING *
         `;
         const values = [name, type || 'general', specialty];
-        const result = await db.query(query, values);
-        res.status(201).json(result.rows[0]);
+        const result = await client.query(query, values);
+        const doctor = result.rows[0];
+
+        if (sessions && Array.isArray(sessions)) {
+            for (const s of sessions) {
+                await client.query(
+                    `INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens, booking_opens_at, booking_closes_before_minutes, day_of_week) 
+                     VALUES ($1::uuid, $2::session_type_enum, $3, $4, $5, $6, $7, $8)`,
+                    [doctor.id, s.session_type, s.start_time, s.end_time, s.max_tokens, s.booking_opens_at, s.booking_closes_before_minutes, s.day_of_week]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        res.status(201).json(doctor);
     } catch (err) {
+        if (client) await client.query('ROLLBACK');
+        console.error('Add doctor error:', err.message);
         res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
     }
 };
 
@@ -176,20 +197,74 @@ exports.deleteStaff = async (req, res) => {
 
 exports.updateDoctor = async (req, res) => {
     const { id } = req.params;
-    const { name, type, specialty } = req.body;
+    const { name, type, specialty, sessions } = req.body;
+    let client;
     try {
+        client = await db.pool.connect();
+        await client.query('BEGIN');
+        
         const query = `
             UPDATE doctors 
-            SET name = $1, type = $2, specialty = $3
-            WHERE id = $4 
+            SET "name" = $1, "type" = $2::doctor_type, "specialty" = $3
+            WHERE id = $4::uuid 
             RETURNING *
         `;
         const values = [name, type, specialty, id];
-        const result = await db.query(query, values);
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Doctor not found' });
+        const result = await client.query(query, values);
+        
+        if (result.rows.length === 0) {
+            if (client) await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Doctor not found' });
+        }
+
+        if (sessions && Array.isArray(sessions)) {
+            // Get all existing session IDs for this doctor
+            const existingRes = await client.query('SELECT id FROM sessions WHERE doctor_id = $1::uuid', [id]);
+            const existingIds = existingRes.rows.map(r => r.id);
+            const processedIds = [];
+
+            for (const s of sessions) {
+                if (s.id && existingIds.includes(s.id)) {
+                    await client.query(
+                        `UPDATE sessions 
+                         SET session_type = $1::session_type_enum, start_time = $2, end_time = $3, max_tokens = $4, 
+                             booking_opens_at = $5, booking_closes_before_minutes = $6, day_of_week = $7, is_active = true 
+                         WHERE id = $8::uuid`,
+                        [s.session_type, s.start_time, s.end_time, s.max_tokens, s.booking_opens_at, s.booking_closes_before_minutes, s.day_of_week, s.id]
+                    );
+                    processedIds.push(s.id);
+                } else {
+                    await client.query(
+                        `INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens, booking_opens_at, booking_closes_before_minutes, day_of_week) 
+                         VALUES ($1::uuid, $2::session_type_enum, $3, $4, $5, $6, $7, $8)`,
+                        [id, s.session_type, s.start_time, s.end_time, s.max_tokens, s.booking_opens_at, s.booking_closes_before_minutes, s.day_of_week]
+                    );
+                }
+            }
+
+            // For sessions that were NOT in the request, safely remove or disable them
+            const toRemove = existingIds.filter(eid => !processedIds.includes(eid));
+            for (const rid of toRemove) {
+                // In Postgres, a failed query in a transaction (like a FK violation) aborts the transaction.
+                // We must check if bookings exist BEFORE attempting to delete.
+                const bookingCheck = await client.query('SELECT COUNT(*) FROM bookings WHERE session_id = $1::uuid', [rid]);
+                if (parseInt(bookingCheck.rows[0].count) === 0) {
+                    await client.query('DELETE FROM sessions WHERE id = $1::uuid', [rid]);
+                } else {
+                    // If bookings exist, we cannot delete the session, so we mark it inactive.
+                    await client.query('UPDATE sessions SET is_active = false WHERE id = $1::uuid', [rid]);
+                }
+            }
+        }
+
+        await client.query('COMMIT');
         res.json(result.rows[0]);
     } catch (err) {
+        if (client) await client.query('ROLLBACK');
+        console.error('Update doctor error:', err.message);
         res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
     }
 };
 

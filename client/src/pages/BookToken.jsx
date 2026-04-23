@@ -137,6 +137,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
   const [isDays, setIsDays] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
+  const [nextAvailableDate, setNextAvailableDate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(null);
@@ -187,13 +188,17 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
   // Sync sessions when doctor selection changes
   useEffect(() => {
     if (form.doctorId) {
-      fetch(`${API_URL}/api/sessions/${form.doctorId}`)
+      setNextAvailableDate(null);
+      fetch(`${API_URL}/api/sessions/${form.doctorId}?date=${form.date}`)
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data)) {
             setSessions(data);
             // Auto-select if solo session
             if (data.length === 1) setForm(p => ({ ...p, sessionId: String(data[0].id) }));
+          } else if (data && data.nextAvailableDate) {
+            setSessions([]);
+            setNextAvailableDate(data.nextAvailableDate);
           } else {
             setSessions([]);
           }
@@ -206,7 +211,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
       setSessions([]);
       setForm(p => ({ ...p, sessionId: '' }));
     }
-  }, [form.doctorId]);
+  }, [form.doctorId, form.date]);
 
   const handleChange = (e) => {
     const {name, value} = e.target;
@@ -666,8 +671,27 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
         <label className="form-label-premium block mb-1">Available Sessions *</label>
         
         {form.doctorId && sessions.length === 0 ? (
-          <div className="h-12 flex items-center px-4 bg-slate-50/50 rounded-2xl border border-slate-100 text-[11px] font-bold text-muted-text/40 uppercase tracking-widest italic animate-pulse">
-            Checking availability…
+          <div className="h-12 flex items-center px-4 bg-slate-50/50 rounded-2xl border border-slate-100 animate-fade-in relative transition-all">
+             {nextAvailableDate ? (
+               <button 
+                 type="button" 
+                 onClick={() => handleDateChange(nextAvailableDate)}
+                 className="flex items-center gap-2 hover:bg-white/50 px-2 -ml-2 py-1 rounded-xl transition-all group/next"
+               >
+                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 group-hover/next:scale-110 transition-transform">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="3"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+                 </div>
+                 <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-left">
+                   Next availability on {new Date(`${nextAvailableDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                   <span className="block text-[8px] opacity-60 font-bold uppercase tracking-widest mt-0.5">Click to switch to this date</span>
+                 </span>
+               </button>
+             ) : (
+               <div className="flex items-center gap-2">
+                 <div className="w-4 h-4 rounded-full border-2 border-slate-200 border-t-slate-400 animate-spin"></div>
+                 <span className="text-[11px] font-bold text-muted-text/40 uppercase tracking-widest italic">Checking availability…</span>
+               </div>
+             )}
           </div>
         ) : (
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

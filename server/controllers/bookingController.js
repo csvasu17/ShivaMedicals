@@ -11,8 +11,57 @@ exports.getDoctors = async (req, res) => {
 };
 
 exports.getSessions = async (req, res) => {
+    const { doctorId } = req.params;
+    const { date } = req.query;
     try {
-        const result = await db.query('SELECT * FROM sessions WHERE doctor_id = $1 AND is_active = true', [req.params.doctorId]);
+        let query = 'SELECT * FROM sessions WHERE doctor_id = $1 AND is_active = true';
+        const params = [doctorId];
+        
+        if (date) {
+            const dayOfWeek = new Date(date).getDay(); // 0 is Sunday
+            query += ' AND (day_of_week = $2 OR day_of_week IS NULL)';
+            params.push(dayOfWeek);
+        }
+        
+        const result = await db.query(query, params);
+        
+        // If no sessions found for this specific date, try to suggest the next available one
+        if (date && result.rows.length === 0) {
+            const allSessionsRes = await db.query('SELECT DISTINCT day_of_week FROM sessions WHERE doctor_id = $1 AND is_active = true', [doctorId]);
+            
+            if (allSessionsRes.rows.length > 0) {
+                const workingDays = new Set();
+                let worksEveryDay = false;
+                
+                allSessionsRes.rows.forEach(s => {
+                    if (s.day_of_week === null) worksEveryDay = true;
+                    else workingDays.add(s.day_of_week);
+                });
+
+                // If they work every day but sessions are missing (unlikely, but for safety) 
+                // or if they only work specific days, calculate next
+                if (!worksEveryDay && workingDays.size > 0) {
+                    const currentDt = new Date(date);
+                    let found = false;
+                    let daysToAdd = 1;
+                    
+                    // Search up to 7 days ahead
+                    while (daysToAdd <= 7) {
+                        const checkDt = new Date(date);
+                        checkDt.setDate(checkDt.getDate() + daysToAdd);
+                        if (workingDays.has(checkDt.getDay())) {
+                            found = true;
+                            return res.json({ 
+                                sessions: [], 
+                                nextAvailableDate: checkDt.toISOString().split('T')[0] 
+                            });
+                        }
+                        daysToAdd++;
+                    }
+                }
+            }
+        }
+
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });

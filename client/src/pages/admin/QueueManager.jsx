@@ -52,7 +52,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   useEffect(() => {
     if (!selectedDoctor) return;
-    fetch(`${API_URL}/api/sessions/${selectedDoctor}`)
+    fetch(`${API_URL}/api/sessions/${selectedDoctor}?date=${dateStr}`)
       .then(res => res.json())
       .then(data => {
         setSessions(data);
@@ -60,7 +60,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
         else setSelectedSession('');
       })
       .catch(err => console.error(err));
-  }, [selectedDoctor, API_URL]);
+  }, [selectedDoctor, dateStr, API_URL]);
 
   const fetchTokens = () => {
     if (!selectedSession) {

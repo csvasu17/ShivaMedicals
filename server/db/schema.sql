@@ -22,7 +22,8 @@ CREATE TABLE sessions (
     max_tokens INT NOT NULL,
     booking_opens_at TIME NOT NULL,
     booking_closes_before_minutes INT NOT NULL,
-    is_active BOOLEAN DEFAULT true
+    is_active BOOLEAN DEFAULT true,
+    day_of_week INT -- NULL means everyday, 0-6 for specific days
 );
 
 CREATE TABLE bookings (
