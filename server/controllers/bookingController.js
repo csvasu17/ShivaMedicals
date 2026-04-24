@@ -2,9 +2,40 @@ const db = require('../db');
 const tokenService = require('../services/tokenService');
 
 exports.getDoctors = async (req, res) => {
+    const { date } = req.query;
     try {
-        const result = await db.query('SELECT id, name, type, specialty FROM doctors WHERE is_active = true');
-        res.json(result.rows);
+        let query = 'SELECT id, name, type, specialty FROM doctors WHERE is_active = true';
+        const params = [];
+
+        if (date) {
+            const dayOfWeek = new Date(date).getDay();
+            query = `
+                SELECT DISTINCT d.id, d.name, d.type, d.specialty 
+                FROM doctors d
+                JOIN sessions s ON d.id = s.doctor_id
+                WHERE d.is_active = true 
+                AND s.is_active = true
+                AND (s.day_of_week = $1 OR s.day_of_week IS NULL)
+            `;
+            params.push(dayOfWeek);
+        }
+
+        const result = await db.query(query, params);
+        const doctors = result.rows;
+
+        // Custom sort: Dr. Anand first, then alphabetical
+        doctors.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            const isAnandA = nameA.includes('anand');
+            const isAnandB = nameB.includes('anand');
+
+            if (isAnandA && !isAnandB) return -1;
+            if (!isAnandA && isAnandB) return 1;
+            return nameA.localeCompare(nameB);
+        });
+
+        res.json(doctors);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

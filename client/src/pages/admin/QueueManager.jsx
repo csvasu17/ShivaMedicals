@@ -30,14 +30,22 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   }, []);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/doctors`)
+    if (!dateStr) return;
+    fetch(`${API_URL}/api/doctors?date=${dateStr}`)
       .then(res => res.json())
       .then(data => {
         setDoctors(data);
-        if (data.length > 0) setSelectedDoctor(data[0].id);
+        if (data.length > 0) {
+          // Keep selection if still in list, else pick first (e.g. Anand)
+          if (!data.find(d => d.id === selectedDoctor)) {
+            setSelectedDoctor(data[0].id);
+          }
+        } else {
+          setSelectedDoctor('');
+        }
       })
       .catch(err => console.error('Error fetching doctors:', err));
-  }, [API_URL]);
+  }, [dateStr, API_URL]);
 
   useEffect(() => {
     if (!selectedDoctor || !dateStr) return;
