@@ -9,10 +9,18 @@ const pool = new Pool({
   }
 });
 
+// the pool will emit an error on behalf of any idle client
+// it contains if a backend error or network partition happens
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle database client:', err);
+});
+
 // Test connection
 pool.connect((err, client, release) => {
   if (err) {
-    return console.error('Error acquiring client', err.stack);
+    console.error('DATABASE CONNECTION ERROR:', err.message);
+    console.error('Stack:', err.stack);
+    return;
   }
   console.log('Successfully connected to database');
   release();
@@ -22,5 +30,6 @@ module.exports = {
   query: (text, params) => pool.query(text, params),
   pool
 };
+
 
 
