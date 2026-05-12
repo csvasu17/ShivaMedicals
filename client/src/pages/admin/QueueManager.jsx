@@ -417,7 +417,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 </button>
             </div>
             
-            <div className="flex-1 max-w-sm hidden lg:block">
+            <div className="w-full md:w-auto md:flex-1 md:max-w-sm">
                <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-primary transition-colors">
                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>

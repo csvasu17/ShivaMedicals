@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../constants/api';
 
-const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor }) => {
+const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDoctors = [] }) => {
   const [formData, setFormData] = useState({
     name: '',
     type: 'general',
@@ -12,6 +12,12 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor }) => {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isAddingNewType, setIsAddingNewType] = useState(false);
+  const [newType, setNewType] = useState('');
+
+  const uniqueTypes = [...new Set(existingDoctors.map(d => d.type).filter(Boolean))];
+  if (!uniqueTypes.includes('general')) uniqueTypes.unshift('general');
+  if (!uniqueTypes.includes('child')) uniqueTypes.push('child');
 
   const days = [
     { label: 'Sunday', value: 0 },
@@ -42,6 +48,8 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor }) => {
       setFormData({ name: '', type: 'general', specialty: '' });
       setSessions([{ day_of_week: null, session_type: 'morning', start_time: '09:00', end_time: '12:00', max_tokens: 200, booking_opens_at: '21:00', booking_closes_before_minutes: 60 }]);
     }
+    setIsAddingNewType(false);
+    setNewType('');
   }, [editDoctor, isOpen, API_URL]);
 
   if (!isOpen) return null;
@@ -168,17 +176,56 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor }) => {
 
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Doctor Type</label>
-                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
-                  <select 
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
-                  >
-                    <option value="general">General</option>
-                    <option value="child">Child Specialist</option>
-                  </select>
-                </div>
+                {isAddingNewType ? (
+                  <div className="flex gap-2">
+                    <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm flex-1">
+                      <input 
+                        type="text" 
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value)}
+                        placeholder="e.g. Cardiologist"
+                        className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
+                        autoFocus
+                      />
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (newType.trim()) {
+                          setFormData({ ...formData, type: newType.trim() });
+                        }
+                        setIsAddingNewType(false);
+                        setNewType('');
+                      }}
+                      className="h-14 px-4 bg-ink text-white rounded-2xl font-bold text-sm hover:bg-blue-primary transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
+                    <select 
+                      name="type"
+                      value={formData.type}
+                      onChange={(e) => {
+                        if (e.target.value === 'add_new') {
+                          setIsAddingNewType(true);
+                        } else {
+                          handleChange(e);
+                        }
+                      }}
+                      className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat capitalize"
+                    >
+                      {uniqueTypes.map(type => (
+                        <option key={type} value={type}>{type === 'child' ? 'Child Specialist' : type}</option>
+                      ))}
+                      {formData.type && !uniqueTypes.includes(formData.type) && (
+                        <option value={formData.type}>{formData.type}</option>
+                      )}
+                      <option value="add_new" className="font-bold text-blue-primary">+ Add New Type</option>
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
 

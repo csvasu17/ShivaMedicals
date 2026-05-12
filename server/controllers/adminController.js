@@ -127,7 +127,7 @@ exports.addDoctor = async (req, res) => {
         
         const query = `
             INSERT INTO doctors ("name", "type", "specialty") 
-            VALUES ($1, $2::doctor_type, $3) 
+            VALUES ($1, $2, $3) 
             RETURNING *
         `;
         const values = [name, type || 'general', specialty];
@@ -205,7 +205,7 @@ exports.updateDoctor = async (req, res) => {
         
         const query = `
             UPDATE doctors 
-            SET "name" = $1, "type" = $2::doctor_type, "specialty" = $3
+            SET "name" = $1, "type" = $2, "specialty" = $3
             WHERE id = $4::uuid 
             RETURNING *
         `;
@@ -521,5 +521,105 @@ exports.getActiveStaff = async (req, res) => {
     } catch (err) {
         console.error('Error fetching active staff:', err);
         res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAttendance = async (req, res) => {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'Date is required' });
+    try {
+        const query = `
+            SELECT u.id as staff_id, u.name, u.username, u.role, u.phone, sa.status 
+            FROM users u
+            LEFT JOIN staff_attendance sa ON u.id = sa.staff_id AND sa.date = $1
+            WHERE u.is_active = true AND u.role IN ('staff', 'receptionist', 'admin')
+            ORDER BY u.name ASC
+        `;
+        const result = await db.query(query, [date]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching attendance:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.markAttendance = async (req, res) => {
+    const { staffId, date, status } = req.body;
+    if (!staffId || !date || !status) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!['present', 'absent'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    
+    try {
+        const query = `
+            INSERT INTO staff_attendance (staff_id, date, status)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (staff_id, date)
+            DO UPDATE SET status = EXCLUDED.status, created_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `;
+        const result = await db.query(query, [staffId, date, status]);
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Error marking attendance:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAttendanceReport = async (req, res) => {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) return res.status(400).json({ error: 'Start and end dates are required' });
+    try {
+        const query = `
+            SELECT u.name, u.username, u.role, u.phone,
+                   COUNT(CASE WHEN sa.status = 'present' THEN 1 END) as present_days,
+                   COUNT(CASE WHEN sa.status = 'absent' THEN 1 END) as absent_days
+            FROM users u
+            LEFT JOIN staff_attendance sa ON u.id = sa.staff_id AND sa.date >= $1 AND sa.date <= $2
+            WHERE u.is_active = true AND u.role IN ('staff', 'receptionist', 'admin')
+            GROUP BY u.id, u.name, u.username, u.role, u.phone
+            ORDER BY u.name ASC
+        `;
+        const result = await db.query(query, [startDate, endDate]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching attendance report:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.submitBulkAttendance = async (req, res) => {
+    const { date, attendance } = req.body;
+    if (!date || !attendance || !Array.isArray(attendance)) {
+        return res.status(400).json({ error: 'Missing required fields or invalid format' });
+    }
+    
+    let client;
+    try {
+        client = await db.pool.connect();
+        await client.query('BEGIN');
+        
+        for (const item of attendance) {
+            if (item.status && ['present', 'absent'].includes(item.status)) {
+                const query = `
+                    INSERT INTO staff_attendance (staff_id, date, status)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (staff_id, date)
+                    DO UPDATE SET status = EXCLUDED.status, created_at = CURRENT_TIMESTAMP
+                `;
+                await client.query(query, [item.staff_id, date, item.status]);
+            }
+        }
+        
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Attendance submitted successfully' });
+    } catch (err) {
+        if (client) await client.query('ROLLBACK');
+        console.error('Error submitting bulk attendance:', err);
+        res.status(500).json({ error: err.message });
+    } finally {
+        if (client) client.release();
     }
 };

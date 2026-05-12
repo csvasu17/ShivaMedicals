@@ -23,4 +23,9 @@ router.get('/doctors/:id/availability', adminController.getDoctorAvailability);
 router.put('/doctors/:id/availability', adminController.toggleDoctorAvailability);
 router.delete('/doctors/:id', adminController.deleteDoctor);
 
+router.get('/attendance', adminController.getAttendance);
+router.get('/attendance/report', adminController.getAttendanceReport);
+router.post('/attendance', adminController.markAttendance);
+router.post('/attendance/bulk', adminController.submitBulkAttendance);
+
 module.exports = router;
