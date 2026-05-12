@@ -99,6 +99,25 @@ exports.getDoctors = async (req, res) => {
     }
 };
 
+exports.getDoctorTypes = async (req, res) => {
+    try {
+        const result = await db.query('SELECT name FROM doctor_types ORDER BY name ASC');
+        res.json(result.rows.map(r => r.name));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.addDoctorType = async (req, res) => {
+    const { name } = req.body;
+    try {
+        await db.query('INSERT INTO doctor_types (name) VALUES ($1) ON CONFLICT DO NOTHING', [name]);
+        res.json({ success: true, name });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.addStaff = async (req, res) => {
     const { name, username, password, phone, role } = req.body;
     try {
@@ -133,6 +152,11 @@ exports.addDoctor = async (req, res) => {
         const values = [name, type || 'general', specialty];
         const result = await client.query(query, values);
         const doctor = result.rows[0];
+
+        // Ensure type exists in doctor_types
+        if (type) {
+            await client.query('INSERT INTO doctor_types (name) VALUES ($1) ON CONFLICT DO NOTHING', [type]);
+        }
 
         if (sessions && Array.isArray(sessions)) {
             for (const s of sessions) {
@@ -212,6 +236,11 @@ exports.updateDoctor = async (req, res) => {
         const values = [name, type, specialty, id];
         const result = await client.query(query, values);
         
+        // Ensure type exists in doctor_types
+        if (type) {
+            await client.query('INSERT INTO doctor_types (name) VALUES ($1) ON CONFLICT DO NOTHING', [type]);
+        }
+
         if (result.rows.length === 0) {
             if (client) await client.query('ROLLBACK');
             return res.status(404).json({ error: 'Doctor not found' });

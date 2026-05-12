@@ -212,7 +212,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                       <p className="text-sm text-muted-text/50 font-bold mb-4">{d.specialty || 'General Practitioner'}</p>
                       
                       <div className="mt-3 text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block">
-                        {d.type === 'child' ? 'Child Specialist' : 'General'}
+                        {d.type === 'child' ? 'Child Specialist' : d.type}
                       </div>
                       {!d.is_active && (
                          <div className="mt-3 ml-2 text-xs font-bold uppercase tracking-widest text-red-600 bg-red-50 px-2 py-1 rounded inline-block">
@@ -241,6 +241,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
            <AddDoctorModal 
              isOpen={isDoctorModalOpen} 
              editDoctor={editingDoctor}
+             existingDoctors={doctors}
              onClose={() => { setIsDoctorModalOpen(false); setEditingDoctor(null); }} 
              onDoctorAdded={handleDoctorAddedOrUpdated} 
            />

@@ -13,11 +13,18 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAddingNewType, setIsAddingNewType] = useState(false);
-  const [newType, setNewType] = useState('');
+  const [uniqueTypes, setUniqueTypes] = useState(['general', 'child']);
 
-  const uniqueTypes = [...new Set(existingDoctors.map(d => d.type).filter(Boolean))];
-  if (!uniqueTypes.includes('general')) uniqueTypes.unshift('general');
-  if (!uniqueTypes.includes('child')) uniqueTypes.push('child');
+  useEffect(() => {
+    fetch(`${API_URL}/api/admin/doctor-types`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setUniqueTypes(data);
+        }
+      })
+      .catch(console.error);
+  }, [API_URL]);
 
   const days = [
     { label: 'Sunday', value: 0 },
@@ -49,7 +56,6 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDo
       setSessions([{ day_of_week: null, session_type: 'morning', start_time: '09:00', end_time: '12:00', max_tokens: 200, booking_opens_at: '21:00', booking_closes_before_minutes: 60 }]);
     }
     setIsAddingNewType(false);
-    setNewType('');
   }, [editDoctor, isOpen, API_URL]);
 
   if (!isOpen) return null;
@@ -181,8 +187,9 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDo
                     <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm flex-1">
                       <input 
                         type="text" 
-                        value={newType}
-                        onChange={(e) => setNewType(e.target.value)}
+                        name="type"
+                        value={formData.type === 'add_new' ? '' : formData.type}
+                        onChange={handleChange}
                         placeholder="e.g. Cardiologist"
                         className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full"
                         autoFocus
@@ -191,25 +198,41 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDo
                     <button 
                       type="button"
                       onClick={() => {
-                        if (newType.trim()) {
-                          setFormData({ ...formData, type: newType.trim() });
+                        const val = formData.type;
+                        if (val && val.trim() !== '' && val !== 'add_new' && !uniqueTypes.includes(val)) {
+                          fetch(`${API_URL}/api/admin/doctor-types`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: val })
+                          }).then(() => setUniqueTypes([...uniqueTypes, val])).catch(console.error);
                         }
                         setIsAddingNewType(false);
-                        setNewType('');
                       }}
-                      className="h-14 px-4 bg-ink text-white rounded-2xl font-bold text-sm hover:bg-blue-primary transition-all"
+                      className="h-14 px-4 flex items-center justify-center bg-ink text-white rounded-2xl font-bold text-sm hover:bg-blue-primary transition-all shrink-0"
                     >
                       Done
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, type: uniqueTypes[0] || 'general' });
+                        setIsAddingNewType(false);
+                      }}
+                      className="h-14 w-14 flex items-center justify-center bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all shrink-0"
+                      title="Cancel"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </button>
                   </div>
                 ) : (
                   <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-blue-primary transition-all shadow-sm">
                     <select 
                       name="type"
-                      value={formData.type}
+                      value={formData.type || 'add_new'}
                       onChange={(e) => {
                         if (e.target.value === 'add_new') {
                           setIsAddingNewType(true);
+                          setFormData({ ...formData, type: '' });
                         } else {
                           handleChange(e);
                         }
@@ -219,7 +242,7 @@ const AddDoctorModal = ({ isOpen, onClose, onDoctorAdded, editDoctor, existingDo
                       {uniqueTypes.map(type => (
                         <option key={type} value={type}>{type === 'child' ? 'Child Specialist' : type}</option>
                       ))}
-                      {formData.type && !uniqueTypes.includes(formData.type) && (
+                      {formData.type && !uniqueTypes.includes(formData.type) && formData.type !== 'add_new' && (
                         <option value={formData.type}>{formData.type}</option>
                       )}
                       <option value="add_new" className="font-bold text-blue-primary">+ Add New Type</option>

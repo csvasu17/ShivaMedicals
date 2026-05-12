@@ -21,6 +21,9 @@ router.post('/doctors', adminController.addDoctor);
 router.put('/doctors/:id', adminController.updateDoctor);
 router.get('/doctors/:id/availability', adminController.getDoctorAvailability);
 router.put('/doctors/:id/availability', adminController.toggleDoctorAvailability);
+router.get('/doctor-types', adminController.getDoctorTypes);
+router.post('/doctor-types', adminController.addDoctorType);
+
 router.delete('/doctors/:id', adminController.deleteDoctor);
 
 router.get('/attendance', adminController.getAttendance);
