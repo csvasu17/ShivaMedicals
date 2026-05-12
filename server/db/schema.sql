@@ -79,3 +79,14 @@ INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens,
 -- Default Superadmin (password: admin)
 INSERT INTO users (name, phone, username, password, role) VALUES
 ('Admin', '1234567890', 'admin', 'admin', 'superadmin');
+
+CREATE TABLE IF NOT EXISTS attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    check_in TIMESTAMP WITH TIME ZONE,
+    check_out TIMESTAMP WITH TIME ZONE,
+    status VARCHAR DEFAULT 'present', -- present, absent, leave
+    notes TEXT,
+    UNIQUE(user_id, date)
+);

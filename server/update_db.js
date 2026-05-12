@@ -1,3 +1,4 @@
+require('dotenv').config();
 const db = require('./db');
 
 async function updateDb() {
@@ -30,6 +31,20 @@ async function updateDb() {
 
         await db.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty VARCHAR;');
         await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;');
+        
+        // Create attendance table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS attendance (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                date DATE NOT NULL DEFAULT CURRENT_DATE,
+                check_in TIMESTAMP WITH TIME ZONE,
+                check_out TIMESTAMP WITH TIME ZONE,
+                status VARCHAR DEFAULT 'present',
+                notes TEXT,
+                UNIQUE(user_id, date)
+            );
+        `);
         
         console.log('Database updated successfully');
     } catch (e) {
