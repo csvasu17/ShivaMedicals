@@ -1,14 +1,13 @@
 -- Create ENUMs
-CREATE TYPE doctor_type AS ENUM ('general', 'child');
 CREATE TYPE session_type_enum AS ENUM ('morning', 'evening');
 CREATE TYPE booking_status AS ENUM ('confirmed', 'called', 'completed', 'cancelled', 'no_show');
-CREATE TYPE admin_role AS ENUM ('superadmin', 'receptionist');
 
 -- Create Tables
 CREATE TABLE doctors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR NOT NULL,
-    type doctor_type NOT NULL,
+    type VARCHAR NOT NULL DEFAULT 'general',
+    specialty VARCHAR,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -40,6 +39,8 @@ CREATE TABLE bookings (
     booking_date DATE NOT NULL,
     token_number INT NOT NULL,
     estimated_time TIME NOT NULL,
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    remarks TEXT NOT NULL DEFAULT '',
     status booking_status DEFAULT 'confirmed',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(session_id, booking_date, token_number)
@@ -60,12 +61,29 @@ CREATE TABLE users (
     phone VARCHAR,
     username VARCHAR UNIQUE NOT NULL,
     password VARCHAR NOT NULL,
-    role admin_role DEFAULT 'superadmin',
+    role VARCHAR NOT NULL DEFAULT 'staff',
     is_active BOOLEAN DEFAULT true,
+    last_active_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE staff_attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    staff_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('present', 'absent', 'half_morning', 'half_evening')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(staff_id, date)
+);
+
+CREATE TABLE doctor_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR UNIQUE NOT NULL
+);
+
 -- Seed Data
+INSERT INTO doctor_types (name) VALUES ('general'), ('child');
+
 INSERT INTO doctors (id, name, type, is_active) VALUES
 ('d1bf98b4-0c2d-4d7a-b153-f72671fc82d5', 'Dr. Smith (General)', 'general', true),
 ('70fae1bd-1974-4b95-a8fa-7ca2acbf9368', 'Dr. Sarah (Child Specialist)', 'child', true);
@@ -78,15 +96,4 @@ INSERT INTO sessions (doctor_id, session_type, start_time, end_time, max_tokens,
 
 -- Default Superadmin (password: admin)
 INSERT INTO users (name, phone, username, password, role) VALUES
-('Admin', '1234567890', 'admin', 'admin', 'superadmin');
-
-CREATE TABLE IF NOT EXISTS attendance (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    date DATE NOT NULL DEFAULT CURRENT_DATE,
-    check_in TIMESTAMP WITH TIME ZONE,
-    check_out TIMESTAMP WITH TIME ZONE,
-    status VARCHAR DEFAULT 'present', -- present, absent, leave
-    notes TEXT,
-    UNIQUE(user_id, date)
-);
+('Admin', '1234567890', 'admin', 'admin', 'admin');

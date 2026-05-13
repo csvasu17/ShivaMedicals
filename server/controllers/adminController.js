@@ -577,7 +577,7 @@ exports.markAttendance = async (req, res) => {
     if (!staffId || !date || !status) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    if (!['present', 'absent'].includes(status)) {
+    if (!['present', 'absent', 'half_morning', 'half_evening'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
     }
     
@@ -602,9 +602,15 @@ exports.getAttendanceReport = async (req, res) => {
     if (!startDate || !endDate) return res.status(400).json({ error: 'Start and end dates are required' });
     try {
         const query = `
-            SELECT u.name, u.username, u.role, u.phone,
-                   COUNT(CASE WHEN sa.status = 'present' THEN 1 END) as present_days,
-                   COUNT(CASE WHEN sa.status = 'absent' THEN 1 END) as absent_days
+            SELECT u.name, u.username, u.role, 
+                   SUM(CASE 
+                     WHEN sa.status = 'present' THEN 1 
+                     WHEN sa.status IN ('half_morning', 'half_evening') THEN 0.5 
+                     ELSE 0 END) as present_days,
+                   SUM(CASE 
+                     WHEN sa.status = 'absent' THEN 1 
+                     WHEN sa.status IN ('half_morning', 'half_evening') THEN 0.5 
+                     ELSE 0 END) as absent_days
             FROM users u
             LEFT JOIN staff_attendance sa ON u.id = sa.staff_id AND sa.date >= $1 AND sa.date <= $2
             WHERE u.is_active = true AND u.role IN ('staff', 'receptionist', 'admin')
@@ -631,7 +637,7 @@ exports.submitBulkAttendance = async (req, res) => {
         await client.query('BEGIN');
         
         for (const item of attendance) {
-            if (item.status && ['present', 'absent'].includes(item.status)) {
+            if (item.status && ['present', 'absent', 'half_morning', 'half_evening'].includes(item.status)) {
                 const query = `
                     INSERT INTO staff_attendance (staff_id, date, status)
                     VALUES ($1, $2, $3)

@@ -32,17 +32,15 @@ async function updateDb() {
         await db.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty VARCHAR;');
         await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;');
         
-        // Create attendance table
+        // Create staff attendance table
         await db.query(`
-            CREATE TABLE IF NOT EXISTS attendance (
+            CREATE TABLE IF NOT EXISTS staff_attendance (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-                date DATE NOT NULL DEFAULT CURRENT_DATE,
-                check_in TIMESTAMP WITH TIME ZONE,
-                check_out TIMESTAMP WITH TIME ZONE,
-                status VARCHAR DEFAULT 'present',
-                notes TEXT,
-                UNIQUE(user_id, date)
+                staff_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                date DATE NOT NULL,
+                status VARCHAR(20) NOT NULL CHECK (status IN ('present', 'absent', 'half_morning', 'half_evening')),
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(staff_id, date)
             );
         `);
         

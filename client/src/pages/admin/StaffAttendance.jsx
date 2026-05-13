@@ -65,6 +65,30 @@ const StaffAttendance = () => {
     }
   };
 
+  const exportToCSV = () => {
+    if (reportData.length === 0) return;
+    const headers = ['S.No', 'Staff Name', 'Present Days', 'Absent Days', 'Total Days'];
+    const csvContent = [
+      headers.join(','),
+      ...reportData.map((row, idx) => {
+        const total = parseFloat(row.present_days || 0) + parseFloat(row.absent_days || 0);
+        return [
+          idx + 1,
+          `"${row.name}"`,
+          row.present_days,
+          row.absent_days,
+          total
+        ].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `attendance_report_${reportStartDate}_to_${reportEndDate}.csv`;
+    link.click();
+  };
+
   const handleStatusChange = (staffId, status) => {
     setAttendanceData(prev => prev.map(item => 
       item.staff_id === staffId ? { ...item, status } : item
@@ -165,7 +189,7 @@ const StaffAttendance = () => {
               {attendanceData.map((staff) => (
                 <div key={staff.staff_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-slate-50/50 hover:bg-slate-50 rounded-2xl border border-slate-100 transition-all gap-4">
                   <div>
-                    <h4 className="text-xl font-bold text-ink mb-2">@{staff.username}</h4>
+                    <h4 className="text-xl font-bold text-ink mb-2">{staff.name}</h4>
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-bold uppercase tracking-wider text-purple-600 bg-purple-50 px-2.5 py-1 rounded-md">
                         {staff.role}
@@ -178,33 +202,25 @@ const StaffAttendance = () => {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => handleStatusChange(staff.staff_id, 'present')}
-                      className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-[13px] transition-all flex items-center justify-center gap-2 ${
-                        staff.status === 'present'
-                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:border-emerald-500 hover:text-emerald-500'
+                  <div className="flex items-center gap-3 w-full sm:w-auto mt-4 sm:mt-0">
+                    <select 
+                      value={staff.status || 'select'} 
+                      onChange={(e) => handleStatusChange(staff.staff_id, e.target.value)}
+                      className={`w-full sm:w-56 px-4 py-3 sm:py-2.5 rounded-xl font-bold text-[13px] outline-none cursor-pointer transition-all border appearance-none ${
+                        staff.status === 'present' ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' :
+                        staff.status === 'absent' ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20' :
+                        staff.status === 'half_morning' ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' :
+                        staff.status === 'half_evening' ? 'bg-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/20' :
+                        'bg-white text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-500'
                       }`}
+                      style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
                     >
-                      {staff.status === 'present' && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      )}
-                      Present
-                    </button>
-                    <button 
-                      onClick={() => handleStatusChange(staff.staff_id, 'absent')}
-                      className={`flex-1 sm:flex-none px-6 py-2.5 rounded-xl font-bold text-[13px] transition-all flex items-center justify-center gap-2 ${
-                        staff.status === 'absent'
-                          ? 'bg-red-500 text-white shadow-lg shadow-red-500/20'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:border-red-500 hover:text-red-500'
-                      }`}
-                    >
-                      {staff.status === 'absent' && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                      )}
-                      Absent
-                    </button>
+                      <option value="select" disabled className="text-slate-800 bg-white font-medium">Select Status</option>
+                      <option value="present" className="text-slate-800 bg-white font-medium">Present (Full Day)</option>
+                      <option value="half_morning" className="text-slate-800 bg-white font-medium">Present (Morning Only)</option>
+                      <option value="half_evening" className="text-slate-800 bg-white font-medium">Present (Evening Only)</option>
+                      <option value="absent" className="text-slate-800 bg-white font-medium">Absent (Full Day)</option>
+                    </select>
                   </div>
                 </div>
               ))}
@@ -213,25 +229,37 @@ const StaffAttendance = () => {
         </div>
       ) : (
         <div className="bg-white rounded-[32px] p-6 sm:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-bold text-muted-text uppercase tracking-wider">From</label>
-              <input 
-                type="date" 
-                value={reportStartDate}
-                onChange={(e) => setReportStartDate(e.target.value)}
-                className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-ink font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-bold text-muted-text uppercase tracking-wider">From</label>
+                <input 
+                  type="date" 
+                  value={reportStartDate}
+                  onChange={(e) => setReportStartDate(e.target.value)}
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-ink font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-bold text-muted-text uppercase tracking-wider">To</label>
+                <input 
+                  type="date" 
+                  value={reportEndDate}
+                  onChange={(e) => setReportEndDate(e.target.value)}
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-ink font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-bold text-muted-text uppercase tracking-wider">To</label>
-              <input 
-                type="date" 
-                value={reportEndDate}
-                onChange={(e) => setReportEndDate(e.target.value)}
-                className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-ink font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              />
-            </div>
+            
+            {reportData.length > 0 && (
+              <button
+                onClick={exportToCSV}
+                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 font-bold text-[13px] rounded-xl transition-all w-full sm:w-auto mt-4 sm:mt-0"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export CSV
+              </button>
+            )}
           </div>
 
           {isLoading ? (
@@ -260,7 +288,7 @@ const StaffAttendance = () => {
                       <td className="py-4 px-2 sm:px-4 font-bold text-emerald-600 text-[13px] sm:text-base">{row.present_days}</td>
                       <td className="py-4 px-2 sm:px-4 font-bold text-red-500 text-[13px] sm:text-base">{row.absent_days}</td>
                       <td className="hidden sm:table-cell py-4 px-2 sm:px-4 font-bold text-blue-600 text-[13px] sm:text-base">
-                        {parseInt(row.present_days) + parseInt(row.absent_days)}
+                        {parseFloat(row.present_days || 0) + parseFloat(row.absent_days || 0)}
                       </td>
                     </tr>
                   ))}
