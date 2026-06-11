@@ -184,6 +184,20 @@ exports.getLiveQueue = async (req, res) => {
     }
 };
 
+exports.getNextQueue = async (req, res) => {
+    try {
+        const result = await db.query(
+            `SELECT token_number, patient_name FROM bookings 
+             WHERE session_id = $1 AND booking_date = $2 AND status = 'confirmed' 
+             ORDER BY token_number ASC LIMIT 3`,
+            [req.params.sessionId, req.params.date]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.cancelBooking = async (req, res) => {
     const { id } = req.params;
     try {
