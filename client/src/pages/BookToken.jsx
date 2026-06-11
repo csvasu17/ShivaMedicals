@@ -36,7 +36,7 @@ const formatDisplay = (ds) => {
   });
 };
 
-const DatePicker = ({ value, onChange }) => {
+const DatePicker = ({ value, onChange, isExtra = false }) => {
   const [open, setOpen]  = useState(false);
   const today = useRef((() => { const d=new Date(); d.setHours(0,0,0,0); return d; })()).current;
   const maxDate = useRef((() => { const d=new Date(today); d.setDate(d.getDate()+29); return d; })()).current;
@@ -50,7 +50,9 @@ const DatePicker = ({ value, onChange }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const canPrev = viewYear > today.getFullYear() || viewMonth > today.getMonth();
+  const canPrev = isExtra 
+    ? (viewYear > today.getFullYear() - 1 || (viewYear === today.getFullYear() - 1 && viewMonth > today.getMonth()))
+    : (viewYear > today.getFullYear() || viewMonth > today.getMonth());
   const canNext = viewYear < maxDate.getFullYear() || (viewYear===maxDate.getFullYear() && viewMonth<maxDate.getMonth());
 
   const prevM = () => { if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1); };
@@ -63,7 +65,7 @@ const DatePicker = ({ value, onChange }) => {
   const pick = (day) => {
     const cellDate = new Date(viewYear, viewMonth, day);
     cellDate.setHours(0,0,0,0);
-    if (cellDate < today || cellDate > maxDate) return;
+    if ((!isExtra && cellDate < today) || cellDate > maxDate) return;
     onChange(toDateStr(cellDate));
     setOpen(false);
   };
@@ -101,7 +103,7 @@ const DatePicker = ({ value, onChange }) => {
               const cellDate = new Date(viewYear, viewMonth, day);
               cellDate.setHours(0,0,0,0);
               const ds = toDateStr(cellDate);
-              const isDisabled = (cellDate < today || cellDate > maxDate);
+              const isDisabled = (!isExtra && cellDate < today) || cellDate > maxDate;
               const isToday = toDateStr(today)===ds;
               const isSel = value===ds;
               return (
@@ -679,7 +681,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
         {/* Date Picker */}
         <div className="flex flex-col">
           <label className="form-label-premium">Preferred Date *</label>
-          <DatePicker value={form.date} onChange={handleDateChange} />
+          <DatePicker value={form.date} onChange={handleDateChange} isExtra={form.isExtra} />
         </div>
       </div>
 
