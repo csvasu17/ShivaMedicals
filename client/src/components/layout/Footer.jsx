@@ -46,10 +46,17 @@ const Footer = ({ setIsLoginModalOpen }) => {
             </p>
           </div>
           <div className="space-y-3">
-            {[ '+91 97870 04716', '+91 81110 17743' ].map(p => (
-              <div key={p} className="flex items-center gap-4 text-white/50 hover:text-white transition-colors cursor-pointer text-sm">
+            {[
+              { number: '+91 97870 04716', label: '' },
+              { number: '+91 81110 17743', label: '' },
+              { number: '+91 97515 48653', label: ' (Emergency Only)' }
+            ].map(p => (
+              <div key={p.number} className="flex items-center gap-4 text-white/50 hover:text-white transition-colors cursor-pointer text-sm">
                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
-                 {p}
+                 <span>
+                   {p.number}
+                   {p.label && <span className="text-red-400 font-semibold text-xs ml-1">{p.label}</span>}
+                 </span>
               </div>
             ))}
           </div>
@@ -62,9 +69,8 @@ const Footer = ({ setIsLoginModalOpen }) => {
             <div className="flex items-start gap-4">
               <svg className="mt-1 text-white/30" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <div className="text-sm text-white/50 leading-loose">
-                Mon – Fri: 9:00 AM – 8:00 PM<br />
-                Saturday: 9:00 AM – 5:00 PM<br />
-                Sunday: 10:00 AM – 2:00 PM<br />
+                Mon – Sat: 9:00 AM – 8:00 PM<br />
+                Sunday: 9:00 AM – 6:00 PM<br />
               </div>
             </div>
           </div>

@@ -33,13 +33,13 @@ const ContactPage = () => {
             { 
               icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>,
               title: "Phone",
-              details: ["+91 97870 04716", "+91 81110 17743"],
+              details: ["+91 97870 04716", "+91 81110 17743", "+91 97515 48653 (Emergency Only)"],
               sub: "Mon-Sun, 24/7"
             },
             { 
               icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
               title: "Email",
-              details: ["info@shivamedical.com"],
+              details: ["shivamedical614616@gmail.com"],
               sub: "Reply within 24hrs"
             },
             { 
@@ -51,7 +51,7 @@ const ContactPage = () => {
             { 
               icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
               title: "Working Hours",
-              details: ["Mon-Fri: 9AM-8PM", "Sat: 9AM-5PM"],
+              details: ["Mon-Sat: 9AM-8PM", "Sun: 9AM-6PM"],
               sub: ""
             }
           ].map((item, idx) => (
@@ -137,10 +137,10 @@ const ContactPage = () => {
            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl transition-all group-hover:bg-white/10"></div>
            <div className="relative z-10">
               <h2 className="text-4xl md:text-6xl font-serif font-black mb-6">Medical Emergency?</h2>
-              <p className="text-red-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-medium">Call us immediately for urgent medical assistance. Our emergency team is available 24/7.</p>
-              <a href="tel:+919787004716" className="inline-flex items-center gap-4 bg-white text-red-600 px-10 h-20 rounded-[32px] font-black text-2xl shadow-xl hover:scale-105 transition-all">
+              <p className="text-red-100 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-medium">Medical emergency only contact this number 9751548653. Call us immediately for urgent medical assistance.</p>
+              <a href="tel:+919751548653" className="inline-flex items-center gap-4 bg-white text-red-600 px-8 py-4 md:px-10 md:py-5 rounded-[32px] font-black text-xl md:text-2xl shadow-xl hover:scale-105 transition-all whitespace-nowrap">
                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
-                 Emergency: +91 97870 04716
+                 Emergency: +91 97515 48653
               </a>
            </div>
         </div>
