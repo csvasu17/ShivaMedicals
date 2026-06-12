@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { API_URL } from '../constants/api';
 
 const parseDoctorName = (fullName) => {
@@ -41,10 +41,95 @@ export default function StatusBoard() {
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const voiceEnabledRef = useRef(false);
+  const isInitialized = useRef(false);
+  const lastAnnouncedTokens = useRef({}); // maps doctorId-sessionId -> tokenNumber
+
+  // Keep ref in sync to avoid closure issues in setInterval
+  useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
+  }, [voiceEnabled]);
+
   useEffect(() => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timeInterval);
   }, []);
+
+  const getIndianEnglishVoice = () => {
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => {
+      const lang = v.lang.replace('_', '-').toLowerCase();
+      return lang === 'en-in' || lang.includes('en-in');
+    })
+      || voices.find(v => v.name.toLowerCase().includes('india'))
+      || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+      || voices.find(v => v.lang.startsWith('en'))
+      || voices[0] || null;
+  };
+
+  const getTamilVoice = () => {
+    if (!window.speechSynthesis) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => {
+      const lang = v.lang.replace('_', '-').toLowerCase();
+      return lang === 'ta-in' || lang.startsWith('ta');
+    }) || null;
+  };
+
+  const announceToken = (tokenNumber, patientName, roomNumber) => {
+    if (!window.speechSynthesis) return;
+
+    const taVoice = getTamilVoice();
+    let message = '';
+    let utterance;
+
+    if (taVoice) {
+      // Speak in Tamil
+      message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
+      utterance = new SpeechSynthesisUtterance(message);
+      utterance.voice = taVoice;
+      utterance.rate = 0.85;
+    } else {
+      // Fallback to Indian English
+      message = `Token number ${tokenNumber}, ${patientName || 'Patient'}, please proceed to Room ${roomNumber}.`;
+      utterance = new SpeechSynthesisUtterance(message);
+      const enVoice = getIndianEnglishVoice();
+      if (enVoice) {
+        utterance.voice = enVoice;
+      }
+      utterance.rate = 0.85;
+    }
+
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleToggleVoice = () => {
+    const nextState = !voiceEnabled;
+    setVoiceEnabled(nextState);
+    if (nextState && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+
+      const taVoice = getTamilVoice();
+      let utterance;
+
+      if (taVoice) {
+        utterance = new SpeechSynthesisUtterance("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.");
+        utterance.voice = taVoice;
+      } else {
+        utterance = new SpeechSynthesisUtterance("Voice announcements enabled.");
+        const enVoice = getIndianEnglishVoice();
+        if (enVoice) {
+          utterance.voice = enVoice;
+        }
+      }
+
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -54,8 +139,10 @@ export default function StatusBoard() {
 
       const tokenData = {};
       const date = new Date().toISOString().split('T')[0];
+      const activeAnnouncementsToPlay = [];
 
-      for (const doc of docs) {
+      for (let idx = 0; idx < docs.length; idx++) {
+        const doc = docs[idx];
         const sessRes = await fetch(`${API_URL}/api/sessions/${doc.id}`);
         const sessions = await sessRes.json();
 
@@ -83,6 +170,27 @@ export default function StatusBoard() {
             patientName: liveToken?.patient_name || null,
             nextPatients: nextPatients
           });
+
+          // Check if token changed
+          const tokenKey = `${doc.id}-${sess.id}`;
+          const currentLiveToken = liveToken?.token_number;
+
+          if (currentLiveToken) {
+            const lastAnnounced = lastAnnouncedTokens.current[tokenKey];
+            if (lastAnnounced !== currentLiveToken) {
+              if (isInitialized.current) {
+                activeAnnouncementsToPlay.push({
+                  docName: doc.name,
+                  tokenNumber: currentLiveToken,
+                  patientName: liveToken?.patient_name,
+                  roomNumber: idx + 1
+                });
+              }
+              lastAnnouncedTokens.current[tokenKey] = currentLiveToken;
+            }
+          } else {
+            delete lastAnnouncedTokens.current[tokenKey];
+          }
         }
 
         let firstActiveSession = sessionSummaries.find((session) => session.token);
@@ -97,6 +205,16 @@ export default function StatusBoard() {
       }
 
       setCurrentTokens(tokenData);
+
+      // Play queued announcements
+      if (isInitialized.current && voiceEnabledRef.current && activeAnnouncementsToPlay.length > 0) {
+        window.speechSynthesis.cancel();
+        activeAnnouncementsToPlay.forEach(ann => {
+          announceToken(ann.tokenNumber, ann.patientName, ann.roomNumber);
+        });
+      }
+
+      isInitialized.current = true;
       setLoading(false);
     } catch (err) {
       console.error('Error fetching live queue:', err);
@@ -177,9 +295,32 @@ export default function StatusBoard() {
             <p className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] text-muted-text/50 mb-1 md:mb-2">Clinical Excellence</p>
             <h2 className="text-2xl md:text-3xl font-serif font-medium text-ink">Active Consultation Status</h2>
           </div>
-          <div className="flex items-center gap-3 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm text-[10px] md:text-[11px] font-bold text-muted-text/70 animate-pulse self-start sm:self-auto">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-            AUTO-SYNC ACTIVE
+          <div className="flex items-center gap-3 self-start sm:self-auto select-none">
+            <button
+              onClick={handleToggleVoice}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-[10px] md:text-[11px] font-bold tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer ${
+                voiceEnabled
+                  ? 'bg-blue-primary text-white border-blue-primary shadow-blue-primary/10'
+                  : 'bg-white text-muted-text/70 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {voiceEnabled ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                  VOICE ON
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
+                  VOICE OFF
+                </>
+              )}
+            </button>
+
+            <div className="flex items-center gap-2 bg-white px-5 py-2.5 rounded-2xl border border-slate-100 shadow-sm text-[10px] md:text-[11px] font-bold text-muted-text/70 animate-pulse shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="shrink-0"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              AUTO-SYNC
+            </div>
           </div>
         </div>
 
