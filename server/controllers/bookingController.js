@@ -112,7 +112,6 @@ exports.getAvailability = async (req, res) => {
 
 exports.createBooking = async (req, res) => {
     const { patientName, phone, patientAgeYears, patientAgeMonths, patientAgeDays, location, doctorId, sessionId, date } = req.body;
-    console.log('[BOOKING REQUEST]', req.body);
     
     // Validation
     if (!patientName || !phone || !doctorId || !sessionId || !date || !location || patientAgeYears === undefined || patientAgeMonths === undefined || patientAgeDays === undefined) {
@@ -125,17 +124,13 @@ exports.createBooking = async (req, res) => {
         if (!isExtra) {
             const isOpen = await tokenService.isBookingOpen(sessionId, date);
             if (!isOpen) {
-                console.log('[BOOKING REJECTED] Not open:', { sessionId, date });
                 return res.status(400).json({ message: 'Booking is not open for this session.', error: 'Booking is not open for this session.' });
             }
             
             const slots = await tokenService.getAvailableSlots(sessionId, date);
             if (slots <= 0) {
-                console.log('[BOOKING REJECTED] No slots:', { sessionId, date });
                 return res.status(400).json({ message: 'Session is fully booked.', error: 'Session is fully booked.' });
             }
-        } else {
-            console.log('[EXTRA BOOKING] Bypassing restrictions:', { sessionId, date });
         }
 
         const tokenNumber = await tokenService.getNextTokenNumber(sessionId, date);
