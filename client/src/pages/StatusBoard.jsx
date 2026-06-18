@@ -45,6 +45,10 @@ export default function StatusBoard() {
   const voiceEnabledRef = useRef(false);
   const isInitialized = useRef(false);
   const lastAnnouncedTokens = useRef({}); // maps doctorId-sessionId -> tokenNumber
+  
+  const currentAudio = useRef(null);
+  const audioQueue = useRef([]);
+  const isAudioPlaying = useRef(false);
 
   // Keep ref in sync to avoid closure issues in setInterval
   useEffect(() => {
@@ -53,7 +57,14 @@ export default function StatusBoard() {
 
   useEffect(() => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timeInterval);
+    return () => {
+      clearInterval(timeInterval);
+      // Clean up fallback audio playback on unmount
+      if (currentAudio.current) {
+        currentAudio.current.pause();
+        currentAudio.current.src = "";
+      }
+    };
   }, []);
 
   const getIndianEnglishVoice = () => {
@@ -78,24 +89,52 @@ export default function StatusBoard() {
     }) || null;
   };
 
-  const playAudioFallback = (message, langCode) => {
+  const cancelFallbackAudio = () => {
+    audioQueue.current = [];
+    isAudioPlaying.current = false;
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current.src = "";
+      currentAudio.current = null;
+    }
+  };
+
+  const processAudioQueue = () => {
+    if (audioQueue.current.length === 0) {
+      isAudioPlaying.current = false;
+      return;
+    }
+
     try {
+      isAudioPlaying.current = true;
+      const { message, langCode } = audioQueue.current.shift();
       const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(message)}`;
       
-      let audioEl = document.getElementById('tts-audio-element');
-      if (!audioEl) {
-        audioEl = document.createElement('audio');
-        audioEl.id = 'tts-audio-element';
-        audioEl.style.display = 'none';
-        document.body.appendChild(audioEl);
-      }
-      
-      audioEl.src = url;
-      audioEl.play().catch(err => {
+      const audio = new Audio(url);
+      currentAudio.current = audio;
+
+      const next = () => {
+        currentAudio.current = null;
+        processAudioQueue();
+      };
+
+      audio.onended = next;
+      audio.onerror = next;
+
+      audio.play().catch(err => {
         console.error('Audio playback failed on TV browser:', err);
+        next();
       });
     } catch (e) {
-      console.error('Error creating/playing fallback audio:', e);
+      console.error('Error in processAudioQueue:', e);
+      isAudioPlaying.current = false;
+    }
+  };
+
+  const playAudioFallback = (message, langCode) => {
+    audioQueue.current.push({ message, langCode });
+    if (!isAudioPlaying.current) {
+      processAudioQueue();
     }
   };
 
@@ -135,11 +174,14 @@ export default function StatusBoard() {
   const handleToggleVoice = () => {
     const nextState = !voiceEnabled;
     setVoiceEnabled(nextState);
-    if (nextState) {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+    
+    // Always cancel active speech and release resources when toggled
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    cancelFallbackAudio();
 
+    if (nextState) {
       const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
       const taVoice = getTamilVoice();
 
@@ -159,6 +201,17 @@ export default function StatusBoard() {
       } else {
         playAudioFallback("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.", "ta");
       }
+
+      // Immediately read aloud the currently visible tokens on the screen after the confirmation finishes
+      setTimeout(() => {
+        doctors.forEach((doc, idx) => {
+          const doctorQueue = currentTokens[doc.id];
+          const activeSession = doctorQueue?.activeSession;
+          if (activeSession && activeSession.token) {
+            announceToken(activeSession.token, activeSession.patientName, idx + 1);
+          }
+        });
+      }, 2500);
     }
   };
 
@@ -239,7 +292,10 @@ export default function StatusBoard() {
 
       // Play queued announcements
       if (isInitialized.current && voiceEnabledRef.current && activeAnnouncementsToPlay.length > 0) {
-        window.speechSynthesis.cancel();
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+        cancelFallbackAudio();
         activeAnnouncementsToPlay.forEach(ann => {
           announceToken(ann.tokenNumber, ann.patientName, ann.roomNumber);
         });
