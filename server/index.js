@@ -19,6 +19,7 @@ const authRoutes = require('./routes/authRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
+const fetch = require('node-fetch');
 
 const app = express();
 
@@ -39,6 +40,25 @@ app.use(express.json());
 // Health check
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// TTS proxy – avoids CORS on Tizen TV, mobile, and desktop browsers
+app.get('/api/tts', async (req, res) => {
+    const { text, lang = 'ta' } = req.query;
+    if (!text) return res.status(400).json({ error: 'text required' });
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${encodeURIComponent(lang)}&client=tw-ob&q=${encodeURIComponent(text)}`;
+    try {
+        const upstream = await fetch(url, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        if (!upstream.ok) return res.status(502).json({ error: 'TTS upstream error' });
+        res.setHeader('Content-Type', upstream.headers.get('content-type') || 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+        upstream.body.pipe(res);
+    } catch (err) {
+        console.error('TTS proxy error:', err);
+        res.status(502).json({ error: 'TTS proxy failed' });
+    }
 });
 
 // Routes

@@ -119,7 +119,7 @@ export default function StatusBoard() {
     try {
       isAudioPlaying.current = true;
       const { message, langCode } = audioQueue.current.shift();
-      const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(message)}`;
+      const url = `${API_URL}/api/tts?lang=${encodeURIComponent(langCode)}&text=${encodeURIComponent(message)}`;
       
       if (persistentAudioRef.current) {
         const audio = persistentAudioRef.current;
