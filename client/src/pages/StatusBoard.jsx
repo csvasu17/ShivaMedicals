@@ -46,7 +46,7 @@ export default function StatusBoard() {
   const isInitialized = useRef(false);
   const lastAnnouncedTokens = useRef({}); // maps doctorId-sessionId -> tokenNumber
   
-  const currentAudio = useRef(null);
+  const persistentAudioRef = useRef(null);
   const audioQueue = useRef([]);
   const isAudioPlaying = useRef(false);
 
@@ -57,6 +57,13 @@ export default function StatusBoard() {
 
   // Warm up and handle asynchronous voice loading for SpeechSynthesis
   useEffect(() => {
+    // Instantiate persistent audio player on mount
+    if (typeof window !== 'undefined') {
+      const audio = new Audio();
+      audio.preload = "auto";
+      persistentAudioRef.current = audio;
+    }
+
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.getVoices();
       const handleVoicesChanged = () => {
@@ -74,9 +81,9 @@ export default function StatusBoard() {
     return () => {
       clearInterval(timeInterval);
       // Clean up fallback audio playback on unmount
-      if (currentAudio.current) {
-        currentAudio.current.pause();
-        currentAudio.current.src = "";
+      if (persistentAudioRef.current) {
+        persistentAudioRef.current.pause();
+        persistentAudioRef.current.src = "";
       }
     };
   }, []);
@@ -94,10 +101,9 @@ export default function StatusBoard() {
   const cancelFallbackAudio = () => {
     audioQueue.current = [];
     isAudioPlaying.current = false;
-    if (currentAudio.current) {
-      currentAudio.current.pause();
-      currentAudio.current.src = "";
-      currentAudio.current = null;
+    if (persistentAudioRef.current) {
+      persistentAudioRef.current.pause();
+      persistentAudioRef.current.src = "";
     }
   };
 
@@ -112,21 +118,26 @@ export default function StatusBoard() {
       const { message, langCode } = audioQueue.current.shift();
       const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${langCode}&client=tw-ob&q=${encodeURIComponent(message)}`;
       
-      const audio = new Audio(url);
-      currentAudio.current = audio;
+      if (persistentAudioRef.current) {
+        const audio = persistentAudioRef.current;
+        audio.src = url;
 
-      const next = () => {
-        currentAudio.current = null;
-        processAudioQueue();
-      };
+        const next = () => {
+          audio.onended = null;
+          audio.onerror = null;
+          processAudioQueue();
+        };
 
-      audio.onended = next;
-      audio.onerror = next;
+        audio.onended = next;
+        audio.onerror = next;
 
-      audio.play().catch(err => {
-        console.error('Audio playback failed on TV browser:', err);
-        next();
-      });
+        audio.play().catch(err => {
+          console.error('Audio playback failed on TV browser:', err);
+          next();
+        });
+      } else {
+        isAudioPlaying.current = false;
+      }
     } catch (e) {
       console.error('Error in processAudioQueue:', e);
       isAudioPlaying.current = false;
@@ -143,16 +154,16 @@ export default function StatusBoard() {
   const announceToken = (tokenNumber, patientName, roomNumber) => {
     const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
 
-    if (!window.speechSynthesis) {
+    const isTizen = typeof navigator !== 'undefined' && /Tizen/i.test(navigator.userAgent);
+    const taVoice = getTamilVoice();
+
+    if (!window.speechSynthesis || isTizen || !taVoice) {
       playAudioFallback(message, 'ta');
       return;
     }
 
-    const taVoice = getTamilVoice();
     const utterance = new SpeechSynthesisUtterance(message);
-    if (taVoice) {
-      utterance.voice = taVoice;
-    }
+    utterance.voice = taVoice;
     utterance.lang = 'ta-IN';
     utterance.rate = 0.85;
     utterance.pitch = 1.0;
@@ -172,17 +183,46 @@ export default function StatusBoard() {
     if (nextState) {
       const message = "குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.";
 
-      if (window.speechSynthesis) {
-        const taVoice = getTamilVoice();
-        const utterance = new SpeechSynthesisUtterance(message);
-        if (taVoice) {
-          utterance.voice = taVoice;
-        }
-        utterance.lang = 'ta-IN';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
+      const isTizen = typeof navigator !== 'undefined' && /Tizen/i.test(navigator.userAgent);
+      const taVoice = getTamilVoice();
+
+      // Unlock persistent audio player with a user gesture
+      if (persistentAudioRef.current) {
+        persistentAudioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        persistentAudioRef.current.play().then(() => {
+          setTimeout(() => {
+            if (!window.speechSynthesis || isTizen || !taVoice) {
+              playAudioFallback(message, "ta");
+            } else {
+              const utterance = new SpeechSynthesisUtterance(message);
+              utterance.voice = taVoice;
+              utterance.lang = 'ta-IN';
+              utterance.rate = 0.9;
+              window.speechSynthesis.speak(utterance);
+            }
+          }, 100);
+        }).catch(err => {
+          console.warn("Audio unlock failed, playing fallback direct:", err);
+          if (!window.speechSynthesis || isTizen || !taVoice) {
+            playAudioFallback(message, "ta");
+          } else {
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.voice = taVoice;
+            utterance.lang = 'ta-IN';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+          }
+        });
       } else {
-        playAudioFallback(message, "ta");
+        if (!window.speechSynthesis || isTizen || !taVoice) {
+          playAudioFallback(message, "ta");
+        } else {
+          const utterance = new SpeechSynthesisUtterance(message);
+          utterance.voice = taVoice;
+          utterance.lang = 'ta-IN';
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
+        }
       }
 
       // Immediately read aloud the currently visible tokens on the screen after the confirmation finishes
