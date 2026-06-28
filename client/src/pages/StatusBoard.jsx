@@ -55,6 +55,20 @@ export default function StatusBoard() {
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
 
+  // Warm up and handle asynchronous voice loading for SpeechSynthesis
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      const handleVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      };
+    }
+  }, []);
+
   useEffect(() => {
     const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => {
@@ -152,6 +166,7 @@ export default function StatusBoard() {
       const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.voice = taVoice;
+      utterance.lang = 'ta-IN';
       utterance.rate = 0.85;
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
@@ -162,12 +177,19 @@ export default function StatusBoard() {
       if (enVoice) {
         utterance.voice = enVoice;
       }
+      utterance.lang = 'en-IN';
       utterance.rate = 0.85;
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     } else {
+      // If voices are empty/loading but window.speechSynthesis exists, use standard speech synthesis.
+      // Do not use audio fallback since background Audio.play() is blocked by mobile autoplay policies.
       const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
-      playAudioFallback(message, 'ta');
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = 'ta-IN';
+      utterance.rate = 0.85;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
     }
   };
 
@@ -188,6 +210,7 @@ export default function StatusBoard() {
       if (taVoice) {
         const utterance = new SpeechSynthesisUtterance("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.");
         utterance.voice = taVoice;
+        utterance.lang = 'ta-IN';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
       } else if (voices.length > 0) {
@@ -196,10 +219,18 @@ export default function StatusBoard() {
         if (enVoice) {
           utterance.voice = enVoice;
         }
+        utterance.lang = 'en-IN';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
       } else {
-        playAudioFallback("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.", "ta");
+        if (window.speechSynthesis) {
+          const utterance = new SpeechSynthesisUtterance("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.");
+          utterance.lang = 'ta-IN';
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
+        } else {
+          playAudioFallback("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.", "ta");
+        }
       }
 
       // Immediately read aloud the currently visible tokens on the screen after the confirmation finishes
