@@ -127,14 +127,10 @@ export default function StatusBoard() {
         audio.src = url;
         audio.load(); // Force Tizen browser engine to reload the new media source!
 
-        const next = () => {
-          audio.removeEventListener('ended', next);
-          audio.removeEventListener('error', next);
-          processAudioQueue();
-        };
+        const next = () => processAudioQueue();
 
-        audio.addEventListener('ended', next);
-        audio.addEventListener('error', next);
+        audio.addEventListener('ended', next, { once: true });
+        audio.addEventListener('error', next, { once: true });
 
         audio.play().catch(err => {
           console.error('Audio playback failed on TV browser:', err);
@@ -246,84 +242,44 @@ export default function StatusBoard() {
 
   const fetchData = async () => {
     try {
-      const docRes = await fetch(`${API_URL}/api/doctors`);
-      const docs = await docRes.json();
-      setDoctors(docs);
+      const date = new Date().toISOString().split('T')[0];
+      const res = await fetch(`${API_URL}/api/liveboard?date=${date}`);
+      const board = await res.json();
 
       const tokenData = {};
-      const date = new Date().toISOString().split('T')[0];
       const activeAnnouncementsToPlay = [];
+      const docs = board.map(({ sessions: _s, ...d }) => d);
 
-      for (let idx = 0; idx < docs.length; idx++) {
-        const doc = docs[idx];
-        const sessRes = await fetch(`${API_URL}/api/sessions/${doc.id}`);
-        const sessions = await sessRes.json();
+      board.forEach((doc, idx) => {
+        const sessionSummaries = doc.sessions;
 
-        const sessionSummaries = [];
-        for (const sess of sessions) {
-          const queueRes = await fetch(`${API_URL}/api/queue/live/${sess.id}/${date}`);
-          const liveToken = await queueRes.json();
-
-          const nextRes = await fetch(`${API_URL}/api/admin/bookings?date=${date}&sessionId=${sess.id}`);
-          const bookings = await nextRes.json();
-          const nextPatients = (bookings || [])
-            .filter(b => b.status === 'confirmed')
-            .sort((a, b) => a.token_number - b.token_number)
-            .slice(0, 3)
-            .map(b => ({
-              token_number: b.token_number,
-              patient_name: b.patient_name
-            }));
-
-          sessionSummaries.push({
-            id: sess.id,
-            label: sess.session_type,
-            start: sess.start_time?.slice(0, 5) || '--:--',
-            token: liveToken?.token_number || null,
-            patientName: liveToken?.patient_name || null,
-            nextPatients: nextPatients
-          });
-
-          // Check if token changed
+        sessionSummaries.forEach(sess => {
           const tokenKey = `${doc.id}-${sess.id}`;
-          const currentLiveToken = liveToken?.token_number;
-
+          const currentLiveToken = sess.token;
           if (currentLiveToken) {
             const lastAnnounced = lastAnnouncedTokens.current[tokenKey];
-            if (lastAnnounced !== currentLiveToken) {
-              if (isInitialized.current) {
-                activeAnnouncementsToPlay.push({
-                  docName: doc.name,
-                  tokenNumber: currentLiveToken,
-                  patientName: liveToken?.patient_name,
-                  roomNumber: idx + 1
-                });
-              }
-              lastAnnouncedTokens.current[tokenKey] = currentLiveToken;
+            if (lastAnnounced !== currentLiveToken && isInitialized.current) {
+              activeAnnouncementsToPlay.push({
+                tokenNumber: currentLiveToken,
+                patientName: sess.patientName,
+                roomNumber: idx + 1
+              });
             }
+            lastAnnouncedTokens.current[tokenKey] = currentLiveToken;
           } else {
             delete lastAnnouncedTokens.current[tokenKey];
           }
-        }
+        });
 
-        let firstActiveSession = sessionSummaries.find((session) => session.token);
-        if (!firstActiveSession && sessionSummaries.length > 0) {
-          firstActiveSession = sessionSummaries[0];
-        }
+        const firstActiveSession = sessionSummaries.find(s => s.token) || sessionSummaries[0] || null;
+        tokenData[doc.id] = { activeSession: firstActiveSession, sessions: sessionSummaries };
+      });
 
-        tokenData[doc.id] = {
-          activeSession: firstActiveSession || null,
-          sessions: sessionSummaries
-        };
-      }
-
+      setDoctors(docs);
       setCurrentTokens(tokenData);
 
-      // Play queued announcements
       if (isInitialized.current && voiceEnabledRef.current && activeAnnouncementsToPlay.length > 0) {
-        if (window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
         cancelFallbackAudio();
         activeAnnouncementsToPlay.forEach(ann => {
           announceToken(ann.tokenNumber, ann.patientName, ann.roomNumber);
@@ -338,11 +294,34 @@ export default function StatusBoard() {
     }
   };
 
+  const pollTimeoutRef = useRef(null);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled) return;
+      await fetchData();
+      if (!cancelled) {
+        pollTimeoutRef.current = setTimeout(poll, 5000);
+      }
+    };
+
+    poll();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        clearTimeout(pollTimeoutRef.current);
+        poll();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(pollTimeoutRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const liveCount = useMemo(

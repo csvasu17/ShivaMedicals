@@ -193,6 +193,98 @@ exports.getNextQueue = async (req, res) => {
     }
 };
 
+exports.getLiveBoard = async (req, res) => {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'date required' });
+    try {
+        const dayOfWeek = new Date(date).getDay();
+
+        const doctorsResult = await db.query(
+            `SELECT DISTINCT d.id, d.name, d.type, d.specialty
+             FROM doctors d
+             JOIN sessions s ON d.id = s.doctor_id
+             WHERE d.is_active = true AND s.is_active = true
+             AND (s.day_of_week = $1 OR s.day_of_week IS NULL)`,
+            [dayOfWeek]
+        );
+
+        const doctors = doctorsResult.rows;
+        doctors.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            const isAnandA = nameA.includes('anand');
+            const isAnandB = nameB.includes('anand');
+            if (isAnandA && !isAnandB) return -1;
+            if (!isAnandA && isAnandB) return 1;
+            return nameA.localeCompare(nameB);
+        });
+
+        if (doctors.length === 0) return res.json([]);
+
+        const doctorIds = doctors.map(d => d.id);
+
+        const sessionsResult = await db.query(
+            `SELECT * FROM sessions
+             WHERE doctor_id = ANY($1) AND is_active = true
+             AND (day_of_week = $2 OR day_of_week IS NULL)`,
+            [doctorIds, dayOfWeek]
+        );
+
+        const sessionIds = sessionsResult.rows.map(s => s.id);
+
+        const [liveResult, nextResult] = await Promise.all([
+            db.query(
+                `SELECT DISTINCT ON (session_id) session_id, token_number, patient_name
+                 FROM bookings
+                 WHERE session_id = ANY($1) AND booking_date = $2 AND status = 'called'
+                 ORDER BY session_id, token_number DESC`,
+                [sessionIds, date]
+            ),
+            db.query(
+                `SELECT session_id, token_number, patient_name
+                 FROM (
+                   SELECT session_id, token_number, patient_name,
+                          ROW_NUMBER() OVER (PARTITION BY session_id ORDER BY token_number ASC) AS rn
+                   FROM bookings
+                   WHERE session_id = ANY($1) AND booking_date = $2 AND status = 'confirmed'
+                 ) ranked WHERE rn <= 3`,
+                [sessionIds, date]
+            )
+        ]);
+
+        const liveMap = {};
+        liveResult.rows.forEach(r => { liveMap[r.session_id] = r; });
+
+        const nextMap = {};
+        nextResult.rows.forEach(r => {
+            if (!nextMap[r.session_id]) nextMap[r.session_id] = [];
+            nextMap[r.session_id].push({ token_number: r.token_number, patient_name: r.patient_name });
+        });
+
+        const sessMap = {};
+        sessionsResult.rows.forEach(s => {
+            if (!sessMap[s.doctor_id]) sessMap[s.doctor_id] = [];
+            sessMap[s.doctor_id].push(s);
+        });
+
+        const payload = doctors.map(doc => {
+            const sessions = (sessMap[doc.id] || []).map(sess => ({
+                id: sess.id,
+                label: sess.session_type,
+                start: sess.start_time?.slice(0, 5) || '--:--',
+                token: liveMap[sess.id]?.token_number || null,
+                patientName: liveMap[sess.id]?.patient_name || null,
+                nextPatients: nextMap[sess.id] || []
+            }));
+            return { ...doc, sessions };
+        });
+
+        res.json(payload);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 exports.cancelBooking = async (req, res) => {
     const { id } = req.params;
     try {
