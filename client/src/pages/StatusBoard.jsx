@@ -81,18 +81,6 @@ export default function StatusBoard() {
     };
   }, []);
 
-  const getIndianEnglishVoice = () => {
-    if (!window.speechSynthesis) return null;
-    const voices = window.speechSynthesis.getVoices();
-    return voices.find(v => {
-      const lang = v.lang.replace('_', '-').toLowerCase();
-      return lang === 'en-in' || lang.includes('en-in');
-    })
-      || voices.find(v => v.name.toLowerCase().includes('india'))
-      || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
-      || voices.find(v => v.lang.startsWith('en'))
-      || voices[0] || null;
-  };
 
   const getTamilVoice = () => {
     if (!window.speechSynthesis) return null;
@@ -153,44 +141,22 @@ export default function StatusBoard() {
   };
 
   const announceToken = (tokenNumber, patientName, roomNumber) => {
+    const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
+
     if (!window.speechSynthesis) {
-      const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
       playAudioFallback(message, 'ta');
       return;
     }
 
-    const voices = window.speechSynthesis.getVoices();
     const taVoice = getTamilVoice();
-
+    const utterance = new SpeechSynthesisUtterance(message);
     if (taVoice) {
-      const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
-      const utterance = new SpeechSynthesisUtterance(message);
       utterance.voice = taVoice;
-      utterance.lang = 'ta-IN';
-      utterance.rate = 0.85;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } else if (voices.length > 0) {
-      const message = `Token number ${tokenNumber}, ${patientName || 'Patient'}, please proceed to Room ${roomNumber}.`;
-      const utterance = new SpeechSynthesisUtterance(message);
-      const enVoice = getIndianEnglishVoice();
-      if (enVoice) {
-        utterance.voice = enVoice;
-      }
-      utterance.lang = 'en-IN';
-      utterance.rate = 0.85;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    } else {
-      // If voices are empty/loading but window.speechSynthesis exists, use standard speech synthesis.
-      // Do not use audio fallback since background Audio.play() is blocked by mobile autoplay policies.
-      const message = `டோக்கன் எண் ${tokenNumber}, ${patientName || 'நோயாளி'}, தயவுசெய்து அறை ${roomNumber}க்கு செல்லவும்.`;
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = 'ta-IN';
-      utterance.rate = 0.85;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
     }
+    utterance.lang = 'ta-IN';
+    utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleToggleVoice = () => {
@@ -204,33 +170,19 @@ export default function StatusBoard() {
     cancelFallbackAudio();
 
     if (nextState) {
-      const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : [];
-      const taVoice = getTamilVoice();
+      const message = "குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.";
 
-      if (taVoice) {
-        const utterance = new SpeechSynthesisUtterance("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.");
-        utterance.voice = taVoice;
+      if (window.speechSynthesis) {
+        const taVoice = getTamilVoice();
+        const utterance = new SpeechSynthesisUtterance(message);
+        if (taVoice) {
+          utterance.voice = taVoice;
+        }
         utterance.lang = 'ta-IN';
         utterance.rate = 0.9;
         window.speechSynthesis.speak(utterance);
-      } else if (voices.length > 0) {
-        const utterance = new SpeechSynthesisUtterance("Voice announcements enabled.");
-        const enVoice = getIndianEnglishVoice();
-        if (enVoice) {
-          utterance.voice = enVoice;
-        }
-        utterance.lang = 'en-IN';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
       } else {
-        if (window.speechSynthesis) {
-          const utterance = new SpeechSynthesisUtterance("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.");
-          utterance.lang = 'ta-IN';
-          utterance.rate = 0.9;
-          window.speechSynthesis.speak(utterance);
-        } else {
-          playAudioFallback("குரல் அறிவிப்புகள் செயல்படுத்தப்பட்டன.", "ta");
-        }
+        playAudioFallback(message, "ta");
       }
 
       // Immediately read aloud the currently visible tokens on the screen after the confirmation finishes
