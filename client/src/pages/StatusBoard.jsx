@@ -104,6 +104,9 @@ export default function StatusBoard() {
     if (persistentAudioRef.current) {
       persistentAudioRef.current.pause();
       persistentAudioRef.current.src = "";
+      try {
+        persistentAudioRef.current.load();
+      } catch (e) {}
     }
   };
 
@@ -120,16 +123,18 @@ export default function StatusBoard() {
       
       if (persistentAudioRef.current) {
         const audio = persistentAudioRef.current;
+        
         audio.src = url;
+        audio.load(); // Force Tizen browser engine to reload the new media source!
 
         const next = () => {
-          audio.onended = null;
-          audio.onerror = null;
+          audio.removeEventListener('ended', next);
+          audio.removeEventListener('error', next);
           processAudioQueue();
         };
 
-        audio.onended = next;
-        audio.onerror = next;
+        audio.addEventListener('ended', next);
+        audio.addEventListener('error', next);
 
         audio.play().catch(err => {
           console.error('Audio playback failed on TV browser:', err);
@@ -189,6 +194,7 @@ export default function StatusBoard() {
       // Unlock persistent audio player with a user gesture
       if (persistentAudioRef.current) {
         persistentAudioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        persistentAudioRef.current.load(); // Load the silent data URI to prime the player
         persistentAudioRef.current.play().then(() => {
           setTimeout(() => {
             if (!window.speechSynthesis || isTizen || !taVoice) {
