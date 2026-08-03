@@ -1,49 +1,105 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ClinicLogo = ({ className = "w-10 h-10" }) => {
+  const [active, setActive] = useState(false);
+  const [timerId, setTimerId] = useState(null);
+
+  const handleTrigger = () => {
+    setActive(true);
+    if (timerId) clearTimeout(timerId);
+    const id = setTimeout(() => {
+      setActive(false);
+    }, 2500);
+    setTimerId(id);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerId) clearTimeout(timerId);
+    };
+  }, [timerId]);
+
   return (
-    <div className={`relative ${className} group-hover:scale-110 transition-transform duration-500`}>
-      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm">
-        {/* Outer Circular Text Path */}
-        <defs>
-          <path id="circlePathTop" d="M 20, 50 a 30,30 0 1,1 60,0" />
-          <path id="circlePathBottom" d="M 80, 50 a 30,30 0 1,1 -60,0" />
-          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#0B8F73', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: '#1847C2', stopOpacity: 1 }} />
-          </linearGradient>
-        </defs>
+    <div 
+      className={`relative ${className} flex-shrink-0 select-none cursor-pointer`}
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => {
+        if (timerId) return; // Keep active if click timer is running
+        setActive(false);
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        handleTrigger();
+      }}
+    >
+      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Main Swirl & Cross Group with smooth transitions */}
+        <g 
+          className="transition-all duration-500 ease-out origin-center"
+          style={{
+            transform: active ? 'translate(0px, -9px) scale(0.82)' : 'translate(0px, 0px) scale(1)'
+          }}
+        >
+          {/* Top-Left Main Swosh */}
+          <path 
+            d="M 24,56 C 18,33 36,17 62,17 C 48,19 35,30 35,48 C 35,60 41,68 51,72 C 39,70 29,66 24,56 Z" 
+            fill="#1072b8" 
+          />
+          {/* Top-Left Inner Swosh */}
+          <path 
+            d="M 32.5,46.5 C 32.5,35.5 41.5,27.5 53.5,25.5 C 45.5,27 38.5,33.5 38.5,43.5 C 38.5,49.5 42.5,54.5 47.5,57 C 39.5,55 32.5,52 32.5,46.5 Z" 
+            fill="#1072b8" 
+          />
+          
+          {/* Bottom-Right Swirl Group (180 degree rotation of Top-Left) */}
+          <g transform="rotate(180 50 50)">
+            {/* Bottom-Right Main Swosh */}
+            <path 
+              d="M 24,56 C 18,33 36,17 62,17 C 48,19 35,30 35,48 C 35,60 41,68 51,72 C 39,70 29,66 24,56 Z" 
+              fill="#1072b8" 
+            />
+            {/* Bottom-Right Inner Swosh */}
+            <path 
+              d="M 32.5,46.5 C 32.5,35.5 41.5,27.5 53.5,25.5 C 45.5,27 38.5,33.5 38.5,43.5 C 38.5,49.5 42.5,54.5 47.5,57 C 39.5,55 32.5,52 32.5,46.5 Z" 
+              fill="#1072b8" 
+            />
+          </g>
 
-        {/* Central Cross */}
-        <rect x="38" y="25" width="24" height="50" rx="4" fill="url(#logoGradient)" />
-        <rect x="25" y="38" width="50" height="24" rx="4" fill="url(#logoGradient)" />
+          {/* Central White Mask */}
+          <circle cx="50" cy="50" r="21" fill="white" />
 
-        {/* Stethoscope Silhouette */}
-        <path 
-          d="M 50,35 A 8,8 0 0,0 42,43 M 50,35 A 8,8 0 0,1 58,43 M 50,35 V 55 M 50,55 A 4,4 0 1,0 50,63" 
-          stroke="white" 
-          strokeWidth="3" 
-          fill="none" 
-          strokeLinecap="round" 
-        />
-        <circle cx="42" cy="43" r="1.5" fill="white" />
-        <circle cx="58" cy="43" r="1.5" fill="white" />
+          {/* Medical Cross (Pink/Magenta) */}
+          <rect x="46" y="34" width="8" height="32" rx="2" fill="#e21a7a" />
+          <rect x="34" y="46" width="32" height="8" rx="2" fill="#e21a7a" />
+        </g>
 
-        {/* Circular Text */}
-        <text className="text-[7.5px] font-bold tracking-[0.1em]" fill="#0B8F73">
-          <textPath href="#circlePathTop" startOffset="50%" textAnchor="middle">
+        {/* Corporate Brand Name Text with fade and slide transitions */}
+        <g 
+          className="transition-all duration-500 ease-out"
+          style={{
+            opacity: active ? 1 : 0,
+            transform: active ? 'translate(0, 0)' : 'translate(0, 4px)'
+          }}
+        >
+          <text 
+            x="50" 
+            y="83" 
+            textAnchor="middle" 
+            fill="#e21a7a" 
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 900, fontSize: '9px', letterSpacing: '0.04em' }}
+          >
+            SHIVA MEDICAL
+          </text>
+          <text 
+            x="50" 
+            y="93" 
+            textAnchor="middle" 
+            fill="#1072b8" 
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif', fontWeight: 700, fontSize: '5.2px', letterSpacing: '0.04em' }}
+          >
             SEMMALAR CLINIC
-          </textPath>
-        </text>
-        <text className="text-[7.5px] font-bold tracking-[0.1em]" fill="#1847C2">
-          <textPath href="#circlePathBottom" startOffset="50%" textAnchor="middle">
-            SHIVA MEDICALS
-          </textPath>
-        </text>
-
-        {/* Side Dots */}
-        <circle cx="15" cy="50" r="2" fill="#0B8F73" />
-        <circle cx="85" cy="50" r="2" fill="#1847C2" />
+          </text>
+        </g>
       </svg>
     </div>
   );

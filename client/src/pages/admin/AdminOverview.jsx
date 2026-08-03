@@ -11,7 +11,11 @@ const AdminOverview = ({ user }) => {
   });
 
   useEffect(() => {
-    fetch(`${API_URL}/api/admin/stats`)
+    let url = `${API_URL}/api/admin/stats`;
+    if (user?.role === 'doctor' && user?.doctor_id) {
+      url += `?doctorId=${user.doctor_id}`;
+    }
+    fetch(url)
       .then(r => r.json())
       .then(data => {
         setStats({
@@ -23,7 +27,7 @@ const AdminOverview = ({ user }) => {
         });
       })
       .catch(err => console.error('Error fetching stats:', err));
-  }, []);
+  }, [user, API_URL]);
 
   const cards = [
     { label: "Patients Today", val: stats.todayPatients, label2: "+12 from yesterday", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 7a4 4 0 11-8 0 4 4 0 018 0", color: "bg-blue-primary/10 text-blue-primary" },

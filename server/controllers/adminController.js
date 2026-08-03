@@ -478,40 +478,68 @@ exports.updateBooking = async (req, res) => {
 };
 
 exports.getDashboardStats = async (req, res) => {
+    const { doctorId } = req.query;
     try {
         const todayStr = new Date().toISOString().split('T')[0];
         
         // Today's total patients
-        const todayRes = await db.query('SELECT COUNT(*) FROM bookings WHERE booking_date = $1', [todayStr]);
+        let todayPatientsQuery = 'SELECT COUNT(*) FROM bookings WHERE booking_date = $1';
+        let todayPatientsParams = [todayStr];
+        if (doctorId) {
+            todayPatientsQuery += ' AND doctor_id = $2';
+            todayPatientsParams.push(doctorId);
+        }
+        const todayRes = await db.query(todayPatientsQuery, todayPatientsParams);
         const todayPatients = parseInt(todayRes.rows[0].count);
 
         // Active sessions today
-        const sessionRes = await db.query('SELECT COUNT(*) FROM sessions WHERE id IN (SELECT DISTINCT session_id FROM bookings WHERE booking_date = $1)', [todayStr]);
+        let sessionQuery = 'SELECT COUNT(*) FROM sessions WHERE id IN (SELECT DISTINCT session_id FROM bookings WHERE booking_date = $1';
+        let sessionParams = [todayStr];
+        if (doctorId) {
+            sessionQuery += ' AND doctor_id = $2';
+            sessionParams.push(doctorId);
+        }
+        sessionQuery += ')';
+        const sessionRes = await db.query(sessionQuery, sessionParams);
         const activeSessions = parseInt(sessionRes.rows[0].count);
 
-        // Top Doctor
-        const topDoctorRes = await db.query(`
-            SELECT d.name, COUNT(b.id) as count 
-            FROM bookings b 
-            JOIN doctors d ON b.doctor_id = d.id 
-            GROUP BY d.name 
-            ORDER BY count DESC 
-            LIMIT 1
-        `);
-        const topDoctor = topDoctorRes.rows[0]?.name || '—';
+        // Top Doctor / Performer
+        let topDoctor = '—';
+        if (doctorId) {
+            const docNameRes = await db.query('SELECT name FROM doctors WHERE id = $1', [doctorId]);
+            topDoctor = docNameRes.rows[0]?.name || '—';
+        } else {
+            const topDoctorRes = await db.query(`
+                SELECT d.name, COUNT(b.id) as count 
+                FROM bookings b 
+                JOIN doctors d ON b.doctor_id = d.id 
+                GROUP BY d.name 
+                ORDER BY count DESC 
+                LIMIT 1
+            `);
+            topDoctor = topDoctorRes.rows[0]?.name || '—';
+        }
 
         // Weekly Traffic
         // Get counts grouped by date for the last 7 days
-        const weeklyRes = await db.query(`
+        let weeklyQuery = `
             SELECT 
                 to_char(booking_date, 'Dy') as day,
                 booking_date as full_date,
                 COUNT(*) as count 
             FROM bookings 
             WHERE booking_date >= CURRENT_DATE - INTERVAL '6 days'
+        `;
+        let weeklyParams = [];
+        if (doctorId) {
+            weeklyQuery += ' AND doctor_id = $1';
+            weeklyParams.push(doctorId);
+        }
+        weeklyQuery += `
             GROUP BY booking_date 
             ORDER BY booking_date ASC
-        `);
+        `;
+        const weeklyRes = await db.query(weeklyQuery, weeklyParams);
         
         const trafficMap = {};
         weeklyRes.rows.forEach(r => {
