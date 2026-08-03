@@ -31,6 +31,7 @@ async function updateDb() {
 
         await db.query('ALTER TABLE doctors ADD COLUMN IF NOT EXISTS specialty VARCHAR;');
         await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;');
+        await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS doctor_id UUID REFERENCES doctors(id) ON DELETE SET NULL;');
         
         // Create staff attendance table
         await db.query(`

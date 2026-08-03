@@ -83,7 +83,12 @@ exports.callNext = async (req, res) => {
 
 exports.getStaff = async (req, res) => {
     try {
-        const result = await db.query('SELECT id, name, username, phone, role, is_active FROM users ORDER BY created_at DESC');
+        const result = await db.query(`
+            SELECT u.id, u.name, u.username, u.phone, u.role, u.doctor_id, u.is_active, d.name as doctor_name
+            FROM users u
+            LEFT JOIN doctors d ON u.doctor_id = d.id
+            ORDER BY u.created_at DESC
+        `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -119,14 +124,14 @@ exports.addDoctorType = async (req, res) => {
 };
 
 exports.addStaff = async (req, res) => {
-    const { name, username, password, phone, role } = req.body;
+    const { name, username, password, phone, role, doctor_id } = req.body;
     try {
         const query = `
-            INSERT INTO users (name, username, password, phone, role) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING id, name, username, phone, role, is_active
+            INSERT INTO users (name, username, password, phone, role, doctor_id) 
+            VALUES ($1, $2, $3, $4, $5, $6) 
+            RETURNING id, name, username, phone, role, doctor_id, is_active
         `;
-        const values = [name, username, password, phone, role || 'staff'];
+        const values = [name, username, password, phone, role || 'staff', role === 'doctor' ? (doctor_id || null) : null];
         const result = await db.query(query, values);
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -181,25 +186,26 @@ exports.addDoctor = async (req, res) => {
 
 exports.updateStaff = async (req, res) => {
     const { id } = req.params;
-    const { name, phone, role, password } = req.body;
+    const { name, phone, role, password, doctor_id } = req.body;
     try {
         let query, values;
+        const actualDoctorId = role === 'doctor' ? (doctor_id || null) : null;
         if (password) {
             query = `
                 UPDATE users 
-                SET name = $1, phone = $2, role = $3, password = $4
-                WHERE id = $5 
-                RETURNING id, name, username, phone, role, is_active
+                SET name = $1, phone = $2, role = $3, password = $4, doctor_id = $5
+                WHERE id = $6 
+                RETURNING id, name, username, phone, role, doctor_id, is_active
             `;
-            values = [name, phone, role, password, id];
+            values = [name, phone, role, password, actualDoctorId, id];
         } else {
             query = `
                 UPDATE users 
-                SET name = $1, phone = $2, role = $3
-                WHERE id = $4 
-                RETURNING id, name, username, phone, role, is_active
+                SET name = $1, phone = $2, role = $3, doctor_id = $4
+                WHERE id = $5 
+                RETURNING id, name, username, phone, role, doctor_id, is_active
             `;
-            values = [name, phone, role, id];
+            values = [name, phone, role, actualDoctorId, id];
         }
         const result = await db.query(query, values);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Staff not found' });

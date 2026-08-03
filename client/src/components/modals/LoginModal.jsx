@@ -7,13 +7,13 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   return (
     <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
        {/* Backdrop */}
-       <div 
-         className="fixed inset-0 bg-ink/60 backdrop-blur-xl animate-fade-in cursor-pointer" 
-         onClick={onClose}
-       ></div>
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in cursor-pointer" 
+          onClick={onClose}
+        ></div>
 
-        {/* Modal Container */}
-        <div className="p-modal-card p-10 w-full max-w-md relative animate-scale-up z-[3010] flex flex-col my-auto transition-all duration-500">
+         {/* Modal Container */}
+         <div className="p-modal-card p-10 w-full max-w-md relative animate-scale-up z-[3010] flex flex-col my-auto transition-all">
            {/* Close button */}
            <button 
              type="button"

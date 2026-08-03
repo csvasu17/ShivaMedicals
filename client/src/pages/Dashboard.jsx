@@ -31,6 +31,9 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
     if (user?.role === 'receptionist' || user?.role === 'staff') {
       setActiveTab('patients'); // or 'overview'
     }
+    if (user?.role === 'doctor') {
+      setActiveTab('overview');
+    }
     if (user?.role === 'admin' || user?.role === 'superadmin') {
       fetchStaffs();
       fetchDoctors();
@@ -162,8 +165,15 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                          {s.phone || 'No phone provided'}
                       </div>
-                      <div className="mt-3 text-xs font-bold uppercase text-purple-600 bg-purple-50 px-2 py-1 rounded inline-block">
-                        {s.role}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="text-xs font-bold uppercase text-purple-605 bg-purple-50 px-2 py-1 rounded inline-block">
+                          {s.role}
+                        </span>
+                        {s.role === 'doctor' && s.doctor_name && (
+                          <span className="text-xs font-bold uppercase text-emerald-600 bg-emerald-50 px-2 py-1 rounded inline-block">
+                            Profile: {s.doctor_name}
+                          </span>
+                        )}
                       </div>
                    </div>
                    <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -268,12 +278,18 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
         {/* DYNAMIC HEADER SECTION */}
         <div className="mb-12">
            <h1 className="text-4xl md:text-5xl font-serif font-medium text-ink tracking-tight">
-              {(user?.role === 'admin' || user?.role === 'superadmin') ? 'Admin Dashboard' : 'Staff Board'}
+              {user?.role === 'doctor' 
+                ? 'Doctor Dashboard' 
+                : (user?.role === 'admin' || user?.role === 'superadmin') 
+                  ? 'Admin Dashboard' 
+                  : 'Staff Board'}
            </h1>
            <p className="mt-3 text-muted-text/70 font-medium max-w-xl">
-              {(user?.role === 'admin' || user?.role === 'superadmin') 
-                ? 'Manage your clinical operations, monitor staff performance, and oversee patient flow in real-time.' 
-                : 'Access patient records, manage the active consultation queue, and coordinate daily clinic visits.'}
+              {user?.role === 'doctor'
+                ? 'Access patient lists, check waiting queues, and view daily consultation flow in read-only mode.'
+                : (user?.role === 'admin' || user?.role === 'superadmin')
+                  ? 'Manage your clinical operations, monitor staff performance, and oversee patient flow in real-time.' 
+                  : 'Access patient records, manage the active consultation queue, and coordinate daily clinic visits.'}
            </p>
         </div>
 
@@ -287,7 +303,12 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
               { id: 'attendance', label: 'Attendance', show: user?.role === 'admin' || user?.role === 'superadmin' },
               { id: 'monitoring', label: 'Monitor', show: user?.role === 'admin' || user?.role === 'superadmin' },
               { id: 'settings', label: 'Settings', show: user?.role === 'admin' || user?.role === 'superadmin' },
-            ].filter(t => t.show !== false).map(tab => (
+            ].filter(t => {
+              if (user?.role === 'doctor') {
+                return t.id === 'overview' || t.id === 'patients';
+              }
+              return t.show !== false;
+            }).map(tab => (
               <button 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)} 

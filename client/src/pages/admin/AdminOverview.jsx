@@ -59,25 +59,33 @@ const AdminOverview = ({ user }) => {
                </div>
             </div>
             
-            <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4 relative px-2">
-               {stats.weeklyTraffic.map((t, i) => {
-                  const maxCount = Math.max(...stats.weeklyTraffic.map(x => x.count), 1);
-                  const barHeight = Math.max((t.count / maxCount) * 80, 2); // 80% max to leave space for text
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end">
-                       {/* Count Label */}
-                       <div className={`mb-2 text-[10px] md:text-[12px] font-black transition-all duration-300 ${t.count > 0 ? 'text-white' : 'text-white/10'}`}>
-                         {t.count}
-                       </div>
-                       
-                       <div className="w-full relative bg-white/5 rounded-t-lg md:rounded-t-xl overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${barHeight}%` }}>
-                          <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-1000 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*100}ms` }}></div>
-                       </div>
-                       <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-widest">{t.day}</p>
-                    </div>
-                  );
-               })}
-            </div>
+             <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4 relative px-2">
+                {/* Horizontal Gridlines behind bars */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
+                  <div className="w-full border-t border-white/[0.04]"></div>
+                  <div className="w-full border-t border-white/[0.04]"></div>
+                  <div className="w-full border-t border-white/[0.04]"></div>
+                  <div className="w-full border-t border-white/[0.04]"></div>
+                </div>
+
+                {stats.weeklyTraffic.map((t, i) => {
+                   const maxCount = Math.max(...stats.weeklyTraffic.map(x => x.count), 1);
+                   const barHeight = Math.max((t.count / maxCount) * 75, 2); // 75% max to leave space for text
+                   return (
+                     <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end z-10">
+                        {/* Count Label */}
+                        <div className={`mb-2 text-[10px] md:text-[12px] font-bold transition-all duration-300 ${t.count > 0 ? 'text-white' : 'text-white/20'}`}>
+                          {t.count}
+                        </div>
+                        
+                        <div className="w-full relative bg-white/5 rounded-t-md overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${barHeight}%` }}>
+                           <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-550 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*50}ms` }}></div>
+                        </div>
+                        <p className="mt-3 md:mt-4 text-[9px] font-bold text-white/35 uppercase tracking-wider">{t.day}</p>
+                     </div>
+                   );
+                })}
+             </div>
          </div>
 
          <div className="p-card p-6 md:p-10">

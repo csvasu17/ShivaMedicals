@@ -7,10 +7,24 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editStaff }) => {
     phone: '',
     username: '',
     password: '',
-    role: 'staff'
+    role: 'staff',
+    doctor_id: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/doctors`)
+      .then(res => res.json())
+      .then(data => {
+        setDoctors(data);
+        if (data.length > 0 && formData.role === 'doctor' && !formData.doctor_id) {
+          setFormData(prev => ({ ...prev, doctor_id: data[0].id }));
+        }
+      })
+      .catch(err => console.error('Error fetching doctors:', err));
+  }, [isOpen, formData.role]);
 
   useEffect(() => {
     if (editStaff) {
@@ -19,17 +33,23 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editStaff }) => {
         phone: editStaff.phone || '',
         username: editStaff.username || '',
         password: '', // Don't show password
-        role: editStaff.role || 'staff'
+        role: editStaff.role || 'staff',
+        doctor_id: editStaff.doctor_id || ''
       });
     } else {
-      setFormData({ name: '', phone: '', username: '', password: '', role: 'staff' });
+      setFormData({ name: '', phone: '', username: '', password: '', role: 'staff', doctor_id: '' });
     }
   }, [editStaff, isOpen]);
 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let updatedFormData = { ...formData, [name]: value };
+    if (name === 'role' && value === 'doctor' && !formData.doctor_id && doctors.length > 0) {
+      updatedFormData.doctor_id = doctors[0].id;
+    }
+    setFormData(updatedFormData);
   };
 
   const handleSubmit = async (e) => {
@@ -153,7 +173,7 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editStaff }) => {
               </div>
             </div>
 
-            <div className="space-y-2">
+             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Role</label>
               <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
                 <select 
@@ -163,10 +183,31 @@ const AddStaffModal = ({ isOpen, onClose, onStaffAdded, editStaff }) => {
                   className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
                 >
                   <option value="staff">Staff Member</option>
+                  <option value="doctor">Doctor</option>
                   <option value="admin">Administrator</option>
                 </select>
               </div>
             </div>
+
+            {formData.role === 'doctor' && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Assign to Doctor Profile</label>
+                <div className="h-14 bg-white border border-slate-200 rounded-2xl flex items-center px-4 relative group focus-within:border-emerald-500 transition-all shadow-sm">
+                  <select 
+                    name="doctor_id"
+                    value={formData.doctor_id}
+                    onChange={handleChange}
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full cursor-pointer appearance-none pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
+                    required
+                  >
+                    <option value="">Select Doctor Profile...</option>
+                    {doctors.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             <button 
               type="submit" 

@@ -20,6 +20,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [itemsPerPage, setItemsPerPage] = useState(window.innerWidth < 768 ? 15 : 25);
   const [isExtraMode, setIsExtraMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  useEffect(() => {
+    setStatusFilter('all');
+  }, [selectedDoctor, selectedSession]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,18 +39,22 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     fetch(`${API_URL}/api/doctors?date=${dateStr}`)
       .then(res => res.json())
       .then(data => {
-        setDoctors(data);
-        if (data.length > 0) {
+        let filteredDoctors = data;
+        if (user?.role === 'doctor' && user?.doctor_id) {
+          filteredDoctors = data.filter(d => d.id === user.doctor_id);
+        }
+        setDoctors(filteredDoctors);
+        if (filteredDoctors.length > 0) {
           // Keep selection if still in list, else pick first (e.g. Anand)
-          if (!data.find(d => d.id === selectedDoctor)) {
-            setSelectedDoctor(data[0].id);
+          if (!filteredDoctors.find(d => d.id === selectedDoctor)) {
+            setSelectedDoctor(filteredDoctors[0].id);
           }
         } else {
           setSelectedDoctor('');
         }
       })
       .catch(err => console.error('Error fetching doctors:', err));
-  }, [dateStr, API_URL]);
+  }, [dateStr, API_URL, user]);
 
   useEffect(() => {
     if (!selectedDoctor || !dateStr) return;
@@ -187,18 +196,29 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Search and Pagination Logic
-  const filteredTokens = tokens.filter(t => 
-    t.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    t.patient_phone.includes(searchTerm) ||
-    String(t.token_number).includes(searchTerm)
-  );
+  const filteredTokens = tokens.filter(t => {
+    const matchesSearch = 
+      t.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      t.patient_phone.includes(searchTerm) ||
+      String(t.token_number).includes(searchTerm);
+      
+    if (!matchesSearch) return false;
+    
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'confirmed') return t.status === 'confirmed';
+    if (statusFilter === 'called') return t.status === 'called';
+    if (statusFilter === 'completed') return t.status === 'completed';
+    if (statusFilter === 'no_show') return t.status === 'no_show' || t.status === 'cancelled';
+    
+    return true;
+  });
 
   const totalPages = Math.ceil(filteredTokens.length / itemsPerPage);
   const displayedTokens = filteredTokens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist';
+    const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist' || user?.role === 'doctor';
     const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Arrival Time", "Location", "Status", "Date", "Payment", "Remarks"];
     const csvContent = [
       finalHeaders.join(","),
@@ -236,16 +256,16 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   };
 
   const metricCards = [
-    { label: "Total queue", val: metrics.total, color: "text-slate-800", iconColor: "bg-slate-50 text-slate-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { label: "Waiting", val: metrics.waiting, color: "text-orange-500", iconColor: "bg-orange-50 text-orange-400", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { label: "Now serving", val: metrics.serving, color: "text-blue-500", iconColor: "bg-blue-50 text-blue-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-    { label: "Completed", val: metrics.completed, color: "text-emerald-500", iconColor: "bg-emerald-50 text-emerald-400", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
-    { label: "No-show", val: metrics.noshow, color: "text-red-500", iconColor: "bg-red-50 text-red-400", icon: "M18 12H6" }
+    { id: 'all', label: "Total queue", val: metrics.total, color: "text-slate-800", activeBorder: "border-slate-300 ring-2 ring-slate-100", iconColor: "bg-slate-50 text-slate-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: 'confirmed', label: "Waiting", val: metrics.waiting, color: "text-orange-500", activeBorder: "border-orange-300 ring-2 ring-orange-100", iconColor: "bg-orange-50 text-orange-400", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { id: 'called', label: "Now serving", val: metrics.serving, color: "text-blue-500", activeBorder: "border-blue-300 ring-2 ring-blue-100", iconColor: "bg-blue-50 text-blue-400", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: 'completed', label: "Completed", val: metrics.completed, color: "text-emerald-500", activeBorder: "border-emerald-300 ring-2 ring-emerald-100", iconColor: "bg-emerald-50 text-emerald-400", icon: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" },
+    { id: 'no_show', label: "No-show", val: metrics.noshow, color: "text-red-500", activeBorder: "border-red-300 ring-2 ring-red-100", iconColor: "bg-red-50 text-red-400", icon: "M18 12H6" }
   ];
 
   const nowServing = tokens.find(t => t.status === 'called');
 
-  const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist';
+  const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist' || user?.role === 'doctor';
 
   const formatTime = (timeStr) => {
     if (!timeStr) return '--:--';
@@ -291,7 +311,8 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                   <select 
                     value={selectedDoctor} 
                     onChange={e => { setSelectedDoctor(e.target.value); setCurrentPage(1); }} 
-                    className="bg-transparent border-none outline-none font-bold text-ink text-sm cursor-pointer appearance-none w-full pr-6 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat"
+                    className="bg-transparent border-none outline-none font-bold text-ink text-sm w-full pr-6 cursor-pointer disabled:cursor-not-allowed disabled:opacity-80 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210%22%20height%3D%226%22%20viewBox%3D%220%200%2010%206%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M1%201L5%205L9%201%22%20stroke%3D%22%230A0F1E%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[length:10px_6px] bg-[right_center] bg-no-repeat disabled:bg-none"
+                    disabled={user?.role === 'doctor'}
                   >
                     {doctors.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
@@ -354,19 +375,30 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
       {/* METRICS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-10">
-        {metricCards.map((m, i) => (
-          <div key={i} className="bg-white rounded-2xl md:rounded-[28px] p-5 md:p-6 border border-slate-100 shadow-sm flex justify-between items-center group hover:scale-[1.02] transition-all">
-             <div>
-                <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 md:mb-3 ${m.label === 'Total queue' ? 'text-slate-400' : m.color}`}>
-                   {m.label}
-                </p>
-                <p className="text-2xl md:text-3xl font-bold text-ink leading-none">{m.val}</p>
-             </div>
-             <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center ${m.iconColor}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={m.icon}/></svg>
-             </div>
-          </div>
-        ))}
+        {metricCards.map((m, i) => {
+          const isActive = statusFilter === m.id;
+          return (
+            <button 
+              key={i} 
+              onClick={() => { setStatusFilter(m.id); setCurrentPage(1); }}
+              className={`bg-white text-left rounded-2xl md:rounded-[28px] p-5 md:p-6 border shadow-sm flex justify-between items-center group hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer w-full outline-none ${
+                isActive ? m.activeBorder : 'border-slate-100 hover:border-slate-200'
+              }`}
+            >
+               <div>
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 md:mb-3 ${m.label === 'Total queue' && !isActive ? 'text-slate-400' : m.color}`}>
+                     {m.label}
+                  </p>
+                  <p className="text-2xl md:text-3xl font-bold text-ink leading-none">{m.val}</p>
+               </div>
+               <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center transition-all ${
+                 isActive ? 'bg-ink text-white shadow-md' : m.iconColor
+               }`}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d={m.icon}/></svg>
+               </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* NOW SERVING BAR */}
@@ -382,12 +414,14 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                 <h3 className="text-xl md:text-3xl font-serif font-medium text-ink leading-none truncate">{nowServing.patient_name}</h3>
               </div>
             </div>
-            <button 
-              onClick={() => handleAction(nowServing.id, 'complete')}
-              className="bg-green-600 text-white hover:bg-green-700 font-bold h-11 md:h-12 w-full sm:w-auto px-10 md:px-12 rounded-xl text-[12px] md:text-[13px] uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-md"
-            >
-              Finish Case
-            </button>
+            {user?.role !== 'doctor' && (
+              <button 
+                onClick={() => handleAction(nowServing.id, 'complete')}
+                className="bg-green-600 text-white hover:bg-green-700 font-bold h-11 md:h-12 w-full sm:w-auto px-10 md:px-12 rounded-xl text-[12px] md:text-[13px] uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-md"
+              >
+                Finish Case
+              </button>
+            )}
           </div>
         ) : (
           <div className="bg-slate-50/80 rounded-2xl md:rounded-[28px] border border-dashed border-slate-200 p-6 text-center">
@@ -408,13 +442,15 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-text group-hover:text-ink transition-colors"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-text group-hover:text-ink">Export</span>
                </button>
-               <button 
-                  onClick={() => onAddPatient(selectedDoctor, false, isExtraMode)}
-                  className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-lg shadow-emerald-600/10 active:scale-95"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  <span className="text-[11px] font-bold uppercase tracking-widest">Add Patient</span>
-                </button>
+               {user?.role !== 'doctor' && (
+                 <button 
+                    onClick={() => onAddPatient(selectedDoctor, false, isExtraMode)}
+                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all shadow-lg shadow-emerald-600/10 active:scale-95 cursor-pointer"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span className="text-[11px] font-bold uppercase tracking-widest">Add Patient</span>
+                  </button>
+               )}
             </div>
             
             <div className="w-full md:w-auto md:flex-1 md:max-w-sm">
@@ -445,123 +481,121 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             {/* DESKTOP VIEW */}
             <table className="w-full text-left border-collapse hidden md:table">
               <thead>
-                <tr className="border-b border-slate-50 text-xs text-gray-600 font-semibold tracking-wide">
-                  <th className="pl-6 md:pl-10 pr-2 py-6">No</th>
-                  <th className="px-2 py-6">Patient Name</th>
-                  <th className="hidden lg:table-cell px-2 py-6">Age</th>
-                  <th className="hidden xl:table-cell px-2 py-6">Mobile</th>
-                  {isStaffOrAdmin && <th className="px-2 py-6 text-center">Arrival</th>}
-                  <th className="hidden lg:table-cell px-2 py-6">Location</th>
-                  <th className="px-2 py-6">Status</th>
-                  <th className="px-2 py-6 text-right">Actions</th>
-                  <th className="px-4 py-6 text-center">Payment</th>
+                <tr className="border-b border-slate-100 text-xs text-slate-500 font-bold tracking-wider uppercase">
+                  <th className="pl-6 md:pl-10 pr-2 py-5">No</th>
+                  <th className="px-4 py-5">Patient Details</th>
+                  {isStaffOrAdmin && <th className="px-4 py-5">Est. Arrival & Area</th>}
+                  <th className="px-4 py-5">Status</th>
+                  {user?.role !== 'doctor' && <th className="px-4 py-5 text-right">Actions</th>}
+                  {user?.role !== 'doctor' && <th className="px-6 py-5 text-center">Controls</th>}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50/50">
+              <tbody className="divide-y divide-slate-100">
                 {displayedTokens.map((t, idx) => {
                   const isActive = t.status === 'called';
                   return (
-                    <tr key={t.id} className={`group hover:bg-slate-50/50 transition-all duration-300 ${isActive ? 'bg-blue-50/40' : ''}`}>
-                      <td className="pl-6 md:pl-10 pr-2 py-4 md:py-6 whitespace-nowrap">
-                         <div className="text-[15px] md:text-[17px] font-black text-ink">
+                    <tr key={t.id} className={`group hover:bg-slate-50/40 transition-all duration-150 ${isActive ? 'bg-blue-50/20' : ''}`}>
+                      <td className="pl-6 md:pl-10 pr-2 py-4 md:py-5 whitespace-nowrap">
+                         <div className="text-[16px] font-bold text-slate-800">
                             #{t.token_number}
                          </div>
                       </td>
-                      <td className="px-2 py-4 md:py-6 transition-all border-b border-transparent">
+                      <td className="px-4 py-4 md:py-5">
                          <div className="flex flex-col min-w-0">
-                            <div className="font-bold text-[14px] md:text-[16px] text-ink leading-tight truncate">{t.patient_name}</div>
+                            <div className="font-bold text-[15px] text-slate-900 leading-tight mb-1 truncate">{t.patient_name}</div>
+                            <div className="flex items-center gap-2 text-xs text-muted-text font-semibold">
+                              <span>{t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}</span>
+                              <span className="text-slate-300">•</span>
+                              <span className="font-mono">{t.patient_phone}</span>
+                            </div>
                          </div>
                       </td>
-                      <td className="hidden lg:table-cell px-2 py-6 font-bold text-[13px] text-ink/70 tracking-tight">
-                         {t.patient_age_days > 0 ? `${t.patient_age_days}d` : `${t.patient_age_years}y ${t.patient_age_months}m`}
-                      </td>
-                      <td className="hidden xl:table-cell px-2 py-6 font-bold text-[13px] text-ink/70 tracking-tight">
-                         {t.patient_phone}
-                      </td>
                        {isStaffOrAdmin && (
-                        <td className="px-2 py-4 md:py-6 whitespace-nowrap text-center">
-                          <div className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-1.5 rounded-lg border border-amber-100 inline-block shadow-sm">
-                            {formatTime(t.estimated_time)}
+                        <td className="px-4 py-4 md:py-5 whitespace-nowrap">
+                          <div className="flex flex-col text-left">
+                            <div className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 inline-block shadow-sm mb-1 self-start leading-none">
+                              {formatTime(t.estimated_time)}
+                            </div>
+                            <div className="text-xs text-muted-text font-bold truncate max-w-[140px] pl-0.5">{t.location || '--'}</div>
                           </div>
                         </td>
                       )}
-                      <td className="hidden lg:table-cell px-2 py-6 text-[12px] font-bold text-slate-500 truncate max-w-[120px]">
-                         {t.location || '--'}
+                      <td className="px-4 py-4 md:py-5">
+                         {t.status === 'confirmed' && <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Waiting</span>}
+                         {t.status === 'called' && <span className="bg-blue-primary text-white px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider shadow-sm">Active</span>}
+                         {t.status === 'completed' && <span className="bg-brand-green text-white px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider shadow-sm">Done</span>}
+                         {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500 bg-red-50 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider line-through border border-red-100">Absent</span>}
                       </td>
-                      <td className="px-2 py-4 md:py-6">
-                         {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest">Waiting</span>}
-                         {t.status === 'called' && <span className="bg-blue-600 text-white px-2 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
-                         {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2 py-1.5 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
-                         {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] md:text-[10px] font-black uppercase tracking-widest line-through">Absent</span>}
-                      </td>
-                      <td className="px-0 py-4 md:py-6">
-                          <div className="flex items-center justify-end gap-2">
-                             {(t.status === 'confirmed' || t.status === 'called') && (
-                                <div className="flex gap-2">
-                                   {t.status === 'confirmed' ? (
-                                      <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-ink/10 transition-all active:scale-95 whitespace-nowrap">Call</button>
-                                   ) : (
-                                      <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-emerald-500/10 transition-all active:scale-95 whitespace-nowrap">Finish</button>
-                                   )}
-                                   <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] shadow-lg shadow-rose-600/10 transition-all active:scale-95 whitespace-nowrap" title="Mark as Absent">Absent</button>
-                                </div>
-                             )}
-                             {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
-                                <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 font-bold h-9 md:h-10 px-3 md:px-5 rounded-xl text-[10px] md:text-[11px] transition-all active:scale-95 whitespace-nowrap">Re-call</button>
-                             )}
-                             {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
-                                <div className="flex gap-2 border-l border-slate-100 pl-2 ml-1">
-                                  <button 
-                                     onClick={() => setEditingPatient(t)} 
-                                     className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all flex-shrink-0"
-                                     title="Edit Patient"
-                                  >
-                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                  </button>
-                                  {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                                    <button 
-                                       onClick={() => handleDelete(t.id)} 
-                                       className="w-9 h-9 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                                       title="Delete Patient"
-                                    >
-                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                                    </button>
-                                  )}
-                                </div>
-                             )}
-                          </div>
-                      </td>
-                      <td className="px-4 py-4 md:py-6 text-center border-l border-slate-50">
-                          <div className="flex flex-col items-center gap-1">
-                            <div className="flex items-center justify-center gap-2">
-                              <button 
-                                onClick={() => handlePaymentStatus(t.id, t.payment_status)}
-                                className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all ${
-                                  t.payment_status === 'paid' 
-                                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
-                                    : 'bg-slate-100 text-slate-400 hover:bg-rose-500 hover:text-white transition-colors'
-                                }`}
-                                title={t.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-                              >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                              </button>
-                              
-                              <button 
-                                onClick={() => setRemarkingPatient(t)}
-                                className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all ${
-                                  t.remarks
-                                    ? 'bg-ink text-white shadow-lg shadow-ink/20' 
-                                    : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-ink hover:text-white'
-                                }`}
-                                title={t.remarks || 'Add Remark'}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                              </button>
+                      {user?.role !== 'doctor' && (
+                        <td className="px-4 py-4 md:py-5">
+                            <div className="flex items-center justify-end gap-2">
+                               {(t.status === 'confirmed' || t.status === 'called') && (
+                                  <div className="flex gap-1.5">
+                                     {t.status === 'confirmed' ? (
+                                        <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer">Call</button>
+                                     ) : (
+                                        <button onClick={() => handleAction(t.id, 'complete')} className="bg-brand-green hover:bg-emerald-600 text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer">Finish</button>
+                                     )}
+                                     <button onClick={() => handleAction(t.id, 'noshow')} className="bg-red-500 hover:bg-red-600 text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer" title="Mark as Absent">Absent</button>
+                                  </div>
+                               )}
+                               {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
+                                  <button onClick={() => handleAction(t.id, 'reset')} className="bg-white border border-slate-200 text-slate-600 hover:bg-blue-primary hover:text-white hover:border-blue-primary font-bold h-9 px-4 rounded-lg text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer">Re-call</button>
+                               )}
                             </div>
-                            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Remark</div>
-                          </div>
-                          {t.remarks && <div className="text-[10px] mt-2 font-bold text-ink/60 italic leading-snug max-w-[150px] mx-auto break-words">"{t.remarks}"</div>}
-                      </td>
+                        </td>
+                      )}
+                      {user?.role !== 'doctor' && (
+                        <td className="px-6 py-4 md:py-5 text-center border-l border-slate-100">
+                            <div className="flex items-center justify-center gap-2">
+                                <button 
+                                  onClick={() => handlePaymentStatus(t.id, t.payment_status)}
+                                  className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                                    t.payment_status === 'paid' 
+                                      ? 'bg-brand-green text-white shadow-sm' 
+                                      : 'bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white'
+                                  }`}
+                                  title={t.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                                </button>
+                                
+                                <button 
+                                  onClick={() => setRemarkingPatient(t)}
+                                  className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all border cursor-pointer ${
+                                    t.remarks
+                                      ? 'bg-slate-800 text-white border-slate-850 shadow-sm' 
+                                      : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-850 hover:text-white'
+                                  }`}
+                                  title={t.remarks || 'Add Remark'}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </button>
+
+                               {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
+                                  <div className="flex gap-2 border-l border-slate-100 pl-2">
+                                    <button 
+                                       onClick={() => setEditingPatient(t)} 
+                                       className="w-8 h-8 rounded-lg bg-blue-50 text-blue-primary hover:bg-blue-primary hover:text-white flex items-center justify-center transition-all flex-shrink-0 cursor-pointer"
+                                       title="Edit Patient"
+                                    >
+                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                    {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                                      <button 
+                                         onClick={() => handleDelete(t.id)} 
+                                         className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0 cursor-pointer"
+                                         title="Delete Patient"
+                                      >
+                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                                      </button>
+                                    )}
+                                  </div>
+                               )}
+                            </div>
+                            {t.remarks && <div className="text-[10px] mt-1.5 font-bold text-slate-500 italic leading-snug max-w-[140px] mx-auto break-words">"{t.remarks}"</div>}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -605,65 +639,75 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                       <button 
-                         onClick={() => handlePaymentStatus(t.id, t.payment_status)}
-                         className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all shadow-sm ${
-                           t.payment_status === 'paid' 
-                             ? 'bg-emerald-500 text-white' 
-                             : 'bg-slate-100 text-slate-400'
-                         }`}
-                       >
-                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                       </button>
-                       <button 
-                         onClick={() => setRemarkingPatient(t)}
-                         className={`h-10 w-10 border flex items-center justify-center rounded-xl transition-all shadow-sm ${
-                           t.remarks ? 'bg-ink text-white border-ink' : 'bg-white border-slate-200 text-slate-400'
-                         }`}
-                       >
-                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                       </button>
-                      {(t.status === 'confirmed' || t.status === 'called') && (
-                         <>
-                            {t.status === 'confirmed' ? (
-                               <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Call</button>
-                            ) : (
-                               <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Finish</button>
-                            )}
-                            <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md">Absent</button>
-                         </>
-                      )}
-                      {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
-                         <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1">Re-call</button>
-                      )}
-                    </div>
-                    {t.remarks && <div className="text-[10px] font-bold text-ink/40 italic px-1">"{t.remarks}"</div>}
-                    {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
-                          <div className="flex gap-2">
-                            <button 
-                              onClick={() => setEditingPatient(t)} 
-                              className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all flex-shrink-0 shadow-sm shadow-blue-500/5"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            {(user?.role === 'admin' || user?.role === 'superadmin') && (
-                              <button 
-                                onClick={() => handleDelete(t.id)} 
-                                className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
-                              </button>
-                            )}
-                            {isStaffOrAdmin && (
-                               <div className="flex-1 flex justify-end items-center">
-                                 <span className="text-[10px] font-black text-amber-600 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-100 uppercase tracking-widest shadow-sm">
-                                   ARRIVAL: {formatTime(t.estimated_time)}
-                                 </span>
-                               </div>
-                             )}
-                          </div>
-                       )}
+                    {user?.role === 'doctor' ? (
+                      <div className="flex justify-end items-center mt-1 pt-2 border-t border-slate-100">
+                        <span className="text-[10px] font-black text-amber-605 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-100 uppercase tracking-widest shadow-sm">
+                          ARRIVAL: {formatTime(t.estimated_time)}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2">
+                           <button 
+                             onClick={() => handlePaymentStatus(t.id, t.payment_status)}
+                             className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all shadow-sm cursor-pointer ${
+                               t.payment_status === 'paid' 
+                                 ? 'bg-emerald-500 text-white' 
+                                 : 'bg-slate-100 text-slate-400'
+                             }`}
+                           >
+                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                           </button>
+                           <button 
+                             onClick={() => setRemarkingPatient(t)}
+                             className={`h-10 w-10 border flex items-center justify-center rounded-xl transition-all shadow-sm cursor-pointer ${
+                               t.remarks ? 'bg-ink text-white border-ink' : 'bg-white border-slate-200 text-slate-400'
+                             }`}
+                           >
+                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                           </button>
+                          {(t.status === 'confirmed' || t.status === 'called') && (
+                             <>
+                                {t.status === 'confirmed' ? (
+                                   <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Call</button>
+                                ) : (
+                                   <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Finish</button>
+                                )}
+                                <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
+                             </>
+                          )}
+                          {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
+                             <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1 cursor-pointer">Re-call</button>
+                          )}
+                        </div>
+                        {t.remarks && <div className="text-[10px] font-bold text-ink/40 italic px-1 mt-1">"{t.remarks}"</div>}
+                        {(user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist') && (
+                              <div className="flex gap-2 mt-2">
+                                <button 
+                                  onClick={() => setEditingPatient(t)} 
+                                  className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all flex-shrink-0 shadow-sm shadow-blue-500/5 cursor-pointer"
+                                >
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                                {(user?.role === 'admin' || user?.role === 'superadmin') && (
+                                  <button 
+                                    onClick={() => handleDelete(t.id)} 
+                                    className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0 cursor-pointer"
+                                  >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                                  </button>
+                                )}
+                                {isStaffOrAdmin && (
+                                   <div className="flex-1 flex justify-end items-center">
+                                     <span className="text-[10px] font-black text-amber-600 bg-amber-50/80 px-3 py-1.5 rounded-xl border border-amber-100 uppercase tracking-widest shadow-sm">
+                                       ARRIVAL: {formatTime(t.estimated_time)}
+                                     </span>
+                                   </div>
+                                 )}
+                              </div>
+                           )}
+                      </>
+                    )}
                   </div>
                 );
               })}

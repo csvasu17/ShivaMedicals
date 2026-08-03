@@ -57,7 +57,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
         {user ? (
           <button 
             onClick={onLogout}
-            className="text-[12px] font-bold uppercase tracking-[0.15em] text-red-500 hover:text-red-600 transition-colors flex items-center gap-2 group"
+            className="text-[12px] font-bold uppercase tracking-[0.15em] text-red-500 hover:text-red-600 transition-colors flex items-center gap-2 group cursor-pointer"
           >
              <span className="hidden sm:inline">Log Out</span>
              <svg className="group-hover:translate-x-0.5 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
@@ -66,14 +66,14 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
           <>
             <button 
               onClick={() => { setIsLoginModalOpen(true); setIsMobileMenuOpen(false); }} 
-              className="hidden lg:flex text-[15px] font-bold text-slate-500 hover:text-ink transition-all duration-300 items-center gap-2 group whitespace-nowrap"
+              className="hidden lg:flex text-[14px] font-bold text-slate-500 hover:text-ink transition-all duration-250 items-center gap-1.5 group whitespace-nowrap cursor-pointer"
             >
                Staff
-               <svg className="group-hover:rotate-12 transition-transform" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+               <svg className="group-hover:rotate-12 transition-transform text-slate-400 group-hover:text-ink" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             </button>
             <button 
               onClick={() => { setIsBookingModalOpen(); setIsMobileMenuOpen(false); }} 
-              className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-4 md:px-5 h-[38px] md:h-[42px] rounded-full text-[11px] md:text-[13px] font-bold uppercase tracking-widest transition-all duration-300 transform active:scale-95 shadow-lg shadow-teal-500/20 hover:shadow-teal-600/40 flex items-center gap-2 group whitespace-nowrap"
+              className="bg-blue-primary hover:bg-blue-primary/95 text-white px-5 h-10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 active:scale-95 flex items-center gap-2 group whitespace-nowrap shadow-sm cursor-pointer"
             >
               <span className="hidden sm:inline">Book Appointment</span>
               <span className="sm:hidden">Book</span>
@@ -81,12 +81,12 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
             </button>
           </>
         )}
-
+ 
       {/* MOBILE MENU TOGGLE BUTTON */}
       {!user && (
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="xl:hidden w-10 h-10 flex items-center justify-center text-ink rounded-lg hover:bg-slate-50 transition-colors z-[2100]"
+          className="xl:hidden w-10 h-10 flex items-center justify-center text-ink rounded-lg hover:bg-slate-100 transition-colors z-[2100] cursor-pointer"
           aria-label="Toggle Menu"
         >
           {isMobileMenuOpen ? (
@@ -97,44 +97,66 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
         </button>
       )}
       </div>
-
+ 
       {/* MOBILE MENU OVERLAY - FULL SCREEN COVERAGE */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-white z-[2000] xl:hidden overflow-hidden flex flex-col"
+          className="fixed inset-0 bg-white z-[2000] xl:hidden overflow-hidden flex flex-col animate-fade-in"
           style={{ top: '0', left: '0', height: '100vh', width: '100vw' }}
         >
-          {/* Menu Top padding (matching navbar) */}
-          <div className="h-[72px] flex-shrink-0 border-b border-slate-50"></div>
+          {/* Menu Top padding (matching navbar height) */}
+          <div className="h-[72px] flex-shrink-0 border-b border-slate-100"></div>
           
-          <div className="flex-1 overflow-y-auto px-8 py-10 flex flex-col gap-10">
-            {[
-              { id: 'home', label: 'Home' },
-              { id: 'doctors', label: 'Doctors' },
-              { id: 'features', label: 'Features' },
-              { id: 'status', label: 'Live Board' },
-              { id: 'contact', label: 'Contact' },
-              { id: 'login', label: 'Staff Login', action: () => setIsLoginModalOpen(true) },
-            ].map((item) => (
-              <button 
-                key={item.id}
-                onClick={() => {
-                  if (item.action) {
-                    item.action();
-                  } else {
+          <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col justify-between">
+            {/* Nav list */}
+            <div className="flex flex-col gap-1">
+              {[
+                { id: 'home', label: 'Home' },
+                { id: 'doctors', label: 'Doctors' },
+                { id: 'features', label: 'Features' },
+                { id: 'status', label: 'Live Board' },
+                { id: 'contact', label: 'Contact' },
+              ].map((item) => (
+                <button 
+                  key={item.id}
+                  onClick={() => {
                     setRoute(item.id);
                     if (item.id === 'home') window.history.pushState({}, '', '/');
                     else window.history.pushState({}, '', `/${item.id}`);
-                  }
-                  setIsMobileMenuOpen(false);
-                }} 
-                className={`text-left text-4xl font-serif font-bold tracking-tight transition-colors duration-200 ${
-                  currentRoute === item.id ? 'text-blue-primary' : 'text-ink'
-                }`}
+                    setIsMobileMenuOpen(false);
+                  }} 
+                  className={`text-left h-12 flex items-center text-2xl font-sans font-bold tracking-tight transition-colors duration-150 cursor-pointer ${
+                    currentRoute === item.id ? 'text-blue-primary' : 'text-slate-800 hover:text-blue-primary'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Bottom Panel */}
+            <div className="space-y-6 pt-6 border-t border-slate-100">
+              <button 
+                onClick={() => { setIsBookingModalOpen(); setIsMobileMenuOpen(false); }}
+                className="w-full bg-blue-primary hover:bg-blue-primary/95 text-white h-12 rounded-xl text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-md cursor-pointer"
               >
-                {item.label}
+                Book Appointment
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
-            ))}
+
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-between">
+                <div className="text-left">
+                  <p className="text-[11px] font-bold text-muted-text uppercase tracking-wider mb-0.5">Staff Portal</p>
+                  <p className="text-[10px] text-slate-400 font-medium leading-none">Internal clinic operations</p>
+                </div>
+                <button
+                  onClick={() => { setIsLoginModalOpen(true); setIsMobileMenuOpen(false); }}
+                  className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 h-9 px-4 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  Log In
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

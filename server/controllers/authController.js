@@ -27,7 +27,8 @@ exports.adminLogin = async (req, res) => {
                 user: { 
                     id: user.id,
                     username: user.username, 
-                    role: user.role 
+                    role: user.role,
+                    doctor_id: user.doctor_id
                 } 
             });
         } else {

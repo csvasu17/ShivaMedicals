@@ -57,43 +57,43 @@ export default function Login({ onLoginSuccess }) {
       )}
 
       {/* FORM */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Username</label>
+          <div className="flex flex-col">
+            <label className="form-label-premium">Username</label>
             <input 
               type="text" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:border-transparent focus:outline-none transition-all duration-300 font-medium"
+              className="input-premium h-[42px] focus:ring-blue-primary"
               placeholder="Ex. receptionist_1"
               required
             />
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Keep-Safe Password</label>
-              <button type="button" className="text-xs font-bold text-teal-600 hover:text-teal-700 transition-colors hover:underline">Forgot password?</button>
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-1">
+              <label className="form-label-premium mb-0">Keep-Safe Password</label>
+              <button type="button" className="text-xs font-bold text-blue-primary hover:underline cursor-pointer">Forgot?</button>
             </div>
             <div className="relative">
               <input 
                 type={showPassword ? "text" : "password"} 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 pl-4 pr-12 rounded-xl border border-gray-300 bg-white text-gray-900 placeholder-gray-400 hover:border-gray-400 focus:ring-2 focus:ring-teal-500 focus:ring-offset-1 focus:border-transparent focus:outline-none transition-all duration-300 font-medium"
+                className="input-premium h-[42px] pr-10 focus:ring-blue-primary"
                 placeholder="••••••••••••"
                 required
               />
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650 transition-colors cursor-pointer"
               >
                 {showPassword ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                 )}
               </button>
             </div>
@@ -104,11 +104,11 @@ export default function Login({ onLoginSuccess }) {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold text-base shadow-lg shadow-teal-500/20 hover:shadow-2xl hover:shadow-teal-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:translate-y-0"
+            className="w-full h-11 bg-blue-primary hover:bg-blue-primary/95 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
-                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
                   <circle className="opacity-25" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
                 Verifying...
@@ -116,7 +116,7 @@ export default function Login({ onLoginSuccess }) {
             ) : (
                 <>
                   Access Dashboard
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </>

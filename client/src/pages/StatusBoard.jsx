@@ -393,7 +393,7 @@ export default function StatusBoard() {
           <div className="flex items-center gap-3 self-start sm:self-auto select-none">
             <button
               onClick={handleToggleVoice}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border text-[10px] md:text-[11px] font-bold tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border text-[11px] font-bold tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer ${
                 voiceEnabled
                   ? 'bg-blue-primary text-white border-blue-primary shadow-blue-primary/10'
                   : 'bg-white text-muted-text/70 border-slate-200 hover:bg-slate-50'
@@ -401,7 +401,11 @@ export default function StatusBoard() {
             >
               {voiceEnabled ? (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                  <div className="flex items-center gap-[2.5px] h-3.5 w-4 shrink-0 justify-center">
+                    <span className="w-[3px] bg-white rounded-full animate-bounce h-3"></span>
+                    <span className="w-[3px] bg-white rounded-full animate-bounce h-2 stagger-1"></span>
+                    <span className="w-[3px] bg-white rounded-full animate-bounce h-3.5 stagger-2"></span>
+                  </div>
                   VOICE ON
                 </>
               ) : (
@@ -419,12 +423,12 @@ export default function StatusBoard() {
           </div>
         </div>
 
-        <div className={`grid gap-8 grid-cols-1 justify-center ${
+        <div className={`grid gap-8 justify-center w-full max-w-7xl mx-auto ${
           doctors.length === 1 
-            ? 'max-w-md mx-auto' 
+            ? 'grid-cols-1 max-w-xl' 
             : doctors.length === 2 
-              ? 'md:grid-cols-2 max-w-7xl mx-auto w-full' 
-              : 'md:grid-cols-2 lg:grid-cols-3 max-w-7xl mx-auto w-full'
+              ? 'grid-cols-1 md:grid-cols-2 max-w-5xl' 
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
         }`}>
           {doctors.map((doc, idx) => {
             const doctorQueue = currentTokens[doc.id];
@@ -433,66 +437,70 @@ export default function StatusBoard() {
 
             return (
               <article key={doc.id} className="p-card p-6 sm:p-8 group animate-slide-up" style={{ animationDelay: `${idx * 150}ms` }}>
-                <div className="mb-8 flex items-start justify-between">
+                <div className="mb-6 flex items-start justify-between">
                   <div className="min-w-0 flex-1 pr-4 text-left">
-                    <span className="inline-block bg-slate-100 text-muted-text px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3">
+                    <span className="inline-block bg-slate-100 text-muted-text px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3">
                       Room {String(idx + 1).padStart(2, '0')}
                     </span>
-                    <h3 className="text-2xl md:text-3xl font-sans font-extrabold text-ink mb-1 group-hover:text-blue-primary transition-colors leading-tight" title={name}>{name}</h3>
+                    <h3 className="text-xl sm:text-2xl font-sans font-bold text-ink mb-1 group-hover:text-blue-primary transition-colors leading-tight" title={name}>{name}</h3>
                     {qualifications && (
-                      <p className="text-[12px] font-bold text-blue-mid uppercase tracking-wider mb-1">{qualifications}</p>
+                      <p className="text-[11px] font-bold text-blue-primary uppercase tracking-wider mb-0.5">{qualifications}</p>
                     )}
                     {translation && (
-                      <p className="text-[13px] font-semibold text-muted-text/75 leading-snug mb-3 max-w-full">({translation})</p>
+                      <p className="text-[13px] font-semibold text-muted-text/80 leading-snug mb-2 max-w-full">({translation})</p>
                     )}
-                    <p className="text-[10px] font-bold text-muted-text/40 uppercase tracking-widest mt-2">{doc.specialty || 'General Practitioner'}</p>
+                    <p className="text-[10px] font-bold text-muted-text/50 uppercase tracking-widest mt-2">{doc.specialty || 'General Practitioner'}</p>
                   </div>
-                  <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-all shrink-0 ${
+                  <div className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all shrink-0 ${
                     activeSession 
-                    ? 'bg-teal-50 text-teal-600 border-teal-100' 
-                    : 'bg-slate-50 text-muted-text/40 border-slate-100'
+                    ? 'bg-emerald-50 text-brand-green border-emerald-100' 
+                    : 'bg-slate-50 text-slate-400 border-slate-100'
                   }`}>
                     {activeSession ? '● Live' : 'Offline'}
                   </div>
                 </div>
 
-                <div className="rounded-3xl md:rounded-[32px] bg-slate-50 border border-slate-100 p-5 sm:p-6 md:p-8 text-center mb-8 transition-all group-hover:bg-white group-hover:shadow-lg group-hover:border-blue-primary/5">
+                <div className={`rounded-2xl bg-slate-50 border border-slate-200/50 p-5 text-center mb-6 transition-all group-hover:bg-white group-hover:shadow-lg group-hover:border-blue-primary/10 ${
+                  doctors.length <= 2 ? 'sm:p-8 md:p-10' : 'sm:p-6'
+                }`}>
                   {activeSession ? (
                     <div className="animate-fade-in text-center">
-                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-blue-primary/40 mb-2">Now Calling</p>
-                      <div className="text-7xl md:text-[96px] font-sans font-black leading-none text-blue-primary group-hover:text-blue-mid transition-colors mb-4 tracking-tighter">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-blue-primary/60 mb-1">Now Calling</p>
+                      <div className={`font-sans font-black leading-none text-blue-primary group-hover:text-blue-mid transition-colors mb-3 tracking-tighter ${
+                        doctors.length <= 2 ? 'text-8xl sm:text-[100px] md:text-[120px]' : 'text-7xl md:text-[88px]'
+                      }`}>
                         {activeSession.token}
                       </div>
-                      <div className="inline-block bg-slate-100 text-ink px-6 py-2.5 rounded-2xl text-base md:text-xl font-extrabold border border-slate-200/60 truncate max-w-full shadow-sm">
+                      <div className="inline-block bg-white text-ink px-4 py-2 rounded-xl text-sm md:text-base font-extrabold border border-slate-200/60 truncate max-w-full shadow-sm">
                         {activeSession.patientName}
                       </div>
                     </div>
                   ) : (
-                    <div className="py-8 md:py-10 opacity-40">
-                      <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.3em] text-muted-text mb-3 md:mb-4">Current Appointment</p>
-                      <div className="text-3xl md:text-4xl font-sans font-extrabold uppercase tracking-wider mb-3 text-slate-400">Standby</div>
-                      <p className="text-[10px] md:text-[11px] font-medium text-muted-text px-4 leading-relaxed">System will update when sessions begin.</p>
+                    <div className="py-8 opacity-45">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-text mb-2">Current Appointment</p>
+                      <div className="text-2xl font-bold uppercase tracking-wider mb-2 text-slate-400">Standby</div>
+                      <p className="text-[11px] font-medium text-slate-400 px-4 leading-relaxed">System will update when sessions begin.</p>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-text/30 px-2 mb-4">Next Patients</p>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-text/40 px-1 mb-2">Next Patients</p>
                   {doctorQueue?.activeSession?.nextPatients && doctorQueue.activeSession.nextPatients.length > 0 ? (
                     doctorQueue.activeSession.nextPatients.map((patient, pIdx) => (
-                      <div key={pIdx} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-50 shadow-sm transition-all hover:border-blue-primary/10 animate-fade-in">
+                      <div key={pIdx} className="flex items-center justify-between p-3.5 rounded-xl bg-white border border-slate-150 shadow-[0_2px_8px_rgba(0,0,0,0.01)] transition-all hover:border-blue-primary/10 animate-fade-in">
                         <div className="flex items-center gap-3 min-w-0">
-                          <p className="text-base font-black text-ink text-left uppercase truncate max-w-[180px] sm:max-w-[240px] md:max-w-[280px]">
+                          <p className="text-[14px] font-bold text-ink text-left uppercase truncate max-w-[180px] sm:max-w-[240px] md:max-w-[280px]">
                             {patient.patient_name}
                           </p>
                         </div>
-                        <div className="px-5 py-2 rounded-xl text-xl md:text-2xl font-black uppercase tracking-wider bg-blue-primary/10 text-blue-primary shrink-0">
+                        <div className="px-4 py-1.5 rounded-lg text-lg md:text-xl font-bold uppercase tracking-wider bg-blue-primary/5 text-blue-primary shrink-0">
                           T-{patient.token_number}
                         </div>
                       </div>
                     ))
                   ) : (
-                    <div className="py-6 text-center text-xs font-semibold text-slate-400 bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                    <div className="py-4 text-center text-xs font-semibold text-slate-400 bg-slate-50/50 rounded-xl border border-slate-200/30">
                       No upcoming patients in queue
                     </div>
                   )}
