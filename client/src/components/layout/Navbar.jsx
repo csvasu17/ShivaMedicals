@@ -13,7 +13,7 @@ const Navbar = ({ setRoute, user, setIsLoginModalOpen, setIsBookingModalOpen, is
         className="flex items-center gap-2 md:gap-3 cursor-pointer group" 
         onClick={() => { setRoute('home'); window.history.pushState({}, '', '/'); setIsMobileMenuOpen(false); }}
       >
-        <ClinicLogo className="w-10 h-10 md:w-14 md:h-14" />
+        <ClinicLogo className="w-14 h-10 md:w-20 md:h-14" />
         <span className="font-serif text-lg md:text-2xl font-medium text-ink tracking-tight whitespace-nowrap transition-colors group-hover:text-blue-primary">
           Semmalar Clinic
           <span className="hidden sm:inline"> & Shiva Medical</span>

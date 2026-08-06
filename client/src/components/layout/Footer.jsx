@@ -8,7 +8,7 @@ const Footer = ({ setIsLoginModalOpen }) => {
         {/* Brand Column */}
         <div className="lg:col-span-1">
           <div className="flex items-center gap-4 mb-8">
-            <ClinicLogo className="w-16 h-16" />
+            <ClinicLogo className="w-24 h-16" />
             <span className="font-serif text-2xl font-medium text-white tracking-tight">Semmalar Clinic & Shiva Medical</span>
           </div>
           <p className="text-white/90 font-medium text-sm mb-4">Excellence in Care, Rooted in Compassion.</p>

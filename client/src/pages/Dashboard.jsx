@@ -176,7 +176,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                         )}
                       </div>
                    </div>
-                   <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                   <div className="flex flex-col gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
                       <button 
                         onClick={() => { setEditingStaff(s); setIsStaffModalOpen(true); }}
                         className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
@@ -230,7 +230,7 @@ const Dashboard = ({ user, setRoute, onAddPatient, onLogout }) => {
                          </div>
                       )}
                    </div>
-                   <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                   <div className="flex flex-col gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
                       <button 
                         onClick={() => { setEditingDoctor(d); setIsDoctorModalOpen(true); }}
                         className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
