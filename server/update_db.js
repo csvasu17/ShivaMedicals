@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const db = require('./db');
 
 async function updateDb() {
@@ -42,6 +43,34 @@ async function updateDb() {
                 status VARCHAR(20) NOT NULL CHECK (status IN ('present', 'absent', 'half_morning', 'half_evening')),
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(staff_id, date)
+            );
+        `);
+
+        // Create system settings table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key VARCHAR PRIMARY KEY,
+                value VARCHAR NOT NULL,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+
+        // Seed default booking_restriction setting if not exists
+        await db.query(`
+            INSERT INTO system_settings (key, value)
+            VALUES ('booking_restriction', 'none')
+            ON CONFLICT (key) DO NOTHING;
+        `);
+
+        // Create session restrictions table
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS session_restrictions (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
+                restriction_date DATE NOT NULL,
+                restriction_type VARCHAR(20) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(session_id, restriction_date)
             );
         `);
         

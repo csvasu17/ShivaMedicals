@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 import { API_URL } from '../../constants/api';
 import EditPatientModal from '../../components/modals/EditPatientModal';
 
 export default function QueueManager({ setRoute, user, onAddPatient }) {
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState('');
@@ -21,6 +22,55 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [isExtraMode, setIsExtraMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  const [bookingRestriction, setBookingRestriction] = useState('none');
+  const [showRestrictionDropdown, setShowRestrictionDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowRestrictionDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSession || !dateStr) {
+      setBookingRestriction('none');
+      return;
+    }
+    fetch(`${API_URL}/api/sessions/${selectedSession}/restrictions?date=${dateStr}&_=${Date.now()}`)
+      .then(res => res.json())
+      .then(data => {
+        setBookingRestriction(data.booking_restriction || 'none');
+      })
+      .catch(err => {
+        console.error('Error fetching session restriction:', err);
+        setBookingRestriction('none');
+      });
+  }, [selectedSession, dateStr]);
+
+  const handleUpdateRestriction = async (val) => {
+    if (!selectedSession || !dateStr) return;
+    try {
+      const res = await fetch(`${API_URL}/api/admin/sessions/${selectedSession}/restrictions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateStr, booking_restriction: val })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBookingRestriction(data.booking_restriction || 'none');
+      } else {
+        console.error('Failed to update restriction');
+      }
+    } catch (err) {
+      console.error('Error updating session restriction:', err);
+    }
+  };
 
   useEffect(() => {
     setStatusFilter('all');
@@ -348,26 +398,89 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
               </div>
            </div>
 
-           <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Extra Option</label>
-              <button 
-                onClick={() => setIsExtraMode(!isExtraMode)}
-                className={`h-14 w-full rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-[12px] uppercase tracking-widest ${
-                  isExtraMode 
-                    ? 'bg-purple-50 border-purple-200 text-purple-600 shadow-lg shadow-purple-500/10' 
-                    : 'bg-white border-slate-200 text-slate-400 hover:border-purple-200 hover:text-purple-400'
-                }`}
-              >
-                <div className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${isExtraMode ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-300'}`}>
-                   {isExtraMode ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6L9 17l-5-5"/></svg>
-                   ) : (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                   )}
-                </div>
-                Extra
-              </button>
-           </div>
+            <div className="space-y-2">
+               <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
+                  {isAdmin ? "Extra & Restrictions" : "Extra Option"}
+               </label>
+               <div className="flex gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => setIsExtraMode(!isExtraMode)}
+                    className={`h-14 rounded-2xl border-2 flex items-center justify-center gap-2 transition-all font-bold text-[12px] uppercase tracking-widest ${isAdmin ? 'flex-1' : 'w-full'} ${
+                      isExtraMode 
+                        ? 'bg-purple-50 border-purple-200 text-purple-600 shadow-lg shadow-purple-500/10' 
+                        : 'bg-white border-slate-200 text-slate-400 hover:border-purple-200 hover:text-purple-400'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${isExtraMode ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-300'}`}>
+                       {isExtraMode ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M20 6L9 17l-5-5"/></svg>
+                       ) : (
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                       )}
+                    </div>
+                    Extra
+                  </button>
+
+                  {isAdmin && (
+                    <div className="relative" ref={dropdownRef}>
+                       <button
+                         type="button"
+                         onClick={() => setShowRestrictionDropdown(!showRestrictionDropdown)}
+                         className={`w-14 h-14 rounded-2xl border-2 flex items-center justify-center transition-all shadow-sm ${
+                           bookingRestriction === 'all'
+                             ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
+                             : (bookingRestriction === 'guest' ? 'bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100')
+                         }`}
+                         title="Booking Restriction Status"
+                       >
+                         {bookingRestriction === 'all' ? (
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                         ) : (bookingRestriction === 'guest' ? (
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+                         ) : (
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                         ))}
+                       </button>
+
+                       {showRestrictionDropdown && (
+                         <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-[200] animate-scale-up">
+                            <button
+                              type="button"
+                              onClick={() => { handleUpdateRestriction('none'); setShowRestrictionDropdown(false); }}
+                              className={`w-full text-left px-4 py-3 text-[12px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center gap-2 ${
+                                bookingRestriction === 'none' ? 'bg-blue-50 text-blue-primary' : 'text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                              Normal Booking
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { handleUpdateRestriction('guest'); setShowRestrictionDropdown(false); }}
+                              className={`w-full text-left px-4 py-3 text-[12px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center gap-2 ${
+                                bookingRestriction === 'guest' ? 'bg-amber-50 text-amber-600' : 'text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+                              Stop for Guest
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { handleUpdateRestriction('all'); setShowRestrictionDropdown(false); }}
+                              className={`w-full text-left px-4 py-3 text-[12px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center gap-2 ${
+                                bookingRestriction === 'all' ? 'bg-rose-50 text-rose-600' : 'text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                              Stop for All
+                            </button>
+                         </div>
+                       )}
+                    </div>
+                  )}
+               </div>
+            </div>
 
 
         </div>

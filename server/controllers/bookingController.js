@@ -45,13 +45,25 @@ exports.getSessions = async (req, res) => {
     const { doctorId } = req.params;
     const { date } = req.query;
     try {
-        let query = 'SELECT * FROM sessions WHERE doctor_id = $1 AND is_active = true';
+        let query;
         const params = [doctorId];
         
         if (date) {
             const dayOfWeek = new Date(date).getDay(); // 0 is Sunday
-            query += ' AND (day_of_week = $2 OR day_of_week IS NULL)';
+            query = `
+                SELECT s.*, COALESCE(sr.restriction_type, 'none') as restriction_type 
+                FROM sessions s
+                LEFT JOIN session_restrictions sr ON s.id = sr.session_id AND sr.restriction_date = $2
+                WHERE s.doctor_id = $1 AND s.is_active = true AND (s.day_of_week = $3 OR s.day_of_week IS NULL)
+            `;
+            params.push(date);
             params.push(dayOfWeek);
+        } else {
+            query = `
+                SELECT s.*, 'none' as restriction_type 
+                FROM sessions s
+                WHERE s.doctor_id = $1 AND s.is_active = true
+            `;
         }
         
         const result = await db.query(query, params);
@@ -120,6 +132,25 @@ exports.createBooking = async (req, res) => {
 
     try {
         const { isExtra } = req.body;
+        
+        // Check session-level booking restrictions
+        const settingsRes = await db.query(
+            "SELECT restriction_type FROM session_restrictions WHERE session_id = $1 AND restriction_date = $2",
+            [sessionId, date]
+        );
+        const restriction = settingsRes.rows[0]?.restriction_type || 'none';
+
+        if (restriction === 'all') {
+            return res.status(400).json({ message: 'Booking is currently closed.', error: 'Booking is currently closed.' });
+        }
+
+        if (restriction === 'guest') {
+            const authHeader = req.headers.authorization;
+            const isStaff = authHeader && authHeader.startsWith('Bearer ');
+            if (!isStaff) {
+                return res.status(400).json({ message: 'Booking is currently unavailable.', error: 'Booking is currently unavailable.' });
+            }
+        }
         
         if (!isExtra) {
             const isOpen = await tokenService.isBookingOpen(sessionId, date);
@@ -296,6 +327,34 @@ exports.cancelBooking = async (req, res) => {
             return res.status(404).json({ message: 'Booking not found.' });
         }
         res.json({ message: 'Booking cancelled successfully.', booking: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getSystemSettings = async (req, res) => {
+    try {
+        const result = await db.query("SELECT value FROM system_settings WHERE key = 'booking_restriction'");
+        const booking_restriction = result.rows[0]?.value || 'none';
+        res.json({ booking_restriction });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getSessionRestriction = async (req, res) => {
+    const { sessionId } = req.params;
+    const { date } = req.query;
+    if (!sessionId || !date) {
+        return res.status(400).json({ error: 'sessionId and date are required' });
+    }
+    try {
+        const result = await db.query(
+            "SELECT restriction_type FROM session_restrictions WHERE session_id = $1 AND restriction_date = $2",
+            [sessionId, date]
+        );
+        const booking_restriction = result.rows[0]?.restriction_type || 'none';
+        res.json({ booking_restriction });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

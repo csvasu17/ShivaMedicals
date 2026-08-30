@@ -30,5 +30,7 @@ router.get('/attendance', adminController.getAttendance);
 router.get('/attendance/report', adminController.getAttendanceReport);
 router.post('/attendance', adminController.markAttendance);
 router.post('/attendance/bulk', adminController.submitBulkAttendance);
+router.put('/settings', adminController.updateSystemSettings);
+router.put('/sessions/:sessionId/restrictions', adminController.updateSessionRestriction);
 
 module.exports = router;

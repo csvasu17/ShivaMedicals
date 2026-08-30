@@ -136,6 +136,15 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
     doctorId: initialDoctorId || '',
     isExtra: isExtra,
   });
+  const isDashboard = window.location.pathname.includes('/staff/dashboard') || window.location.pathname.includes('/admin');
+  const isStaff = isDashboard && !!localStorage.getItem('adminToken');
+  const getSessionRestrictionStatus = (s) => {
+    if (!s || s.id === 'none') return null;
+    const restriction = s.restriction_type || 'none';
+    if (restriction === 'all') return 'closed';
+    if (restriction === 'guest' && !isStaff) return 'unavailable';
+    return null;
+  };
   const [isDays, setIsDays] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -154,6 +163,28 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
   const [cancelError, setCancelError] = useState('');
   const [confirmPrompt, setConfirmPrompt] = useState(null);
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState('');
+  
+  const [bookingRestriction, setBookingRestriction] = useState('none');
+
+  useEffect(() => {
+    if (!form.sessionId || !form.date) {
+      setBookingRestriction('none');
+      return;
+    }
+    fetch(`${API_URL}/api/sessions/${form.sessionId}/restrictions?date=${form.date}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.booking_restriction) {
+          setBookingRestriction(data.booking_restriction);
+        } else {
+          setBookingRestriction('none');
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch session settings:', err);
+        setBookingRestriction('none');
+      });
+  }, [form.sessionId, form.date, API_URL]);
 
   useEffect(() => {
     fetch(`${API_URL}/api/doctors`)
@@ -191,7 +222,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
   useEffect(() => {
     if (form.doctorId) {
       setNextAvailableDate(null);
-      fetch(`${API_URL}/api/sessions/${form.doctorId}?date=${form.date}`)
+      fetch(`${API_URL}/api/sessions/${form.doctorId}?date=${form.date}&_=${Date.now()}`)
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -242,14 +273,32 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
       setError('Please complete all required fields (*)'); 
       return;
     }
+
+    if (selectedSession) {
+      const rest = getSessionRestrictionStatus(selectedSession);
+      if (rest === 'closed') {
+        setError('Booking is currently closed for this session.');
+        return;
+      }
+      if (rest === 'unavailable') {
+        setError('Booking is currently unavailable for guest users for this session.');
+        return;
+      }
+    }
     
     setError(''); 
     setLoading(true);
 
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      const adminToken = localStorage.getItem('adminToken');
+      if (isDashboard && adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
       const response = await fetch(`${API_URL}/api/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(form),
       });
 
@@ -519,6 +568,8 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
     );
   }
 
+
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <div className="flex flex-row justify-between items-center gap-3 pr-8 sm:pr-12 md:pr-14 mb-1">
@@ -738,7 +789,9 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
         ) : (
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
              {(sessions.length > 0 ? sessions : [{ id: 'none', session_type: 'Pick a doctor first' }]).map(s => {
-               const isBlocked = s.id !== 'none' && (blockedSessions.includes(s.session_type) || !isDoctorAvailable);
+               const restriction = getSessionRestrictionStatus(s);
+               const isBlocked = s.id !== 'none' && (blockedSessions.includes(s.session_type) || !isDoctorAvailable || restriction !== null);
+               console.log('BookToken session debug:', s.session_type, 'restriction:', restriction, 'isBlocked:', isBlocked, 's.restriction_type:', s.restriction_type);
                return (
                  <button 
                    key={s.id} 
@@ -758,7 +811,9 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
                    <div className="flex w-full items-center justify-between pointer-events-none">
                      <span className="text-[11px] font-black uppercase tracking-[0.15em]">{s.session_type}</span>
                      {isBlocked && (
-                       <span className="text-[8px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">UNAVAILABLE</span>
+                       <span className="text-[8px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">
+                         {restriction === 'closed' ? 'CLOSED' : (restriction === 'unavailable' ? 'STAFF ONLY' : 'UNAVAILABLE')}
+                       </span>
                      )}
                    </div>
                    {s.start_time && (
@@ -771,6 +826,18 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
              })}
            </div>
         )}
+        {selectedSession && getSessionRestrictionStatus(selectedSession) && (
+           <div className="rounded-2xl bg-rose-50 border border-rose-100 p-4 text-[13px] text-rose-700 font-medium flex items-center gap-3 animate-fade-in mt-3 shadow-sm">
+             <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+             </div>
+             <span className="flex-1 text-left">
+               {getSessionRestrictionStatus(selectedSession) === 'closed' 
+                 ? 'Booking is currently closed for this session.' 
+                 : 'Booking is currently unavailable for guest users for this session.'}
+             </span>
+           </div>
+         )}
       </div>
 
       {/* Location */}
@@ -791,7 +858,7 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
       <div className="flex flex-col items-center gap-2 mt-2 w-full">
         <button 
           type="submit" 
-          disabled={loading || (!form.isExtra && !isDoctorAvailable)} 
+          disabled={loading || (!form.isExtra && !isDoctorAvailable) || (selectedSession && getSessionRestrictionStatus(selectedSession) !== null)} 
           className={`w-full h-11 sm:h-12 rounded-xl text-white font-bold text-base shadow-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-40 ${
             form.isExtra ? 'bg-purple-600 shadow-purple-600/20' : 'bg-[#00c389] shadow-[#00c389]/20'
           }`}

@@ -692,3 +692,46 @@ exports.submitBulkAttendance = async (req, res) => {
         if (client) client.release();
     }
 };
+
+exports.updateSystemSettings = async (req, res) => {
+    const { booking_restriction } = req.body;
+    if (!booking_restriction || !['none', 'guest', 'all'].includes(booking_restriction)) {
+        return res.status(400).json({ error: 'Invalid booking restriction setting' });
+    }
+    try {
+        const query = `
+            INSERT INTO system_settings (key, value, updated_at)
+            VALUES ('booking_restriction', $1, CURRENT_TIMESTAMP)
+            ON CONFLICT (key)
+            DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `;
+        const result = await db.query(query, [booking_restriction]);
+        res.json({ success: true, booking_restriction: result.rows[0].value });
+    } catch (err) {
+        console.error('Error updating system settings:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateSessionRestriction = async (req, res) => {
+    const { sessionId } = req.params;
+    const { date, booking_restriction } = req.body;
+    if (!sessionId || !date || !booking_restriction || !['none', 'guest', 'all'].includes(booking_restriction)) {
+        return res.status(400).json({ error: 'sessionId, date, and valid booking_restriction are required' });
+    }
+    try {
+        const query = `
+            INSERT INTO session_restrictions (session_id, restriction_date, restriction_type, created_at)
+            VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+            ON CONFLICT (session_id, restriction_date)
+            DO UPDATE SET restriction_type = EXCLUDED.restriction_type, created_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `;
+        const result = await db.query(query, [sessionId, date, booking_restriction]);
+        res.json({ success: true, booking_restriction: result.rows[0].restriction_type });
+    } catch (err) {
+        console.error('Error updating session settings:', err);
+        res.status(500).json({ error: err.message });
+    }
+};
