@@ -1,6 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../constants/api';
 
+const parseDoctorName = (fullName) => {
+  if (!fullName) return { name: '', qualifications: '', translation: '' };
+  
+  // 1. Extract Tamil text in parentheses
+  const tamilRegex = /\(([\u0B80-\u0BFF\s,().\-\u200B-\u200D]+)\)/;
+  const tamilMatch = fullName.match(tamilRegex);
+  let translation = '';
+  let cleanName = fullName;
+  
+  if (tamilMatch) {
+    translation = tamilMatch[1].trim();
+    cleanName = fullName.replace(tamilRegex, '').trim();
+  }
+  
+  // 2. Separate name from degrees (MBBS, MD, DCH, DLO, D.DIAB, MS, DrNB, etc.)
+  const degreeRegex = /\b(MBBS|MD|DCH|DLO|D\.DIAB|MS|DrNB)\b/i;
+  const degreeMatch = cleanName.match(degreeRegex);
+  
+  let name = cleanName;
+  let qualifications = '';
+  
+  if (degreeMatch) {
+    const index = degreeMatch.index;
+    name = cleanName.substring(0, index).trim();
+    qualifications = cleanName.substring(index).trim();
+    
+    // Clean trailing/leading commas/spaces from name and qualifications
+    name = name.replace(/^[,\s]+|[,\s]+$/g, '');
+    qualifications = qualifications.replace(/^[,\s]+|[,\s]+$/g, '');
+  }
+  
+  return { name, qualifications, translation };
+};
+
 const DoctorsSection = ({ setIsBookingModalOpen }) => {
   const [doctors, setDoctors] = useState([]);
 
@@ -47,12 +81,25 @@ const DoctorsSection = ({ setIsBookingModalOpen }) => {
                 <img src={getDoctorImage(doctor.name)} alt={doctor.name} className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:grayscale-0 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               </div>
-              <div className="flex-1 w-full text-center sm:text-left">
+              <div className="flex-1 min-w-0 w-full text-center sm:text-left">
                 <div className="flex flex-wrap items-center justify-center sm:justify-between gap-4 mb-4">
                   <span className="bg-teal-500/10 text-teal-600 px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest border border-teal-500/10 animate-pulse">Acting Now</span>
                   <span className="text-[10px] md:text-[11px] font-bold text-muted-text/70 uppercase tracking-widest">{doctor.specialty ? doctor.specialty.toUpperCase() : (doctor.type === 'child' ? 'CHILD SPECIALIST' : doctor.type.toUpperCase())}</span>
                 </div>
-                <h3 className="text-2xl md:text-3xl font-serif font-bold text-ink mb-6 md:mb-8 tracking-tight p-card-title">{doctor.name}</h3>
+                {(() => {
+                  const { name, qualifications, translation } = parseDoctorName(doctor.name);
+                  return (
+                    <div className="mb-6 md:mb-8 text-left">
+                      <h3 className="text-2xl md:text-3xl font-serif font-bold text-ink mb-1.5 tracking-tight p-card-title break-words">{name}</h3>
+                      {qualifications && (
+                        <p className="text-[11px] md:text-[12px] font-bold text-blue-primary uppercase tracking-wider mb-1.5">{qualifications}</p>
+                      )}
+                      {translation && (
+                        <p className="text-[13px] md:text-[14px] font-semibold text-muted-text/80 leading-snug">({translation})</p>
+                      )}
+                    </div>
+                  );
+                })()}
                 
                 <div className="flex flex-col sm:flex-row items-center sm:justify-between bg-slate-50 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-slate-100 gap-4 w-full">
                   <div className="text-center sm:text-left">
