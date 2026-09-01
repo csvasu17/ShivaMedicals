@@ -13,7 +13,7 @@ const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = fa
       />
 
       {/* Modal Container */}
-      <div className="relative z-[3010] p-modal-card !p-0 w-full max-w-2xl animate-scale-up max-h-[95vh] flex flex-col overflow-hidden sm:overflow-visible">
+      <div className="relative z-[3010] p-modal-card !p-0 w-full max-w-2xl animate-scale-up max-h-[92vh] flex flex-col overflow-hidden">
         {/* Absolute Close button */}
         <button 
           onClick={onClose}
@@ -23,8 +23,8 @@ const BookingModal = ({ isOpen, onClose, initialDoctorId, initialCancelMode = fa
         </button>
 
         {/* Modal Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto sm:overflow-visible scrollbar-hide">
-          <div className="p-4 sm:p-6 md:px-10 md:py-6">
+        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+          <div className="p-4 sm:p-6 md:px-8 md:py-6">
             <BookToken 
               onClose={onClose} 
               initialDoctorId={initialDoctorId} 

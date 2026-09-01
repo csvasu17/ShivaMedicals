@@ -23,6 +23,30 @@ const formatTimeAMPM = (timeStr) => {
   return `${hour}:${m} ${ampm}`;
 };
 
+const parseDoctorName = (fullName) => {
+  if (!fullName) return { name: '', qualifications: '', translation: '' };
+  const tamilRegex = /\(([\u0B80-\u0BFF\s,().\-\u200B-\u200D]+)\)/;
+  const tamilMatch = fullName.match(tamilRegex);
+  let translation = '';
+  let cleanName = fullName;
+  if (tamilMatch) {
+    translation = tamilMatch[1].trim();
+    cleanName = fullName.replace(tamilRegex, '').trim();
+  }
+  const degreeRegex = /\b(MBBS|MD|DCH|DLO|D\.DIAB|MS|DrNB)\b/i;
+  const degreeMatch = cleanName.match(degreeRegex);
+  let name = cleanName;
+  let qualifications = '';
+  if (degreeMatch) {
+    const index = degreeMatch.index;
+    name = cleanName.substring(0, index).trim();
+    qualifications = cleanName.substring(index).trim();
+    name = name.replace(/^[,\s]+|[,\s]+$/g, '');
+    qualifications = qualifications.replace(/^[,\s]+|[,\s]+$/g, '');
+  }
+  return { name, qualifications, translation };
+};
+
 const formatDateDisplay = (dateStr) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -358,65 +382,68 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
   };
 
   if (success) {
+    const docInfo = selectedDoctor?.name ? parseDoctorName(selectedDoctor.name) : { name: selectedDoctor?.name || '—', qualifications: '', translation: '' };
     return (
-      <div className="flex flex-col items-center text-center py-2 animate-fade-in relative w-full">
+      <div className="flex flex-col items-center text-center py-1 animate-fade-in relative w-full">
         {/* Top Header */}
-        <div className={`w-[60px] h-[60px] rounded-full shadow-lg text-white flex items-center justify-center mb-4 rotate-0 ${form.isExtra ? 'bg-purple-600 shadow-purple-600/20' : 'bg-brand-green shadow-brand-green/20'}`}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <div className={`w-12 h-12 rounded-full shadow-md text-white flex items-center justify-center mb-3 ${form.isExtra ? 'bg-purple-600 shadow-purple-600/20' : 'bg-brand-green shadow-brand-green/20'}`}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </div>
-        <p className={`text-[12px] font-bold tracking-[0.2em] mb-2 uppercase ${form.isExtra ? 'text-purple-600' : 'text-brand-green'}`}>Success</p>
-        <h2 className="font-serif text-3xl font-bold text-slate-900 mb-2">
+        <p className={`text-[11px] font-bold tracking-[0.2em] mb-1 uppercase ${form.isExtra ? 'text-purple-600' : 'text-brand-green'}`}>Success</p>
+        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 mb-1">
           {form.isExtra ? 'Extra Appointment Confirmed.' : 'Appointment Confirmed.'}
         </h2>
-        <p className="text-[14px] text-muted-text mb-6">Show this token number at reception for your turn.</p>
+        <p className="text-[13px] text-muted-text mb-4">Show this token number at reception for your turn.</p>
 
         {/* The Card - High-Contrast Ticket Aesthetic */}
-        <div className="w-full bg-slate-50 rounded-2xl overflow-hidden shadow-sm mb-6 relative group text-left border border-slate-200/80">
-          <div className={`absolute top-0 left-0 w-full h-[6px] ${form.isExtra ? 'bg-purple-600' : 'bg-brand-green'}`} />
+        <div className="w-full bg-slate-50 rounded-2xl overflow-hidden shadow-sm mb-4 relative group text-left border border-slate-200/80">
+          <div className={`absolute top-0 left-0 w-full h-[5px] ${form.isExtra ? 'bg-purple-600' : 'bg-brand-green'}`} />
           
-          <div className="relative p-6 sm:p-8">
+          <div className="relative p-4 sm:p-6">
             {/* Card Header */}
-            <div className="flex items-center gap-2 mb-6">
+            <div className="flex items-center gap-2 mb-3">
               <div className={`p-1.5 rounded-lg ${form.isExtra ? 'bg-purple-50 text-purple-600' : 'bg-emerald-50 text-brand-green'}`}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
               </div>
-              <span className="text-slate-800 font-bold text-sm uppercase tracking-wider">Appointment Token</span>
+              <span className="text-slate-800 font-bold text-xs uppercase tracking-wider">Appointment Token</span>
             </div>
             
             {/* Card Body */}
-            <div className="grid grid-cols-[1fr_1.3fr] gap-4 mb-6">
-              <div className="flex items-center justify-center border-r border-slate-200 pr-4">
-                <span className="font-sans text-[80px] sm:text-[100px] leading-none text-blue-primary font-black drop-shadow-sm">{success.token_number}</span>
+            <div className="grid grid-cols-[1fr_1.3fr] gap-3 mb-3">
+              <div className="flex items-center justify-center border-r border-slate-200 pr-3">
+                <span className="font-sans text-[64px] sm:text-[80px] leading-none text-blue-primary font-black drop-shadow-sm">{success.token_number}</span>
               </div>
-              <div className="flex flex-col justify-center gap-2.5 pl-4 text-[14px]">
-                <div className="flex items-start"><span className="text-slate-500 w-20 font-semibold">Patient:</span> <span className="text-slate-900 font-bold truncate">{success.patient_name}</span></div>
-                <div className="flex items-start"><span className="text-slate-500 w-20 font-semibold">Age:</span> <span className="text-slate-900 font-bold truncate">{success.patient_age_days > 0 ? `${success.patient_age_days}d` : `${success.patient_age_years}y ${success.patient_age_months}m`}</span></div>
-                <div className="flex items-start"><span className="text-slate-500 w-20 font-semibold">Date:</span> <span className="text-slate-900 font-bold">{formatDateDisplay(success.booking_date)}</span></div>
+              <div className="flex flex-col justify-center gap-1.5 pl-3 text-[13px]">
+                <div className="flex items-start"><span className="text-slate-500 w-16 font-semibold shrink-0">Patient:</span> <span className="text-slate-900 font-bold truncate">{success.patient_name}</span></div>
+                <div className="flex items-start"><span className="text-slate-500 w-16 font-semibold shrink-0">Age:</span> <span className="text-slate-900 font-bold truncate">{success.patient_age_days > 0 ? `${success.patient_age_days}d` : `${success.patient_age_years}y ${success.patient_age_months}m`}</span></div>
+                <div className="flex items-start"><span className="text-slate-500 w-16 font-semibold shrink-0">Date:</span> <span className="text-slate-900 font-bold">{formatDateDisplay(success.booking_date)}</span></div>
                 {!form.isExtra && (
-                  <div className="flex items-start"><span className="text-slate-500 w-20 font-semibold">Estimated:</span> <span className="text-slate-900 font-bold">{formatTimeAMPM(success.estimated_time)}</span></div>
+                  <div className="flex items-start"><span className="text-slate-500 w-16 font-semibold shrink-0">Estimated:</span> <span className="text-slate-900 font-bold">{formatTimeAMPM(success.estimated_time)}</span></div>
                 )}
-                <div className="flex items-start"><span className="text-slate-500 w-20 font-semibold">Specialty:</span> <span className="text-slate-900 font-bold capitalize truncate">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
+                <div className="flex items-start"><span className="text-slate-500 w-16 font-semibold shrink-0">Specialty:</span> <span className="text-slate-900 font-bold capitalize truncate">{selectedDoctor?.specialty || (selectedDoctor?.type === 'child' ? 'Pediatrics' : 'General Medicine')}</span></div>
               </div>
             </div>
 
             {/* Card Footer */}
-            <div className="pt-4 border-t border-slate-200/80 flex text-[14px]">
-              <div className="flex gap-2"><span className="text-slate-500 font-semibold">Doctor Specialist:</span><span className="text-slate-900 font-extrabold">{selectedDoctor?.name || '—'}</span></div>
+            <div className="pt-3 border-t border-slate-200/80 flex flex-wrap items-baseline gap-1.5 text-[13px]">
+              <span className="text-slate-500 font-semibold">Doctor Specialist:</span>
+              <span className="text-slate-900 font-extrabold">{docInfo.name}</span>
+              {docInfo.qualifications && <span className="text-blue-primary text-[11px] font-bold">({docInfo.qualifications})</span>}
             </div>
           </div>
         </div>
         
         {/* Arrival Time Notice */}
-        <div className="bg-amber-50 border border-amber-200/50 rounded-xl p-4 mb-6 w-full text-left animate-fade-in shadow-sm">
-          <div className="flex items-start gap-3">
-             <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div className="bg-amber-50 border border-amber-200/60 rounded-xl p-3 sm:p-3.5 mb-4 w-full text-left animate-fade-in shadow-sm">
+          <div className="flex items-start gap-2.5">
+             <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
              </div>
-             <div className="flex flex-col gap-1.5">
-               <p className="text-amber-900 font-bold text-[13px] leading-relaxed">
+             <div className="flex flex-col gap-0.5">
+               <p className="text-amber-950 font-bold text-[12px] sm:text-[13px] leading-snug">
                  பதிவு செய்யப்பட்ட நேரத்திலிருந்து ஒரு மணி நேரத்திற்கு தாங்கள் வரவில்லை என்றால் டோக்கன் காலாவதி ஆகிவிடும்.
                </p>
-               <p className="text-amber-800/80 font-semibold text-[12px] leading-relaxed">
+               <p className="text-amber-800/90 font-medium text-[11px] sm:text-[12px] leading-snug">
                  If you do not arrive within one hour of the registered time, the token will expire.
                </p>
              </div>
@@ -424,31 +451,31 @@ const BookToken = ({ onClose, initialDoctorId, initialCancelMode = false, isExtr
         </div>
 
         {/* Action Buttons */}
-        <button 
-          onClick={() => {
-            const isAdmin = localStorage.getItem('adminToken');
-            if (!isAdmin) {
-              onClose();
-              window.location.href = '/';
-            } else {
-              onClose();
-            }
-          }} 
-          className="w-full bg-brand-green hover:bg-brand-green/95 text-white font-bold text-sm uppercase tracking-wider h-12 rounded-xl shadow-md transition-all active:scale-[0.98] cursor-pointer"
-        >
-          Submit
-        </button>
-        
-        <div className="mt-6 flex items-center justify-center gap-4 w-full text-slate-300">
-          <div className="flex-1 h-px bg-slate-200"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full mt-1 pb-2">
           <button 
             type="button"
             onClick={() => { setSuccess(null); setForm(initialFormState); }} 
-            className="text-[13px] font-bold text-blue-primary hover:text-blue-primary/95 transition cursor-pointer"
+            className="w-full bg-slate-100 hover:bg-slate-200/90 text-slate-700 font-bold text-sm h-12 rounded-xl border border-slate-200/80 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
           >
-            Book Another Appointment
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Book Another
           </button>
-          <div className="flex-1 h-px bg-slate-200"></div>
+          
+          <button 
+            onClick={() => {
+              const isAdmin = localStorage.getItem('adminToken');
+              if (!isAdmin) {
+                onClose();
+                window.location.href = '/';
+              } else {
+                onClose();
+              }
+            }} 
+            className="w-full bg-brand-green hover:bg-brand-green/95 text-white font-bold text-sm uppercase tracking-wider h-12 rounded-xl shadow-md shadow-emerald-600/15 flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Done
+          </button>
         </div>
       </div>
     );
