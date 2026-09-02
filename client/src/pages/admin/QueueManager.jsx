@@ -3,6 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../../constants/api';
 import EditPatientModal from '../../components/modals/EditPatientModal';
 
+const getLocalTodayDateStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function QueueManager({ setRoute, user, onAddPatient }) {
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const [doctors, setDoctors] = useState([]);
@@ -10,7 +18,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedSession, setSelectedSession] = useState('');
   const [tokens, setTokens] = useState([]);
-  const [dateStr, setDateStr] = useState(new Date().toISOString().split('T')[0]); 
+  const [dateStr, setDateStr] = useState(getLocalTodayDateStr()); 
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
@@ -169,8 +177,11 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   };
 
   const isOverdueNoShow = (t) => {
+    if (!t) return false;
     if (t.is_checked_in || t.status !== 'confirmed') return false;
-    const todayStr = new Date().toISOString().split('T')[0];
+    
+    // Only check overdue for today's appointment date
+    const todayStr = getLocalTodayDateStr();
     if (dateStr !== todayStr) return false;
     if (!t.estimated_time) return false;
 
@@ -179,21 +190,25 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       if (parts.length < 2) return false;
       const h = parseInt(parts[0], 10);
       const m = parseInt(parts[1], 10);
+      if (isNaN(h) || isNaN(m)) return false;
+
       const now = new Date();
       const arrivalDate = new Date();
       arrivalDate.setHours(h, m, 0, 0);
-      const cutoffDate = new Date(arrivalDate.getTime() + 90 * 60 * 1000);
-      return now > cutoffDate;
+
+      // Exactly Est. Arrival Time + 90 minutes
+      const cutoffTime = arrivalDate.getTime() + (90 * 60 * 1000);
+      return now.getTime() > cutoffTime;
     } catch (e) {
       return false;
     }
   };
 
   const getEffectiveStatus = (t) => {
-    if (t.status === 'confirmed' && isOverdueNoShow(t)) {
+    if (t?.status === 'confirmed' && isOverdueNoShow(t)) {
       return 'no_show';
     }
-    return t.status;
+    return t?.status || 'confirmed';
   };
 
   const openCheckInModal = (patient) => {

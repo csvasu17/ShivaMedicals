@@ -40,7 +40,8 @@ exports.checkInBooking = async (req, res) => {
     try {
         const result = await db.query(`
             UPDATE bookings 
-            SET is_checked_in = true, 
+            SET status = 'confirmed',
+                is_checked_in = true, 
                 check_in_time = CURRENT_TIMESTAMP, 
                 payment_status = COALESCE($1, payment_status), 
                 payment_remark = $2, 
@@ -62,7 +63,10 @@ exports.reactivateBooking = async (req, res) => {
     try {
         const result = await db.query(`
             UPDATE bookings 
-            SET status = 'confirmed'
+            SET status = 'confirmed',
+                is_checked_in = true,
+                check_in_time = COALESCE(check_in_time, CURRENT_TIMESTAMP),
+                payment_remark = COALESCE(payment_remark, 'Pending')
             WHERE id = $1 
             RETURNING *
         `, [req.params.id]);
