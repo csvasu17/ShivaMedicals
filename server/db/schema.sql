@@ -41,6 +41,9 @@ CREATE TABLE bookings (
     estimated_time TIME NOT NULL,
     payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
     remarks TEXT NOT NULL DEFAULT '',
+    is_checked_in BOOLEAN DEFAULT false,
+    check_in_time TIMESTAMP WITH TIME ZONE,
+    payment_remark VARCHAR(100),
     status booking_status DEFAULT 'confirmed',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(session_id, booking_date, token_number)

@@ -7,6 +7,8 @@ router.post('/login', authController.adminLogin);
 router.get('/bookings', adminController.getBookings);
 router.get('/stats', adminController.getDashboardStats);
 router.put('/bookings/:id/status', adminController.updateBookingStatus);
+router.put('/bookings/:id/checkin', adminController.checkInBooking);
+router.put('/bookings/:id/reactivate', adminController.reactivateBooking);
 router.put('/bookings/:id/payment', adminController.updatePaymentStatus);
 router.put('/bookings/:id', adminController.updateBooking);
 router.delete('/bookings/:id', adminController.deleteBooking);

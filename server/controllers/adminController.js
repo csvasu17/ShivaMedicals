@@ -3,6 +3,24 @@ const db = require('../db');
 exports.getBookings = async (req, res) => {
     const { date, sessionId } = req.query;
     try {
+        // Auto-assign NO-SHOW if patient has not checked in and current time > Est. Arrival Time + 90 mins (for today's session)
+        if (date && sessionId) {
+            try {
+                await db.query(`
+                    UPDATE bookings 
+                    SET status = 'no_show' 
+                    WHERE booking_date = $1 
+                      AND session_id = $2 
+                      AND status = 'confirmed' 
+                      AND (is_checked_in = false OR is_checked_in IS NULL)
+                      AND booking_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+                      AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') > ((booking_date + estimated_time) + INTERVAL '90 minutes')
+                `, [date, sessionId]);
+            } catch (autoErr) {
+                console.error('Error auto-updating no-show status:', autoErr);
+            }
+        }
+
         const query = `
             SELECT b.*, d.name as doctor_name 
             FROM bookings b 
@@ -12,6 +30,47 @@ exports.getBookings = async (req, res) => {
         `;
         const result = await db.query(query, [date, sessionId]);
         res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.checkInBooking = async (req, res) => {
+    const { payment_status, payment_remark, remarks } = req.body;
+    try {
+        const result = await db.query(`
+            UPDATE bookings 
+            SET is_checked_in = true, 
+                check_in_time = CURRENT_TIMESTAMP, 
+                payment_status = COALESCE($1, payment_status), 
+                payment_remark = $2, 
+                remarks = COALESCE($3, remarks)
+            WHERE id = $4 
+            RETURNING *
+        `, [payment_status || 'pending', payment_remark || 'Paid', remarks !== undefined ? remarks : null, req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.reactivateBooking = async (req, res) => {
+    try {
+        const result = await db.query(`
+            UPDATE bookings 
+            SET status = 'confirmed'
+            WHERE id = $1 
+            RETURNING *
+        `, [req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -31,7 +90,7 @@ exports.updateBookingStatus = async (req, res) => {
 };
 
 exports.updatePaymentStatus = async (req, res) => {
-    const { payment_status, remarks } = req.body;
+    const { payment_status, remarks, payment_remark, is_checked_in } = req.body;
     try {
         let query = 'UPDATE bookings SET ';
         const values = [];
@@ -44,6 +103,17 @@ exports.updatePaymentStatus = async (req, res) => {
         if (remarks !== undefined) {
             values.push(remarks);
             updates.push(`remarks = $${values.length}`);
+        }
+        if (payment_remark !== undefined) {
+            values.push(payment_remark);
+            updates.push(`payment_remark = $${values.length}`);
+        }
+        if (is_checked_in !== undefined) {
+            values.push(is_checked_in);
+            updates.push(`is_checked_in = $${values.length}`);
+            if (is_checked_in) {
+                updates.push(`check_in_time = CURRENT_TIMESTAMP`);
+            }
         }
 
         if (updates.length === 0) return res.status(400).json({ error: 'Nothing to update' });

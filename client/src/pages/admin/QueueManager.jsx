@@ -23,6 +23,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
+  // Check-In Modal State
+  const [checkInPatient, setCheckInPatient] = useState(null);
+  const [checkInPaymentOption, setCheckInPaymentOption] = useState('Cash');
+  const [checkInCustomRemark, setCheckInCustomRemark] = useState('');
+  const [checkInLoading, setCheckInLoading] = useState(false);
+
   const [bookingRestriction, setBookingRestriction] = useState('none');
   const [showRestrictionDropdown, setShowRestrictionDropdown] = useState(false);
   const dropdownRef = useRef(null);
@@ -162,6 +168,100 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
     }
   };
 
+  const isOverdueNoShow = (t) => {
+    if (t.is_checked_in || t.status !== 'confirmed') return false;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (dateStr !== todayStr) return false;
+    if (!t.estimated_time) return false;
+
+    try {
+      const parts = t.estimated_time.split(':');
+      if (parts.length < 2) return false;
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      const now = new Date();
+      const arrivalDate = new Date();
+      arrivalDate.setHours(h, m, 0, 0);
+      const cutoffDate = new Date(arrivalDate.getTime() + 90 * 60 * 1000);
+      return now > cutoffDate;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const getEffectiveStatus = (t) => {
+    if (t.status === 'confirmed' && isOverdueNoShow(t)) {
+      return 'no_show';
+    }
+    return t.status;
+  };
+
+  const openCheckInModal = (patient) => {
+    setCheckInPatient(patient);
+    if (patient.payment_remark === 'GPay') {
+      setCheckInPaymentOption('GPay');
+      setCheckInCustomRemark(patient.remarks || '');
+    } else if (patient.payment_remark === 'Cash' || patient.payment_status === 'paid') {
+      setCheckInPaymentOption('Cash');
+      setCheckInCustomRemark(patient.remarks || '');
+    } else if (patient.payment_remark === 'Not Paid' || patient.payment_status === 'pending') {
+      setCheckInPaymentOption('Not Paid');
+      setCheckInCustomRemark(patient.remarks || '');
+    } else if (patient.payment_remark) {
+      setCheckInPaymentOption('Custom');
+      setCheckInCustomRemark(patient.payment_remark || patient.remarks || '');
+    } else {
+      setCheckInPaymentOption('Cash');
+      setCheckInCustomRemark(patient.remarks || '');
+    }
+  };
+
+  const submitCheckIn = async () => {
+    if (!checkInPatient) return;
+    setCheckInLoading(true);
+    try {
+      const isPaid = checkInPaymentOption === 'Cash' || checkInPaymentOption === 'GPay';
+      const paymentStatus = isPaid ? 'paid' : 'pending';
+      const paymentRemark = checkInPaymentOption === 'Custom' 
+        ? (checkInCustomRemark || 'Custom Note') 
+        : checkInPaymentOption;
+
+      const res = await fetch(`${API_URL}/api/admin/bookings/${checkInPatient.id}/checkin`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payment_status: paymentStatus,
+          payment_remark: paymentRemark,
+          remarks: checkInCustomRemark || ''
+        })
+      });
+      if (res.ok) {
+        fetchTokens();
+        setCheckInPatient(null);
+      } else {
+        alert('Failed to check in patient');
+      }
+    } catch (err) {
+      console.error('Error checking in:', err);
+      alert('Network error while checking in');
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
+
+  const handleReactivate = async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/api/admin/bookings/${id}/reactivate`, {
+        method: 'PUT'
+      });
+      if (res.ok) {
+        fetchTokens();
+      }
+    } catch (err) {
+      console.error('Error reactivating booking:', err);
+    }
+  };
+
   const handlePaymentStatus = async (id, currentStatus) => {
     try {
       const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
@@ -242,7 +342,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
   };
 
   // Pagination State
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
 
   // Search and Pagination Logic
@@ -254,11 +353,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
       
     if (!matchesSearch) return false;
     
+    const effStatus = getEffectiveStatus(t);
     if (statusFilter === 'all') return true;
-    if (statusFilter === 'confirmed') return t.status === 'confirmed';
-    if (statusFilter === 'called') return t.status === 'called';
-    if (statusFilter === 'completed') return t.status === 'completed';
-    if (statusFilter === 'no_show') return t.status === 'no_show' || t.status === 'cancelled';
+    if (statusFilter === 'confirmed') return effStatus === 'confirmed';
+    if (statusFilter === 'called') return effStatus === 'called';
+    if (statusFilter === 'completed') return effStatus === 'completed';
+    if (statusFilter === 'no_show') return effStatus === 'no_show' || effStatus === 'cancelled';
     
     return true;
   });
@@ -268,8 +368,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const isStaffOrAdmin = user?.role === 'admin' || user?.role === 'superadmin' || user?.role === 'staff' || user?.role === 'receptionist' || user?.role === 'doctor';
-    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Arrival Time", "Location", "Status", "Date", "Payment", "Remarks"];
+    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Arrival Time", "Location", "Check-In", "Check-In Time", "Status", "Date", "Payment", "Payment Remark", "Remarks"];
     const csvContent = [
       finalHeaders.join(","),
       ...tokens.map(t => [
@@ -279,9 +378,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
         t.patient_phone, 
         `"${t.estimated_time || ''}"`,
         `"${t.location}"`,
-        t.status,
+        t.is_checked_in ? 'Checked In' : 'Not Checked In',
+        `"${t.check_in_time ? new Date(t.check_in_time).toLocaleTimeString('en-IN') : '--'}"`,
+        getEffectiveStatus(t),
         `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"`,
         t.payment_status === 'paid' ? 'Paid' : 'Pending',
+        `"${t.payment_remark || ''}"`,
         `"${t.remarks || ''}"`
       ].join(","))
     ].join("\n");
@@ -299,10 +401,10 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const metrics = {
     total: tokens.length,
-    waiting: tokens.filter(t => t.status === 'confirmed').length,
-    serving: tokens.filter(t => t.status === 'called').length,
-    completed: tokens.filter(t => t.status === 'completed').length,
-    noshow: tokens.filter(t => t.status === 'no_show' || t.status === 'cancelled').length,
+    waiting: tokens.filter(t => getEffectiveStatus(t) === 'confirmed').length,
+    serving: tokens.filter(t => getEffectiveStatus(t) === 'called').length,
+    completed: tokens.filter(t => getEffectiveStatus(t) === 'completed').length,
+    noshow: tokens.filter(t => getEffectiveStatus(t) === 'no_show' || getEffectiveStatus(t) === 'cancelled').length,
   };
 
   const metricCards = [
@@ -606,6 +708,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
               <tbody className="divide-y divide-slate-100">
                 {displayedTokens.map((t, idx) => {
                   const isActive = t.status === 'called';
+                  const effectiveStatus = getEffectiveStatus(t);
                   return (
                     <tr key={t.id} className={`group hover:bg-slate-50/40 transition-all duration-150 ${isActive ? 'bg-blue-50/20' : ''}`}>
                       <td className="pl-6 md:pl-10 pr-2 py-4 md:py-5 whitespace-nowrap">
@@ -634,26 +737,126 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                         </td>
                       )}
                       <td className="px-4 py-4 md:py-5">
-                         {t.status === 'confirmed' && <span className="bg-amber-50 text-amber-600 border border-amber-100 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Waiting</span>}
-                         {t.status === 'called' && <span className="bg-blue-primary text-white px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider shadow-sm">Active</span>}
-                         {t.status === 'completed' && <span className="bg-brand-green text-white px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider shadow-sm">Done</span>}
-                         {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500 bg-red-50 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-bold uppercase tracking-wider line-through border border-red-100">Absent</span>}
+                         {effectiveStatus === 'confirmed' && (
+                           t.is_checked_in ? (
+                             <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                               Checked In
+                             </span>
+                           ) : (
+                             <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                               Waiting
+                             </span>
+                           )
+                         )}
+                         {effectiveStatus === 'called' && <span className="bg-blue-primary text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Active</span>}
+                         {effectiveStatus === 'completed' && <span className="bg-brand-green text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Done</span>}
+                         {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
+                           <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-rose-100 inline-flex items-center gap-1">
+                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                             No-Show
+                           </span>
+                         )}
                       </td>
                       {user?.role !== 'doctor' && (
                         <td className="px-4 py-4 md:py-5">
-                            <div className="flex items-center justify-end gap-2">
-                               {(t.status === 'confirmed' || t.status === 'called') && (
-                                  <div className="flex gap-1.5">
-                                     {t.status === 'confirmed' ? (
-                                        <button onClick={() => handleAction(t.id, 'call')} className="bg-ink hover:bg-blue-primary text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer">Call</button>
-                                     ) : (
-                                        <button onClick={() => handleAction(t.id, 'complete')} className="bg-brand-green hover:bg-emerald-600 text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer">Finish</button>
-                                     )}
-                                     <button onClick={() => handleAction(t.id, 'noshow')} className="bg-red-500 hover:bg-red-600 text-white font-bold h-9 px-4 rounded-lg text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer" title="Mark as Absent">Absent</button>
-                                  </div>
+                            <div className="flex items-center justify-end gap-1.5">
+                               {effectiveStatus === 'confirmed' && (
+                                  <>
+                                    {!t.is_checked_in ? (
+                                      <>
+                                        <button 
+                                          onClick={() => openCheckInModal(t)} 
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 px-3.5 rounded-xl text-[11px] shadow-sm shadow-emerald-600/20 flex items-center gap-1.5 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+                                          title="Check In Patient & Verify Payment"
+                                        >
+                                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                          <span>Check In</span>
+                                        </button>
+                                        
+                                        {/* Locked Disabled Call Button */}
+                                        <button 
+                                          disabled 
+                                          title="Action Locked: Patient must check in with payment remark before calling" 
+                                          className="bg-slate-100 text-slate-400 border border-slate-200/80 font-bold h-9 px-3 rounded-xl text-[11px] opacity-60 cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                          <span>Call</span>
+                                        </button>
+
+                                        <button 
+                                          onClick={() => handleAction(t.id, 'noshow')} 
+                                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 font-bold h-9 px-2.5 rounded-xl text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer" 
+                                          title="Mark as Absent"
+                                        >
+                                          Absent
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        {/* Checked In Tag / Edit Remark */}
+                                        <button
+                                          onClick={() => openCheckInModal(t)}
+                                          className="bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-300 font-semibold h-9 px-2.5 rounded-xl text-[10px] flex items-center gap-1.5 transition-all cursor-pointer group"
+                                          title="Click to edit payment remark or check-in details"
+                                        >
+                                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                          <span className="font-bold">{t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'GPay')}</span>
+                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-emerald-600"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                        </button>
+
+                                        {/* Unlocked Active Call Button */}
+                                        <button 
+                                          onClick={() => handleAction(t.id, 'call')} 
+                                          className="bg-ink hover:bg-blue-primary text-white font-bold h-9 px-3.5 rounded-xl text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer flex items-center gap-1"
+                                        >
+                                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                          <span>Call</span>
+                                        </button>
+
+                                        <button 
+                                          onClick={() => handleAction(t.id, 'noshow')} 
+                                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 font-bold h-9 px-2.5 rounded-xl text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer" 
+                                          title="Mark as Absent"
+                                        >
+                                          Absent
+                                        </button>
+                                      </>
+                                    )}
+                                  </>
                                )}
-                               {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
-                                  <button onClick={() => handleAction(t.id, 'reset')} className="bg-white border border-slate-200 text-slate-600 hover:bg-blue-primary hover:text-white hover:border-blue-primary font-bold h-9 px-4 rounded-lg text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer">Re-call</button>
+                               {effectiveStatus === 'called' && (
+                                  <>
+                                    <button onClick={() => handleAction(t.id, 'complete')} className="bg-brand-green hover:bg-emerald-600 text-white font-bold h-9 px-4 rounded-xl text-[11px] shadow-sm transition-all active:scale-95 whitespace-nowrap cursor-pointer flex items-center gap-1">
+                                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                      <span>Finish</span>
+                                    </button>
+                                    <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 font-bold h-9 px-2.5 rounded-xl text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer" title="Mark as Absent">Absent</button>
+                                  </>
+                               )}
+                               {effectiveStatus === 'completed' && (
+                                  <button onClick={() => handleAction(t.id, 'reset')} className="bg-white border border-slate-200 text-slate-600 hover:bg-blue-primary hover:text-white hover:border-blue-primary font-bold h-9 px-3.5 rounded-xl text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer">Re-call</button>
+                                )}
+                               {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
+                                  <div className="flex gap-1.5">
+                                    <button 
+                                      onClick={() => handleReactivate(t.id)} 
+                                      className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold h-9 px-3 rounded-xl text-[11px] transition-all active:scale-95 flex items-center gap-1 shadow-sm cursor-pointer whitespace-nowrap"
+                                      title="Reactivate appointment / Manual Override"
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.3"/></svg>
+                                      <span>Override</span>
+                                    </button>
+                                    <button 
+                                      onClick={() => openCheckInModal(t)} 
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 px-3 rounded-xl text-[11px] transition-all active:scale-95 flex items-center gap-1 shadow-sm cursor-pointer whitespace-nowrap"
+                                      title="Check in directly"
+                                    >
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                      <span>Check In</span>
+                                    </button>
+                                  </div>
                                )}
                             </div>
                         </td>
@@ -719,6 +922,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
             <div className="md:hidden divide-y divide-slate-50">
               {displayedTokens.map((t) => {
                 const isActive = t.status === 'called';
+                const effectiveStatus = getEffectiveStatus(t);
                 return (
                   <div key={t.id} className={`p-4 flex flex-col gap-4 ${isActive ? 'bg-blue-50/40' : ''}`}>
                     <div className="flex items-center justify-between">
@@ -739,17 +943,27 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           {!isStaffOrAdmin && <span className="text-[11px] font-medium text-muted-text/50 truncate max-w-[180px] mt-0.5">{t.location}</span>}
                         </div>
                       </div>
-                        <div className="flex items-center gap-2">
-                          {t.status === 'confirmed' && <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">Waiting</span>}
-                          {t.status === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
-                          {t.status === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
-                          {(t.status === 'no_show' || t.status === 'cancelled') && <span className="text-red-500/40 text-[9px] font-black uppercase tracking-widest line-through">Absent</span>}
-                          {t.payment_status === 'paid' && (
-                            <span className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      <div className="flex items-center gap-2">
+                        {effectiveStatus === 'confirmed' && (
+                          t.is_checked_in ? (
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                              ✓ Checked In
                             </span>
-                          )}
-                        </div>
+                          ) : (
+                            <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                              Waiting
+                            </span>
+                          )
+                        )}
+                        {effectiveStatus === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
+                        {effectiveStatus === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
+                        {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && <span className="text-red-500/80 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">No-Show</span>}
+                        {t.payment_status === 'paid' && (
+                          <span className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
                     {user?.role === 'doctor' ? (
@@ -779,18 +993,60 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                            >
                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                            </button>
-                          {(t.status === 'confirmed' || t.status === 'called') && (
+                          {effectiveStatus === 'confirmed' && (
                              <>
-                                {t.status === 'confirmed' ? (
-                                   <button onClick={() => handleAction(t.id, 'call')} className="bg-ink text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Call</button>
+                                {!t.is_checked_in ? (
+                                  <>
+                                    <button 
+                                      onClick={() => openCheckInModal(t)} 
+                                      className="bg-emerald-600 text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer flex items-center justify-center gap-1"
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                      Check In
+                                    </button>
+                                    <button 
+                                      disabled 
+                                      title="Locked" 
+                                      className="bg-slate-100 text-slate-400 border border-slate-200 font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 cursor-not-allowed opacity-50"
+                                    >
+                                      Call
+                                    </button>
+                                    <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
+                                  </>
                                 ) : (
-                                   <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Finish</button>
+                                  <>
+                                    <button 
+                                      onClick={() => handleAction(t.id, 'call')} 
+                                      className="bg-ink text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer flex items-center justify-center gap-1"
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                      Call
+                                    </button>
+                                    <button 
+                                      onClick={() => openCheckInModal(t)} 
+                                      className="bg-slate-100 text-slate-700 font-bold h-10 px-2.5 rounded-xl text-[10px] uppercase tracking-widest flex-1 border border-slate-200 cursor-pointer truncate"
+                                    >
+                                      {t.payment_remark || 'Paid'}
+                                    </button>
+                                    <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
+                                  </>
                                 )}
+                             </>
+                          )}
+                          {effectiveStatus === 'called' && (
+                             <>
+                                <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Finish</button>
                                 <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
                              </>
                           )}
-                          {(t.status === 'completed' || t.status === 'no_show' || t.status === 'cancelled') && (
+                          {effectiveStatus === 'completed' && (
                              <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1 cursor-pointer">Re-call</button>
+                          )}
+                          {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
+                             <>
+                               <button onClick={() => handleReactivate(t.id)} className="bg-amber-50 border border-amber-200 text-amber-700 h-10 px-3 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1 cursor-pointer">Override</button>
+                               <button onClick={() => openCheckInModal(t)} className="bg-emerald-600 text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Check In</button>
+                             </>
                           )}
                         </div>
                         {t.remarks && <div className="text-[10px] font-bold text-ink/40 italic px-1 mt-1">"{t.remarks}"</div>}
@@ -948,7 +1204,142 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
              </div>
           </div>
         </div>
-      )}      {/* Availability Selection Modal */}
+      )}
+
+      {/* PATIENT CHECK-IN & PAYMENT REMARK MODAL */}
+      {checkInPatient && (
+        <div className="fixed inset-0 z-[7500] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setCheckInPatient(null)}>
+          <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl relative overflow-hidden animate-scale-up p-6 md:p-8 border border-slate-100" onClick={e => e.stopPropagation()}>
+            
+            {/* Top Header with Icon */}
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-sm">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-ink">Patient Check-In</h3>
+                  <p className="text-xs text-slate-400 font-medium">Verify payment and register arrival</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCheckInPatient(null)}
+                className="w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-ink flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {/* Patient Info Card */}
+            <div className="bg-slate-50 rounded-2xl p-4 mb-5 border border-slate-100/80 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-ink text-white rounded-xl flex items-center justify-center font-black text-base shadow-sm flex-shrink-0">
+                  #{checkInPatient.token_number}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-bold text-sm text-slate-900 leading-tight truncate">{checkInPatient.patient_name}</h4>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {checkInPatient.patient_age_days > 0 ? `${checkInPatient.patient_age_days}d` : `${checkInPatient.patient_age_years}y ${checkInPatient.patient_age_months}m`} • {checkInPatient.patient_phone}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right flex-shrink-0">
+                <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 shadow-xs">
+                  {formatTime(checkInPatient.estimated_time)}
+                </span>
+              </div>
+            </div>
+
+            {/* Payment Remark Selection */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 block mb-2">
+                  Select Payment Remark
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { id: 'Cash', label: 'Cash (Paid)', icon: '💵', desc: 'Direct cash received', color: 'border-emerald-500 bg-emerald-50/50 text-emerald-800 ring-emerald-500/20' },
+                    { id: 'GPay', label: 'GPay / UPI', icon: '📱', desc: 'Digital QR / PhonePe', color: 'border-blue-500 bg-blue-50/50 text-blue-800 ring-blue-500/20' },
+                    { id: 'Not Paid', label: 'Not Paid', icon: '⏳', desc: 'Payment pending', color: 'border-amber-500 bg-amber-50/50 text-amber-800 ring-amber-500/20' },
+                    { id: 'Custom', label: 'Custom Note', icon: '📝', desc: 'Custom remark / memo', color: 'border-purple-500 bg-purple-50/50 text-purple-800 ring-purple-500/20' }
+                  ].map((opt) => {
+                    const isSelected = checkInPaymentOption === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setCheckInPaymentOption(opt.id)}
+                        className={`p-3 rounded-2xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
+                          isSelected 
+                            ? `${opt.color} shadow-sm ring-2` 
+                            : 'bg-white border-slate-100 hover:border-slate-200 text-slate-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className="text-lg">{opt.icon}</span>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'}`}>
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-bold text-xs block leading-tight">{opt.label}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{opt.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Note or Additional Remarks */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1 block">
+                  {checkInPaymentOption === 'Custom' ? 'Enter Custom Note *' : 'Additional Remarks (Optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={checkInCustomRemark}
+                  onChange={(e) => setCheckInCustomRemark(e.target.value)}
+                  placeholder={checkInPaymentOption === 'Custom' ? 'e.g., Insurance claimed, Pay ₹150 later...' : 'Add any special clinical note...'}
+                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-medium text-ink focus:bg-white focus:border-blue-primary focus:ring-2 focus:ring-blue-primary/10 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setCheckInPatient(null)}
+                disabled={checkInLoading}
+                className="flex-1 h-12 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitCheckIn}
+                disabled={checkInLoading}
+                className="flex-1 h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {checkInLoading ? (
+                  <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle className="opacity-25" cx="12" cy="12" r="10"/><path className="opacity-100" d="M4 12a8 8 0 018-8v8H4z"/></svg>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Confirm Check-In</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Availability Selection Modal */}
       {showAvailabilityModal && (
         <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4">
            {/* Backdrop */}

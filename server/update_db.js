@@ -10,6 +10,9 @@ async function updateDb() {
         await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS patient_age_days INT;');
         await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_status VARCHAR(20) DEFAULT \'pending\';');
         await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS remarks TEXT DEFAULT \'\';');
+        await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS is_checked_in BOOLEAN DEFAULT false;');
+        await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS check_in_time TIMESTAMP WITH TIME ZONE;');
+        await db.query('ALTER TABLE bookings ADD COLUMN IF NOT EXISTS payment_remark VARCHAR(100);');
         
         // 2. Set default values for existing rows to satisfy NOT NULL constraints
         await db.query('UPDATE bookings SET patient_age_years = 0 WHERE patient_age_years IS NULL;');
