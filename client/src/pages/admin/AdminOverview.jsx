@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../constants/api';
 
 const AdminOverview = ({ user }) => {
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
   const [timeRange, setTimeRange] = useState('week'); // 'week' | 'month' | '6months' | 'year'
   const [stats, setStats] = useState({
     todayPatients: 0,
@@ -14,7 +15,8 @@ const AdminOverview = ({ user }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let url = `${API_URL}/api/admin/stats?range=${timeRange}`;
+    const activeRange = isAdmin ? timeRange : 'week';
+    let url = `${API_URL}/api/admin/stats?range=${activeRange}`;
     if (user?.role === 'doctor' && user?.doctor_id) {
       url += `&doctorId=${user.doctor_id}`;
     }
@@ -37,7 +39,7 @@ const AdminOverview = ({ user }) => {
         console.error('Error fetching stats:', err);
         setLoading(false);
       });
-  }, [user, API_URL, timeRange]);
+  }, [user, API_URL, timeRange, isAdmin]);
 
   const rangeDescriptions = {
     week: 'Daily booking volume over the last 7 days.',
@@ -75,29 +77,39 @@ const AdminOverview = ({ user }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-12 gap-4">
                <div>
                   <h3 className="text-xl md:text-2xl font-serif font-medium text-white mb-1">Queue Traffic</h3>
-                  <p className="text-white/40 text-xs md:text-sm">{rangeDescriptions[timeRange] || rangeDescriptions.week}</p>
+                  <p className="text-white/40 text-xs md:text-sm">
+                    {isAdmin ? (rangeDescriptions[timeRange] || rangeDescriptions.week) : rangeDescriptions.week}
+                  </p>
                </div>
-               <div className="flex bg-white/10 p-1 rounded-2xl gap-1 border border-white/10 backdrop-blur-sm self-start sm:self-auto">
-                  {[
-                    { id: 'week', short: '7D', full: 'Week' },
-                    { id: 'month', short: '30D', full: 'Month' },
-                    { id: '6months', short: '6M', full: '6 Months' },
-                    { id: 'year', short: '1Y', full: '1 Year' },
-                  ].map(tab => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setTimeRange(tab.id)}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                        timeRange === tab.id
-                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <span className="hidden sm:inline">{tab.full}</span>
-                      <span className="sm:hidden">{tab.short}</span>
-                    </button>
-                  ))}
-               </div>
+               {isAdmin ? (
+                 <div className="flex bg-white/10 p-1 rounded-2xl gap-1 border border-white/10 backdrop-blur-sm self-start sm:self-auto">
+                    {[
+                      { id: 'week', short: '7D', full: 'Week' },
+                      { id: 'month', short: '30D', full: 'Month' },
+                      { id: '6months', short: '6M', full: '6 Months' },
+                      { id: 'year', short: '1Y', full: '1 Year' },
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setTimeRange(tab.id)}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          timeRange === tab.id
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                            : 'text-white/60 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">{tab.full}</span>
+                        <span className="sm:hidden">{tab.short}</span>
+                      </button>
+                    ))}
+                 </div>
+               ) : (
+                 <div className="flex gap-2">
+                    <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[11px] font-bold text-white/60 tracking-widest uppercase">
+                      Weekly view
+                    </div>
+                 </div>
+               )}
             </div>
             
              <div className="h-48 md:h-64 flex items-end justify-between gap-1.5 sm:gap-2 md:gap-4 relative px-2">
