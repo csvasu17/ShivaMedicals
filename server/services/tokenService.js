@@ -11,28 +11,92 @@ async function getNextTokenNumber(sessionId, date) {
 
 // Helper to convert HH:MM:SS to minutes since midnight
 function timeToMinutes(timeStr) {
-    const [h, m, s] = timeStr.split(':').map(Number);
+    if (!timeStr) return 0;
+    const parts = String(timeStr).split(':');
+    const h = parseInt(parts[0], 10) || 0;
+    const m = parseInt(parts[1], 10) || 0;
     return h * 60 + m;
 }
 
 // Helper to convert minutes to HH:MM:SS
 function minutesToTime(minutes) {
-    const h = Math.floor(minutes / 60).toString().padStart(2, '0');
-    const m = (minutes % 60).toString().padStart(2, '0');
-    return `${h}:${m}:00`;
+    const h = Math.floor(minutes / 60) % 24;
+    const m = minutes % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:00`;
 }
 
-async function calculateEstimatedTime(sessionId, tokenNumber) {
-    const result = await db.query('SELECT start_time FROM sessions WHERE id = $1', [sessionId]);
+// Helper to get current date and time in IST (Asia/Kolkata)
+function getISTDateTime(customDate = null) {
+    const now = customDate ? (customDate instanceof Date ? customDate : new Date(customDate)) : new Date();
+    const istFormatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    const parts = istFormatter.formatToParts(now);
+    const getPart = (type) => parts.find(p => p.type === type)?.value;
+    const dateStr = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+    const hours = parseInt(getPart('hour'), 10) || 0;
+    const minutes = parseInt(getPart('minute'), 10) || 0;
+    const seconds = parseInt(getPart('second'), 10) || 0;
+    const currentMins = hours * 60 + minutes;
+
+    return {
+        dateStr,
+        hours,
+        minutes,
+        seconds,
+        currentMins
+    };
+}
+
+async function calculateEstimatedTime(sessionId, tokenNumber, bookingDateStr = null, client = db, mockNow = null) {
+    const result = await client.query('SELECT start_time FROM sessions WHERE id = $1', [sessionId]);
     if (result.rows.length === 0) throw new Error('Session not found');
     const { start_time } = result.rows[0];
     
     const startMins = timeToMinutes(start_time);
-    
-    // One appointment per minute
-    const estMins = startMins + (tokenNumber - 1); 
-    
-    return minutesToTime(estMins);
+    const normalQueueMins = startMins + (tokenNumber - 1);
+    let calculatedEtaMins = normalQueueMins;
+
+    const formattedDateStr = typeof bookingDateStr === 'string' 
+        ? bookingDateStr.split('T')[0] 
+        : (bookingDateStr instanceof Date ? bookingDateStr.toISOString().split('T')[0] : null);
+
+    // Look up previous bookings in this session on this date to continue ETA sequentially
+    if (formattedDateStr) {
+        const prevRes = await client.query(
+            `SELECT token_number, estimated_time 
+             FROM bookings 
+             WHERE session_id = $1 AND booking_date = $2 AND token_number < $3 
+             ORDER BY token_number DESC LIMIT 1`,
+            [sessionId, formattedDateStr, tokenNumber]
+        );
+
+        if (prevRes.rows.length > 0 && prevRes.rows[0].estimated_time) {
+            const prevEtaMins = timeToMinutes(prevRes.rows[0].estimated_time);
+            const tokensDiff = tokenNumber - prevRes.rows[0].token_number;
+            const continuedEtaMins = prevEtaMins + tokensDiff;
+            calculatedEtaMins = Math.max(normalQueueMins, continuedEtaMins);
+        }
+    }
+
+    // Compare with current time if the booking is for today (in IST)
+    const ist = getISTDateTime(mockNow);
+    const isToday = formattedDateStr ? (formattedDateStr === ist.dateStr) : false;
+
+    if (isToday) {
+        if (calculatedEtaMins <= ist.currentMins) {
+            calculatedEtaMins = ist.currentMins + 1;
+        }
+    }
+
+    return minutesToTime(calculatedEtaMins);
 }
 
 async function isBookingOpen(sessionId, bookingDateStr) {
@@ -98,5 +162,8 @@ module.exports = {
     getNextTokenNumber,
     calculateEstimatedTime,
     isBookingOpen,
-    getAvailableSlots
+    getAvailableSlots,
+    timeToMinutes,
+    minutesToTime,
+    getISTDateTime
 };

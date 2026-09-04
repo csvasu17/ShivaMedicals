@@ -752,31 +752,51 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                         </td>
                       )}
                       <td className="px-4 py-4 md:py-5">
-                         {effectiveStatus === 'confirmed' && (
-                           t.is_checked_in ? (
-                             <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
-                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                               Checked In
+                         <div className="flex flex-col items-start gap-1">
+                           {effectiveStatus === 'confirmed' && (
+                             t.is_checked_in ? (
+                               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                 Checked In
+                               </span>
+                             ) : (
+                               <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
+                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                 Waiting
+                               </span>
+                             )
+                           )}
+                           {effectiveStatus === 'called' && <span className="bg-blue-primary text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Active</span>}
+                           {effectiveStatus === 'completed' && <span className="bg-brand-green text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Done</span>}
+                           {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
+                             <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-rose-100 inline-flex items-center gap-1">
+                               <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                               No-Show
                              </span>
-                           ) : (
-                             <span className="bg-amber-50 text-amber-700 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5">
-                               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                               Waiting
+                           )}
+                           {t.payment_remark && (
+                             <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80 inline-block truncate max-w-[120px]">
+                               {t.payment_remark}
                              </span>
-                           )
-                         )}
-                         {effectiveStatus === 'called' && <span className="bg-blue-primary text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Active</span>}
-                         {effectiveStatus === 'completed' && <span className="bg-brand-green text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shadow-sm">Done</span>}
-                         {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
-                           <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-rose-100 inline-flex items-center gap-1">
-                             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                             No-Show
-                           </span>
-                         )}
+                           )}
+                         </div>
                       </td>
                       {user?.role !== 'doctor' && (
                         <td className="px-4 py-4 md:py-5">
                             <div className="flex items-center justify-end gap-1.5">
+                               {/* Always show Clickable Payment Remark Badge if patient has checked in or has payment remark */}
+                               {(t.is_checked_in || t.payment_remark) && (
+                                 <button
+                                   onClick={() => openCheckInModal(t)}
+                                   className="bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-300 font-semibold h-9 px-2.5 rounded-xl text-[10px] flex items-center gap-1.5 transition-all cursor-pointer group whitespace-nowrap"
+                                   title="Click to edit payment remark or check-in details"
+                                 >
+                                   <span className={`w-2 h-2 rounded-full ${t.payment_status === 'paid' || t.payment_remark === 'Cash' || t.payment_remark === 'GPay' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                                   <span className="font-bold">{t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'Cash')}</span>
+                                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-emerald-600"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                 </button>
+                               )}
+
                                {effectiveStatus === 'confirmed' && (
                                   <>
                                     {!t.is_checked_in ? (
@@ -810,17 +830,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                                       </>
                                     ) : (
                                       <>
-                                        {/* Checked In Tag / Edit Remark */}
-                                        <button
-                                          onClick={() => openCheckInModal(t)}
-                                          className="bg-slate-50 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-300 font-semibold h-9 px-2.5 rounded-xl text-[10px] flex items-center gap-1.5 transition-all cursor-pointer group"
-                                          title="Click to edit payment remark or check-in details"
-                                        >
-                                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                          <span className="font-bold">{t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'GPay')}</span>
-                                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-emerald-600"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                                        </button>
-
                                         {/* Unlocked Active Call Button */}
                                         <button 
                                           onClick={() => handleAction(t.id, 'call')} 
@@ -852,7 +861,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                                )}
                                {effectiveStatus === 'completed' && (
                                   <button onClick={() => handleAction(t.id, 'reset')} className="bg-white border border-slate-200 text-slate-600 hover:bg-blue-primary hover:text-white hover:border-blue-primary font-bold h-9 px-3.5 rounded-xl text-[11px] transition-all active:scale-95 whitespace-nowrap cursor-pointer">Re-call</button>
-                                )}
+                               )}
                                {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
                                   <div className="flex gap-1.5">
                                     <button 
@@ -879,18 +888,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                       {user?.role !== 'doctor' && (
                         <td className="px-6 py-4 md:py-5 text-center border-l border-slate-100">
                             <div className="flex items-center justify-center gap-2">
-                                <button 
-                                  onClick={() => handlePaymentStatus(t.id, t.payment_status)}
-                                  className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
-                                    t.payment_status === 'paid' 
-                                      ? 'bg-brand-green text-white shadow-sm' 
-                                      : 'bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white'
-                                  }`}
-                                  title={t.payment_status === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
-                                >
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                                </button>
-                                
                                 <button 
                                   onClick={() => setRemarkingPatient(t)}
                                   className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all border cursor-pointer ${
@@ -973,7 +970,12 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                         {effectiveStatus === 'called' && <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20">Active</span>}
                         {effectiveStatus === 'completed' && <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Done</span>}
                         {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && <span className="text-red-500/80 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">No-Show</span>}
-                        {t.payment_status === 'paid' && (
+                        {t.payment_remark && (
+                          <span className="bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                            {t.payment_remark}
+                          </span>
+                        )}
+                        {t.payment_status === 'paid' && !t.payment_remark && (
                           <span className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                           </span>
@@ -990,16 +992,6 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                     ) : (
                       <>
                         <div className="flex items-center gap-2">
-                           <button 
-                             onClick={() => handlePaymentStatus(t.id, t.payment_status)}
-                             className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all shadow-sm cursor-pointer ${
-                               t.payment_status === 'paid' 
-                                 ? 'bg-emerald-500 text-white' 
-                                 : 'bg-slate-100 text-slate-400'
-                             }`}
-                           >
-                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                           </button>
                            <button 
                              onClick={() => setRemarkingPatient(t)}
                              className={`h-10 w-10 border flex items-center justify-center rounded-xl transition-all shadow-sm cursor-pointer ${
@@ -1041,7 +1033,7 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                                       onClick={() => openCheckInModal(t)} 
                                       className="bg-slate-100 text-slate-700 font-bold h-10 px-2.5 rounded-xl text-[10px] uppercase tracking-widest flex-1 border border-slate-200 cursor-pointer truncate"
                                     >
-                                      {t.payment_remark || 'Paid'}
+                                      {t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'Cash')}
                                     </button>
                                     <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-3 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
                                   </>
@@ -1050,12 +1042,32 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
                           )}
                           {effectiveStatus === 'called' && (
                              <>
+                                {(t.payment_remark || t.is_checked_in) && (
+                                  <button 
+                                    onClick={() => openCheckInModal(t)} 
+                                    className="bg-slate-100 text-slate-700 font-bold h-10 px-2.5 rounded-xl text-[10px] uppercase tracking-widest flex-1 border border-slate-200 cursor-pointer truncate flex items-center justify-center gap-1"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    {t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'Cash')}
+                                  </button>
+                                )}
                                 <button onClick={() => handleAction(t.id, 'complete')} className="bg-emerald-500 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Finish</button>
                                 <button onClick={() => handleAction(t.id, 'noshow')} className="bg-rose-600 text-white font-bold h-10 px-4 rounded-xl text-[10px] uppercase tracking-widest flex-1 shadow-md cursor-pointer">Absent</button>
                              </>
                           )}
                           {effectiveStatus === 'completed' && (
-                             <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1 cursor-pointer">Re-call</button>
+                             <>
+                                {(t.payment_remark || t.is_checked_in) && (
+                                  <button 
+                                    onClick={() => openCheckInModal(t)} 
+                                    className="bg-slate-100 text-slate-700 font-bold h-10 px-2.5 rounded-xl text-[10px] uppercase tracking-widest flex-1 border border-slate-200 cursor-pointer truncate flex items-center justify-center gap-1"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    {t.payment_remark || (t.payment_status === 'paid' ? 'Paid' : 'Cash')}
+                                  </button>
+                                )}
+                                <button onClick={() => handleAction(t.id, 'reset')} className="bg-slate-50 border border-slate-200 text-slate-400 h-10 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest flex-1 cursor-pointer">Re-call</button>
+                             </>
                           )}
                           {(effectiveStatus === 'no_show' || effectiveStatus === 'cancelled') && (
                              <>

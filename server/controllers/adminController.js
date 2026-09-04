@@ -1,4 +1,5 @@
 const db = require('../db');
+const tokenService = require('../services/tokenService');
 
 exports.getBookings = async (req, res) => {
     const { date, sessionId } = req.query;
@@ -485,31 +486,8 @@ exports.deleteBooking = async (req, res) => {
             [session_id, booking_date, token_number]
         );
 
-        // We need start_time, end_time and max_tokens for this session to recalculate
-        const sessionRes = await client.query('SELECT start_time, end_time, max_tokens FROM sessions WHERE id = $1', [session_id]);
-        const { start_time, end_time, max_tokens } = sessionRes.rows[0];
-
-        // Helper to convert HH:MM:SS to minutes since midnight
-        function timeToMinutes(timeStr) {
-            const [h, m] = timeStr.split(':').map(Number);
-            return h * 60 + m;
-        }
-
-        // Helper to convert minutes to HH:MM:SS
-        function minutesToTime(minutes) {
-            const h = Math.floor(minutes / 60).toString().padStart(2, '0');
-            const m = (minutes % 60).toString().padStart(2, '0');
-            return `${h}:${m}:00`;
-        }
-
-        const startMins = timeToMinutes(start_time);
-        const endMins = timeToMinutes(end_time);
-        const totalDurationMins = endMins - startMins;
-        const avgMinutesPerPatient = Math.max(1, Math.floor(totalDurationMins / max_tokens));
-
         for (const booking of remainingBookings.rows) {
-            const estMins = startMins + ((booking.token_number - 1) * avgMinutesPerPatient);
-            const estTime = minutesToTime(estMins);
+            const estTime = await tokenService.calculateEstimatedTime(session_id, booking.token_number, booking_date, client);
             await client.query('UPDATE bookings SET estimated_time = $1 WHERE id = $2', [estTime, booking.id]);
         }
 
@@ -552,7 +530,7 @@ exports.updateBooking = async (req, res) => {
 };
 
 exports.getDashboardStats = async (req, res) => {
-    const { doctorId } = req.query;
+    const { doctorId, range = 'week' } = req.query;
     try {
         const todayStr = new Date().toISOString().split('T')[0];
         
@@ -594,49 +572,172 @@ exports.getDashboardStats = async (req, res) => {
             topDoctor = topDoctorRes.rows[0]?.name || '—';
         }
 
-        // Weekly Traffic
-        // Get counts grouped by date for the last 7 days
-        let weeklyQuery = `
-            SELECT 
-                to_char(booking_date, 'Dy') as day,
-                booking_date as full_date,
-                COUNT(*) as count 
-            FROM bookings 
-            WHERE booking_date >= CURRENT_DATE - INTERVAL '6 days'
-        `;
-        let weeklyParams = [];
-        if (doctorId) {
-            weeklyQuery += ' AND doctor_id = $1';
-            weeklyParams.push(doctorId);
-        }
-        weeklyQuery += `
-            GROUP BY booking_date 
-            ORDER BY booking_date ASC
-        `;
-        const weeklyRes = await db.query(weeklyQuery, weeklyParams);
-        
-        const trafficMap = {};
-        weeklyRes.rows.forEach(r => {
-            trafficMap[r.day] = parseInt(r.count);
-        });
+        // Traffic calculation based on range: 'week' | 'month' | '6months' | 'year'
+        let traffic = [];
 
-        // Generate full 7 day list to ensure no gaps
-        const weeklyTraffic = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-            weeklyTraffic.push({
-                day: dayName,
-                count: trafficMap[dayName] || 0
+        if (range === 'month') {
+            // Group by 4 weekly buckets in past 28 days
+            let monthQuery = `
+                SELECT 
+                    to_char(booking_date, 'YYYY-MM-DD') as date_str,
+                    COUNT(*) as count 
+                FROM bookings 
+                WHERE booking_date >= CURRENT_DATE - INTERVAL '27 days'
+                  AND booking_date <= CURRENT_DATE
+            `;
+            let monthParams = [];
+            if (doctorId) {
+                monthQuery += ' AND doctor_id = $1';
+                monthParams.push(doctorId);
+            }
+            monthQuery += ` GROUP BY date_str ORDER BY date_str ASC`;
+            const monthRes = await db.query(monthQuery, monthParams);
+
+            const dayCountMap = {};
+            monthRes.rows.forEach(r => {
+                dayCountMap[r.date_str] = parseInt(r.count);
             });
+
+            // 4 weeks
+            for (let i = 3; i >= 0; i--) {
+                const endD = new Date();
+                endD.setDate(endD.getDate() - (i * 7));
+                const startD = new Date();
+                startD.setDate(startD.getDate() - (i * 7 + 6));
+                
+                const startStr = startD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const endStr = endD.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                let weekSum = 0;
+                const cur = new Date(startD);
+                while (cur <= endD) {
+                    const dStr = cur.toISOString().split('T')[0];
+                    weekSum += (dayCountMap[dStr] || 0);
+                    cur.setDate(cur.getDate() + 1);
+                }
+
+                traffic.push({
+                    day: `W${4 - i}`,
+                    label: `Week ${4 - i}`,
+                    subLabel: `${startStr} - ${endStr}`,
+                    count: weekSum
+                });
+            }
+        } else if (range === '6months') {
+            let halfYearQuery = `
+                SELECT 
+                    to_char(booking_date, 'YYYY-MM') as month_key,
+                    COUNT(*) as count 
+                FROM bookings 
+                WHERE booking_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months'
+                  AND booking_date <= CURRENT_DATE
+            `;
+            let halfYearParams = [];
+            if (doctorId) {
+                halfYearQuery += ' AND doctor_id = $1';
+                halfYearParams.push(doctorId);
+            }
+            halfYearQuery += ` GROUP BY month_key ORDER BY month_key ASC`;
+            const halfYearRes = await db.query(halfYearQuery, halfYearParams);
+
+            const monthCountMap = {};
+            halfYearRes.rows.forEach(r => {
+                monthCountMap[r.month_key] = parseInt(r.count);
+            });
+
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(1);
+                d.setMonth(d.getMonth() - i);
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+                traffic.push({
+                    day: monthName,
+                    label: monthName,
+                    subLabel: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    count: monthCountMap[monthKey] || 0
+                });
+            }
+        } else if (range === 'year') {
+            let yearQuery = `
+                SELECT 
+                    to_char(booking_date, 'YYYY-MM') as month_key,
+                    COUNT(*) as count 
+                FROM bookings 
+                WHERE booking_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '11 months'
+                  AND booking_date <= CURRENT_DATE
+            `;
+            let yearParams = [];
+            if (doctorId) {
+                yearQuery += ' AND doctor_id = $1';
+                yearParams.push(doctorId);
+            }
+            yearQuery += ` GROUP BY month_key ORDER BY month_key ASC`;
+            const yearRes = await db.query(yearQuery, yearParams);
+
+            const monthCountMap = {};
+            yearRes.rows.forEach(r => {
+                monthCountMap[r.month_key] = parseInt(r.count);
+            });
+
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(1);
+                d.setMonth(d.getMonth() - i);
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = d.toLocaleDateString('en-US', { month: 'short' });
+                traffic.push({
+                    day: monthName,
+                    label: monthName,
+                    subLabel: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    count: monthCountMap[monthKey] || 0
+                });
+            }
+        } else {
+            // Default: 'week' (7 days)
+            let weeklyQuery = `
+                SELECT 
+                    to_char(booking_date, 'YYYY-MM-DD') as date_str,
+                    COUNT(*) as count 
+                FROM bookings 
+                WHERE booking_date >= CURRENT_DATE - INTERVAL '6 days'
+                  AND booking_date <= CURRENT_DATE
+            `;
+            let weeklyParams = [];
+            if (doctorId) {
+                weeklyQuery += ' AND doctor_id = $1';
+                weeklyParams.push(doctorId);
+            }
+            weeklyQuery += ` GROUP BY date_str ORDER BY date_str ASC`;
+            const weeklyRes = await db.query(weeklyQuery, weeklyParams);
+            
+            const trafficMap = {};
+            weeklyRes.rows.forEach(r => {
+                trafficMap[r.date_str] = parseInt(r.count);
+            });
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+                const fullDateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                traffic.push({
+                    day: dayName,
+                    label: dayName,
+                    subLabel: fullDateStr,
+                    count: trafficMap[dateStr] || 0
+                });
+            }
         }
 
         res.json({
             todayPatients,
             activeSessions,
             topDoctor,
-            weeklyTraffic,
+            range,
+            traffic,
+            weeklyTraffic: traffic,
             // Estimated revenue (mock logic: number of patients * average fee)
             monthRevenue: `₹${(todayPatients * 350).toLocaleString()}` 
         });

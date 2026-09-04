@@ -165,7 +165,7 @@ exports.createBooking = async (req, res) => {
         }
 
         const tokenNumber = await tokenService.getNextTokenNumber(sessionId, date);
-        const estimatedTime = await tokenService.calculateEstimatedTime(sessionId, tokenNumber);
+        const estimatedTime = await tokenService.calculateEstimatedTime(sessionId, tokenNumber, date, db);
         
         const bookingRef = `BK-${Date.now().toString().slice(-4)}${Math.floor(100000 + Math.random() * 899999)}`;
 

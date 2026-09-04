@@ -2,32 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { API_URL } from '../../constants/api';
 
 const AdminOverview = ({ user }) => {
+  const [timeRange, setTimeRange] = useState('week'); // 'week' | 'month' | '6months' | 'year'
   const [stats, setStats] = useState({
     todayPatients: 0,
     monthRevenue: '₹0',
     topDoctor: '—',
     activeSessions: 0,
-    weeklyTraffic: []
+    weeklyTraffic: [],
+    traffic: []
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let url = `${API_URL}/api/admin/stats`;
+    let url = `${API_URL}/api/admin/stats?range=${timeRange}`;
     if (user?.role === 'doctor' && user?.doctor_id) {
-      url += `?doctorId=${user.doctor_id}`;
+      url += `&doctorId=${user.doctor_id}`;
     }
+    setLoading(true);
     fetch(url)
       .then(r => r.json())
       .then(data => {
+        const trafficData = data.traffic || data.weeklyTraffic || [];
         setStats({
           todayPatients: data.todayPatients || 0,
           monthRevenue: data.monthRevenue || '₹0',
           topDoctor: data.topDoctor || '—',
           activeSessions: data.activeSessions || 0,
-          weeklyTraffic: data.weeklyTraffic || []
+          weeklyTraffic: trafficData,
+          traffic: trafficData
         });
+        setLoading(false);
       })
-      .catch(err => console.error('Error fetching stats:', err));
-  }, [user, API_URL]);
+      .catch(err => {
+        console.error('Error fetching stats:', err);
+        setLoading(false);
+      });
+  }, [user, API_URL, timeRange]);
+
+  const rangeDescriptions = {
+    week: 'Daily booking volume over the last 7 days.',
+    month: 'Weekly booking volume over the past 30 days.',
+    '6months': 'Monthly booking volume over the last 6 months.',
+    year: 'Monthly booking volume over the past 12 months.'
+  };
 
   const cards = [
     { label: "Patients Today", val: stats.todayPatients, label2: "+12 from yesterday", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 7a4 4 0 11-8 0 4 4 0 018 0", color: "bg-blue-primary/10 text-blue-primary" },
@@ -35,6 +52,8 @@ const AdminOverview = ({ user }) => {
     { label: "Top Performer", val: stats.topDoctor, label2: "Highest consultation rate", icon: "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z", color: "bg-purple-100 text-purple-600" },
     { label: "Active Sessions", val: stats.activeSessions, label2: "Morning & Evening", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", color: "bg-pink-100 text-pink-600" },
   ];
+
+  const currentTraffic = stats.traffic && stats.traffic.length > 0 ? stats.traffic : stats.weeklyTraffic;
 
   return (
     <div className="animate-fade-in space-y-6 md:space-y-10">
@@ -56,14 +75,32 @@ const AdminOverview = ({ user }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-12 gap-4">
                <div>
                   <h3 className="text-xl md:text-2xl font-serif font-medium text-white mb-1">Queue Traffic</h3>
-                  <p className="text-white/40 text-xs md:text-sm">Daily booking volume over the last 7 days.</p>
+                  <p className="text-white/40 text-xs md:text-sm">{rangeDescriptions[timeRange] || rangeDescriptions.week}</p>
                </div>
-               <div className="flex gap-2">
-                  <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] md:text-[11px] font-bold text-white/60 tracking-widest uppercase">Weekly view</div>
+               <div className="flex bg-white/10 p-1 rounded-2xl gap-1 border border-white/10 backdrop-blur-sm self-start sm:self-auto">
+                  {[
+                    { id: 'week', short: '7D', full: 'Week' },
+                    { id: 'month', short: '30D', full: 'Month' },
+                    { id: '6months', short: '6M', full: '6 Months' },
+                    { id: 'year', short: '1Y', full: '1 Year' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setTimeRange(tab.id)}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                        timeRange === tab.id
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">{tab.full}</span>
+                      <span className="sm:hidden">{tab.short}</span>
+                    </button>
+                  ))}
                </div>
             </div>
             
-             <div className="h-48 md:h-64 flex items-end justify-between gap-2 md:gap-4 relative px-2">
+             <div className="h-48 md:h-64 flex items-end justify-between gap-1.5 sm:gap-2 md:gap-4 relative px-2">
                 {/* Horizontal Gridlines behind bars */}
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-8 pt-4">
                   <div className="w-full border-t border-white/[0.04]"></div>
@@ -72,20 +109,35 @@ const AdminOverview = ({ user }) => {
                   <div className="w-full border-t border-white/[0.04]"></div>
                 </div>
 
-                {stats.weeklyTraffic.map((t, i) => {
-                   const maxCount = Math.max(...stats.weeklyTraffic.map(x => x.count), 1);
+                {currentTraffic.map((t, i) => {
+                   const maxCount = Math.max(...currentTraffic.map(x => x.count), 1);
                    const barHeight = Math.max((t.count / maxCount) * 75, 2); // 75% max to leave space for text
                    return (
                      <div key={i} className="flex-1 flex flex-col items-center group relative h-full justify-end z-10">
+                        {/* Tooltip on hover */}
+                        {t.subLabel && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -top-8 bg-slate-900 border border-white/10 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-2xl pointer-events-none whitespace-nowrap z-30">
+                            {t.subLabel}: <span className="text-blue-400">{t.count} patients</span>
+                          </div>
+                        )}
+
                         {/* Count Label */}
-                        <div className={`mb-2 text-[10px] md:text-[12px] font-bold transition-all duration-300 ${t.count > 0 ? 'text-white' : 'text-white/20'}`}>
+                        <div className={`mb-2 text-[9px] sm:text-[10px] md:text-[12px] font-bold transition-all duration-300 ${t.count > 0 ? 'text-white' : 'text-white/20'}`}>
                           {t.count}
                         </div>
                         
-                        <div className="w-full relative bg-white/5 rounded-t-md overflow-hidden group-hover:bg-white/10 transition-colors" style={{ height: `${barHeight}%` }}>
-                           <div className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-550 origin-bottom scale-y-0 group-hover:scale-y-100" style={{ transform: 'scaleY(1)', transitionDelay: `${i*50}ms` }}></div>
+                        <div className="w-full relative bg-white/5 rounded-t-md overflow-hidden group-hover:bg-white/15 transition-colors" style={{ height: `${barHeight}%` }}>
+                           <div 
+                             className="absolute inset-x-0 bottom-0 bg-blue-mid h-[100%] transition-all duration-500 origin-bottom" 
+                             style={{ 
+                               transform: 'scaleY(1)', 
+                               transitionDelay: `${i * 25}ms` 
+                             }}
+                           ></div>
                         </div>
-                        <p className="mt-3 md:mt-4 text-[9px] font-bold text-white/35 uppercase tracking-wider">{t.day}</p>
+                        <p className="mt-3 md:mt-4 text-[8px] sm:text-[9px] md:text-[10px] font-bold text-white/40 uppercase tracking-wider truncate max-w-full text-center" title={t.label || t.day}>
+                          {t.day || t.label}
+                        </p>
                      </div>
                    );
                 })}
