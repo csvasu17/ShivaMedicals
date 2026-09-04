@@ -383,23 +383,21 @@ export default function QueueManager({ setRoute, user, onAddPatient }) {
 
   const downloadCSV = () => {
     if (tokens.length === 0) return;
-    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Arrival Time", "Location", "Check-In", "Check-In Time", "Status", "Date", "Payment", "Payment Remark", "Remarks"];
+    const finalHeaders = ["Token No", "Patient Name", "Age", "Mobile", "Location", "Check-In Time", "Status", "Date", "Payment", "Payment Remark", "Remarks"];
     const csvContent = [
       finalHeaders.join(","),
       ...tokens.map(t => [
         t.token_number,
-        `"${t.patient_name}"`,
+        `"${(t.patient_name || '').replace(/"/g, '""')}"`,
         `"${t.patient_age_days > 0 ? t.patient_age_days + 'd' : t.patient_age_years + 'y ' + t.patient_age_months + 'm'}"`,
-        t.patient_phone, 
-        `"${t.estimated_time || ''}"`,
-        `"${t.location}"`,
-        t.is_checked_in ? 'Checked In' : 'Not Checked In',
-        `"${t.check_in_time ? new Date(t.check_in_time).toLocaleTimeString('en-IN') : '--'}"`,
+        `"\t${t.patient_phone || ''}"`, 
+        `"${(t.location || '').replace(/"/g, '""')}"`,
+        `"${t.check_in_time ? new Date(t.check_in_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--'}"`,
         getEffectiveStatus(t),
         `"\t${new Date(t.booking_date).toLocaleDateString('en-IN').split('/').join('-')}"`,
         t.payment_status === 'paid' ? 'Paid' : 'Pending',
-        `"${t.payment_remark || ''}"`,
-        `"${t.remarks || ''}"`
+        `"${(t.payment_remark || '').replace(/"/g, '""')}"`,
+        `"${(t.remarks || '').replace(/"/g, '""')}"`
       ].join(","))
     ].join("\n");
 
