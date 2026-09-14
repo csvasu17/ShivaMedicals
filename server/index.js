@@ -26,9 +26,11 @@ const app = express();
 // Configure CORS
 app.use(cors({
     origin: [
-        'https://shiva-medicals.vercel.app',
-        'http://localhost:5173',
-        'http://localhost:6002'
+    'https://shivamedicals.in',
+    'https://www.shivamedicals.in',
+    'https://shiva-medicals.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:6002'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
